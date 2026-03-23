@@ -145,6 +145,16 @@ class StockAnalysis:
 
 
 @dataclass(slots=True)
+class ExpertInsight:
+    expert_name: str
+    affiliation: str
+    key_claims: list[str]
+    topic: str = ""
+    sentiment: str = "NEUTRAL"  # "BULLISH", "BEARISH", "NEUTRAL"
+    mentioned_tickers: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class VideoAnalysisReport:
     run_id: str
     created_at: str
@@ -156,6 +166,9 @@ class VideoAnalysisReport:
     transcript_language: str | None
     ticker_mentions: list[TickerMention]
     stock_analyses: list[StockAnalysis]
+    macro_insights: list[MacroInsight] = field(default_factory=list)
+    market_review: MarketReviewSummary | None = None
+    expert_insights: list[ExpertInsight] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

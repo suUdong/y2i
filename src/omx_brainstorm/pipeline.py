@@ -6,19 +6,25 @@ import uuid
 from pathlib import Path
 
 from .analysis import StockAnalyzer
+from .expert_interview import extract_expert_insights
 from .extractors import HybridTickerExtractor
 from .fundamentals import FundamentalsFetcher
 from .llm import resolve_provider
-from .models import VideoAnalysisReport, utc_now_iso
+from .macro_signals import extract_macro_insights
+from .market_review import extract_market_review
+from .models import VideoAnalysisReport, VideoType, utc_now_iso
 from .reporting import save_report
 from .signal_gate import assess_video_signal
 from .transcript_cache import TranscriptCache
+from .transcript_runtime import resolve_transcript_text
 from .youtube import TranscriptFetcher, YoutubeResolver
 
 logger = logging.getLogger(__name__)
 
 
 class OMXPipeline:
+    """Primary report-generation pipeline for one video or channel slice."""
+
     def __init__(self, provider_name: str, output_dir: Path, mode: str = "ralph", transcript_cache: TranscriptCache | None = None):
         self.provider_name = provider_name
         self.mode = mode
@@ -32,32 +38,8 @@ class OMXPipeline:
         self.analyzer = StockAnalyzer(self.provider, mode=mode)
 
     def _analyze_resolved_video(self, video):
+        transcript_text, language, transcript_source = self._resolve_transcript(video)
         metadata_text = " ".join(part for part in [video.title, video.description or "", " ".join(video.tags)] if part).strip()
-        cached = self.transcript_cache.load(video.video_id)
-        try:
-            if cached and cached.get("transcript_text") and cached.get("source") != "metadata_fallback":
-                segments = []
-                language = f"cache:{cached.get('transcript_language') or 'unknown'}"
-                transcript_text = cached["transcript_text"]
-                transcript_source = cached.get("source", "cache")
-            else:
-                segments, language = self.fetcher.fetch(video.video_id)
-                transcript_text = self.fetcher.join_segments(segments)
-                transcript_source = "transcript_api"
-                self.transcript_cache.save(video, transcript_text, language, transcript_source)
-        except Exception as exc:
-            logger.warning("Transcript fetch failed for %s: %s", video.video_id, exc)
-            if cached and cached.get("transcript_text"):
-                segments = []
-                language = f"cache:{cached.get('transcript_language') or 'unknown'}"
-                transcript_text = cached["transcript_text"]
-                transcript_source = cached.get("source", "cache")
-            else:
-                segments = []
-                language = "metadata_fallback"
-                transcript_text = metadata_text
-                transcript_source = "metadata_fallback"
-                self.transcript_cache.save(video, transcript_text, language, transcript_source)
         analyses = []
         signal_assessment = assess_video_signal(
             video.title,
@@ -67,11 +49,59 @@ class OMXPipeline:
         )
         mentions = []
         analysis_text = transcript_text or metadata_text
-        if signal_assessment.should_analyze_stocks:
-            mentions = self.extractor.extract(video.title, analysis_text)
-            for mention in mentions:
-                snapshot = self.fundamentals.fetch(mention)
-                analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
+        video_type = VideoType(signal_assessment.video_type)
+
+        # --- VideoType-based branching ---
+        macro_insights = []
+        market_review = None
+        expert_insights = []
+
+        if video_type in (VideoType.STOCK_PICK, VideoType.SECTOR):
+            # Full stock analysis path (existing behavior)
+            if signal_assessment.should_analyze_stocks:
+                mentions = self.extractor.extract(video.title, analysis_text)
+                for mention in mentions:
+                    snapshot = self.fundamentals.fetch(mention)
+                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
+
+        elif video_type == VideoType.MACRO:
+            # Macro insights extraction + indirect stock mentions
+            macro_insights = extract_macro_insights(video.title, analysis_text)
+            if signal_assessment.should_analyze_stocks:
+                mentions = self.extractor.extract(video.title, analysis_text)
+                for mention in mentions:
+                    snapshot = self.fundamentals.fetch(mention)
+                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
+
+        elif video_type == VideoType.MARKET_REVIEW:
+            # Market review summary extraction
+            market_review = extract_market_review(video.title, analysis_text)
+            macro_insights = market_review.macro_insights
+            if signal_assessment.should_analyze_stocks:
+                mentions = self.extractor.extract(video.title, analysis_text)
+                for mention in mentions:
+                    snapshot = self.fundamentals.fetch(mention)
+                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
+
+        elif video_type == VideoType.EXPERT_INTERVIEW:
+            # Expert insight extraction + stock analysis if applicable
+            expert_insights = extract_expert_insights(video.title, analysis_text, video.description or "")
+            macro_insights = extract_macro_insights(video.title, analysis_text)
+            if signal_assessment.should_analyze_stocks:
+                mentions = self.extractor.extract(video.title, analysis_text)
+                for mention in mentions:
+                    snapshot = self.fundamentals.fetch(mention)
+                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
+
+        else:
+            # NEWS_EVENT / OTHER — run stock analysis if signal is strong enough
+            macro_insights = extract_macro_insights(video.title, analysis_text)
+            if signal_assessment.should_analyze_stocks:
+                mentions = self.extractor.extract(video.title, analysis_text)
+                for mention in mentions:
+                    snapshot = self.fundamentals.fetch(mention)
+                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
+
         self.transcript_cache.save(
             video=video,
             transcript_text=analysis_text,
@@ -90,8 +120,16 @@ class OMXPipeline:
             transcript_language=language,
             ticker_mentions=mentions,
             stock_analyses=analyses,
+            macro_insights=macro_insights,
+            market_review=market_review,
+            expert_insights=expert_insights,
         )
         return report, save_report(report, self.output_dir)
+
+    def _resolve_transcript(self, video) -> tuple[str, str, str]:
+        """Resolve transcript text from cache, live fetch, or metadata fallback."""
+        transcript_text, language, transcript_source, _cached = resolve_transcript_text(video, self.transcript_cache, self.fetcher, logger)
+        return transcript_text, language, transcript_source
 
     def analyze_video(self, url_or_id: str):
         video = self.resolver.resolve_video(url_or_id)
