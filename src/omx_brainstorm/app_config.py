@@ -29,6 +29,7 @@ class NotificationConfig:
     """Notification destinations and credentials."""
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
+    discord_webhook_url: str | None = None
 
 
 @dataclass(slots=True)
@@ -112,6 +113,7 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
         notifications=NotificationConfig(
             telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", notifications_payload.get("telegram_bot_token")),
             telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID", notifications_payload.get("telegram_chat_id")),
+            discord_webhook_url=os.getenv("DISCORD_WEBHOOK_URL", notifications_payload.get("discord_webhook_url")),
         ),
         schedule=ScheduleConfig(
             daily_time=os.getenv("OMX_DAILY_TIME", schedule_payload.get("daily_time", "09:00")),

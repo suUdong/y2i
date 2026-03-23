@@ -22,3 +22,27 @@ def send_telegram_message(config: NotificationConfig, text: str) -> bool:
     except Exception as exc:
         logger.warning("Telegram notification failed: %s", exc)
         return False
+
+
+def send_discord_message(config: NotificationConfig, text: str) -> bool:
+    if not config.discord_webhook_url:
+        logger.info("Discord notification skipped: webhook URL missing")
+        return False
+    try:
+        response = requests.post(
+            config.discord_webhook_url,
+            json={"content": text[:2000]},
+            timeout=10,
+        )
+        return response.status_code in (200, 204)
+    except Exception as exc:
+        logger.warning("Discord notification failed: %s", exc)
+        return False
+
+
+def notify_all(config: NotificationConfig, text: str) -> dict[str, bool]:
+    """Dispatch notification to all configured channels."""
+    return {
+        "telegram": send_telegram_message(config, text),
+        "discord": send_discord_message(config, text),
+    }
