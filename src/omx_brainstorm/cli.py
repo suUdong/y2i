@@ -63,6 +63,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_health = sub.add_parser("run-healthcheck", help="Read scheduler health state")
     p_health.add_argument("--path", default=".omx/state/scheduler_health.json")
+
+    p_all = sub.add_parser("analyze-all", help="Analyze all enabled channels from config")
+    p_all.add_argument("--config", default="config.toml")
+    p_all.add_argument("--limit", type=int, default=3, help="Videos per channel")
     return parser
 
 
@@ -168,6 +172,31 @@ def main() -> None:
             from .healthcheck import read_health_state
 
             print(json.dumps(read_health_state(args.path), ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "analyze-all":
+            config = load_app_config(args.config)
+            enabled = [ch for ch in config.channels if ch.enabled]
+            if not enabled:
+                logger.warning("No enabled channels in config")
+                print(json.dumps({"channels": [], "error": "no enabled channels"}, ensure_ascii=False, indent=2))
+                return
+            all_results = {}
+            for ch in enabled:
+                logger.info("Analyzing channel %s (%s) limit=%d", ch.slug, ch.display_name, args.limit)
+                ch_output = Path(args.output_dir) / ch.slug
+                ch_pipeline = OMXPipeline(provider_name=config.provider, output_dir=ch_output, mode=args.mode)
+                try:
+                    results = ch_pipeline.analyze_channel(ch.url, limit=args.limit)
+                    all_results[ch.slug] = {
+                        "display_name": ch.display_name,
+                        "videos_analyzed": len(results),
+                        "reports": [_report_summary(report, paths) for report, paths in results],
+                    }
+                except Exception as exc:
+                    logger.error("Channel %s failed: %s", ch.slug, exc)
+                    all_results[ch.slug] = {"display_name": ch.display_name, "error": str(exc)}
+            print(json.dumps(all_results, ensure_ascii=False, indent=2))
             return
 
         pipeline = OMXPipeline(provider_name=args.provider, output_dir=Path(args.output_dir), mode=args.mode)

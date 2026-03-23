@@ -99,3 +99,11 @@ def test_report_summary_includes_new_fields(tmp_path):
     assert summary["expert_insights_count"] == 1
     assert summary["has_market_review"] is False
     assert "NVDA" in summary["tickers"]
+
+
+def test_cli_parser_has_analyze_all_command():
+    parser = build_parser()
+    args = parser.parse_args(["analyze-all", "--config", "config.toml", "--limit", "2"])
+    assert args.command == "analyze-all"
+    assert args.config == "config.toml"
+    assert args.limit == 2
