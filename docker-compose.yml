@@ -1,0 +1,28 @@
+services:
+  omx-paper-trading:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omx-paper-trading
+    env_file:
+      - .env
+    volumes:
+      - ./output:/app/output
+      - ./.omx:/app/.omx
+      - ./config.toml:/app/config.toml
+      - ./channels.json:/app/channels.json
+    command: ["python", "-m", "omx_brainstorm.cli", "run-comparison", "--config", "config.toml"]
+
+  omx-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omx-scheduler
+    env_file:
+      - .env
+    volumes:
+      - ./output:/app/output
+      - ./.omx:/app/.omx
+      - ./config.toml:/app/config.toml
+      - ./channels.json:/app/channels.json
+    command: ["python", "scripts/run_scheduler.py", "--config", "config.toml"]

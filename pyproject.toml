@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omx-brainstorm"
+version = "0.1.0"
+description = "OMX economic YouTube transcript to ticker extraction and LLM analysis pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "youtube-transcript-api>=1.2.0",
+  "yt-dlp>=2025.1.26",
+  "yfinance>=0.2.54",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest-cov>=5.0.0",
+  "pip-audit>=2.8.0",
+]
+
+[project.scripts]
+omx-brainstorm = "omx_brainstorm.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=src/omx_brainstorm --cov-fail-under=75"
+testpaths = ["tests"]

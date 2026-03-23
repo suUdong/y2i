@@ -129,7 +129,7 @@ class CLIProvider(LLMProvider):
             check=False,
         )
         if proc.returncode != 0:
-            raise LLMError(f"{self.provider} CLI 실행 실패: {proc.stderr.strip() or proc.stdout.strip()}")
+            raise LLMError(f"{self.provider} CLI 실행 실패 (exit code={proc.returncode})")
         text = proc.stdout.strip() or proc.stderr.strip()
         if not text:
             raise LLMError(f"{self.provider} CLI 응답이 비어 있습니다")
