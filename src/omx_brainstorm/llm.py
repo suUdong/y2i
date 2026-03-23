@@ -31,6 +31,24 @@ class LLMProvider:
 
 class MockProvider(LLMProvider):
     def run(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+        if 'extract structured expert claims' in system_prompt.lower():
+            payload = {
+                "claims": [
+                    {
+                        "claim": "반도체 업황이 하반기부터 본격 회복될 것으로 전망",
+                        "reasoning": "메모리 재고 조정이 마무리 국면이고 AI 서버 수요가 견인",
+                        "confidence": 0.85,
+                        "direction": "BULLISH",
+                    },
+                    {
+                        "claim": "금리 인하 시기가 예상보다 늦어질 수 있어 주의 필요",
+                        "reasoning": "인플레이션 지표가 여전히 목표치 상회",
+                        "confidence": 0.7,
+                        "direction": "BEARISH",
+                    },
+                ]
+            }
+            return LLMResponse(provider="mock", text=json.dumps(payload, ensure_ascii=False))
         if 'extract publicly traded stock tickers' in system_prompt.lower():
             payload = {
                 "mentions": [

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 import re
 
-from .models import ExpertInsight
+from .models import ExpertInsight, StructuredClaim
 from .stock_registry import COMPANY_MAP
+
+logger = logging.getLogger(__name__)
 
 TITLE_SUFFIXES = r"대표|이사|교수|박사|위원|애널리스트|연구위원|연구원|센터장|부센터장|본부장|팀장|소장|원장|이코노미스트|과장|평론가"
 
@@ -192,3 +195,59 @@ def _extract_mentioned_tickers(text: str) -> list[str]:
             if len(tickers) >= 5:
                 break
     return tickers
+
+
+EXPERT_CLAIM_SYSTEM_PROMPT = """\
+You are a Korean financial video analyst. Extract structured expert claims from the transcript.
+Return a JSON object with a "claims" array. Each claim has:
+- "claim": the expert's assertion (Korean, 1-2 sentences)
+- "reasoning": why the expert believes this (Korean, 1-2 sentences)
+- "confidence": 0.0-1.0 how confident the expert sounds
+- "direction": "BULLISH", "BEARISH", or "NEUTRAL"
+Return at most 5 claims. Focus on actionable investment insights.
+"""
+
+
+def extract_expert_claims_llm(provider, title: str, text: str) -> list[StructuredClaim]:
+    """Use LLM to extract structured expert claims from transcript text."""
+    user_prompt = f"영상 제목: {title}\n\n자막 내용 (처음 3000자):\n{text[:3000]}"
+    try:
+        result = provider.run_json(EXPERT_CLAIM_SYSTEM_PROMPT, user_prompt)
+        claims = []
+        for item in result.get("claims", []):
+            claims.append(StructuredClaim(
+                claim=item.get("claim", ""),
+                reasoning=item.get("reasoning", ""),
+                confidence=float(item.get("confidence", 0.5)),
+                direction=item.get("direction", "NEUTRAL"),
+            ))
+        return claims[:5]
+    except Exception as exc:
+        logger.warning("LLM expert claim extraction failed: %s", exc)
+        return []
+
+
+def extract_expert_insights_with_llm(
+    provider,
+    title: str,
+    text: str,
+    description: str = "",
+) -> list[ExpertInsight]:
+    """Extract expert insights with LLM-enhanced claims, falling back to heuristic."""
+    insights = extract_expert_insights(title, text, description)
+    if not insights:
+        return insights
+
+    structured_claims = extract_expert_claims_llm(provider, title, text)
+    if not structured_claims:
+        # Fallback: convert heuristic claims into structured format
+        for insight in insights:
+            insight.structured_claims = [
+                StructuredClaim(claim=c, direction=insight.sentiment)
+                for c in insight.key_claims[:5]
+            ]
+    else:
+        for insight in insights:
+            insight.structured_claims = structured_claims
+
+    return insights

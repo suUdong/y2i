@@ -145,6 +145,14 @@ class StockAnalysis:
 
 
 @dataclass(slots=True)
+class StructuredClaim:
+    claim: str
+    reasoning: str = ""
+    confidence: float = 0.5
+    direction: str = "NEUTRAL"  # "BULLISH", "BEARISH", "NEUTRAL"
+
+
+@dataclass(slots=True)
 class ExpertInsight:
     expert_name: str
     affiliation: str
@@ -152,6 +160,7 @@ class ExpertInsight:
     topic: str = ""
     sentiment: str = "NEUTRAL"  # "BULLISH", "BEARISH", "NEUTRAL"
     mentioned_tickers: list[str] = field(default_factory=list)
+    structured_claims: list[StructuredClaim] = field(default_factory=list)
 
 
 @dataclass(slots=True)

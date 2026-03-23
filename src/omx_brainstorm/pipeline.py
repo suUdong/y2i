@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 
 from .analysis import StockAnalyzer
-from .expert_interview import extract_expert_insights
+from .expert_interview import extract_expert_insights, extract_expert_insights_with_llm
 from .extractors import HybridTickerExtractor
 from .fundamentals import FundamentalsFetcher
 from .llm import resolve_provider
@@ -77,7 +77,10 @@ class OMXPipeline:
                 logger.warning("Market review extraction failed for %s: %s", video.video_id, exc)
         elif video_type == VideoType.EXPERT_INTERVIEW:
             try:
-                expert_insights = extract_expert_insights(video.title, analysis_text, video.description or "")
+                if self.provider_name != "mock":
+                    expert_insights = extract_expert_insights_with_llm(self.provider, video.title, analysis_text, video.description or "")
+                else:
+                    expert_insights = extract_expert_insights(video.title, analysis_text, video.description or "")
             except Exception as exc:
                 logger.warning("Expert insight extraction failed for %s: %s", video.video_id, exc)
             try:
