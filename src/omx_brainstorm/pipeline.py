@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 import logging
 import uuid
@@ -125,18 +126,38 @@ class OMXPipeline:
         video = self.resolver.resolve_video(url_or_id)
         return self._analyze_resolved_video(video)
 
-    def analyze_channel(self, channel_url: str, limit: int = 5):
+    def _analyze_batch(self, videos, max_workers: int | None = None):
+        """Analyze a batch of videos with optional parallelism."""
+        if len(videos) <= 1 or max_workers == 1:
+            return [self._analyze_resolved_video(video) for video in videos]
+
+        workers = min(max_workers or 4, len(videos))
+        results = [None] * len(videos)
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            future_to_idx = {
+                pool.submit(self._analyze_resolved_video, video): idx
+                for idx, video in enumerate(videos)
+            }
+            for future in as_completed(future_to_idx):
+                idx = future_to_idx[future]
+                try:
+                    results[idx] = future.result()
+                except Exception as exc:
+                    logger.error("Video analysis failed (index %d): %s", idx, exc)
+        return [r for r in results if r is not None]
+
+    def analyze_channel(self, channel_url: str, limit: int = 5, max_workers: int | None = None):
         videos = self.resolver.resolve_channel_videos(channel_url, limit=limit)
-        results = [self._analyze_resolved_video(video) for video in videos]
+        results = self._analyze_batch(videos, max_workers=max_workers)
         if results:
             reports = [report for report, _paths in results]
             dashboard_path = save_combined_dashboard(reports, self.output_dir, label="channel_dashboard")
             logger.info("Combined dashboard saved to %s", dashboard_path)
         return results
 
-    def analyze_channel_since(self, channel_url: str, days: int = 30, max_entries: int = 80):
+    def analyze_channel_since(self, channel_url: str, days: int = 30, max_entries: int = 80, max_workers: int | None = None):
         videos = self.resolver.resolve_channel_videos_since(channel_url, days=days, max_entries=max_entries)
-        results = [self._analyze_resolved_video(video) for video in videos]
+        results = self._analyze_batch(videos, max_workers=max_workers)
         if results:
             reports = [report for report, _paths in results]
             dashboard_path = save_combined_dashboard(reports, self.output_dir, label="channel_dashboard")
