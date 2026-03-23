@@ -6,6 +6,7 @@ from omx_brainstorm.models import (
     MarketReviewSummary,
     MasterOpinion,
     StockAnalysis,
+    StructuredClaim,
     TickerMention,
     VideoAnalysisReport,
     VideoInput,
@@ -211,6 +212,56 @@ def test_dashboard_video_source_list():
     assert "영상B" in md
     assert "STOCK_PICK" in md
     assert "MACRO" in md
+
+
+def test_dashboard_renders_structured_claims():
+    expert = ExpertInsight(
+        expert_name="박철수",
+        affiliation="미래에셋증권",
+        key_claims=["반도체 상승 전망"],
+        topic="반도체",
+        sentiment="BULLISH",
+        mentioned_tickers=["005930.KS"],
+        structured_claims=[
+            StructuredClaim(
+                claim="반도체 업황이 하반기부터 본격 회복",
+                reasoning="메모리 재고 조정 마무리 + AI 서버 수요 견인",
+                confidence=0.85,
+                direction="BULLISH",
+            ),
+            StructuredClaim(
+                claim="금리 인하 시기 예상보다 지연 가능",
+                reasoning="인플레이션 지표 목표치 상회",
+                confidence=0.7,
+                direction="BEARISH",
+            ),
+        ],
+    )
+    report = _make_report(video_type="EXPERT_INTERVIEW", expert_insights=[expert])
+    md = render_combined_dashboard([report])
+    assert "구조화 주장" in md
+    assert "[BULLISH]" in md
+    assert "[BEARISH]" in md
+    assert "85%" in md
+    assert "근거:" in md
+    assert "메모리 재고 조정" in md
+    # Should NOT show "핵심 주장" when structured_claims present
+    assert "핵심 주장" not in md
+
+
+def test_dashboard_falls_back_to_key_claims_when_no_structured():
+    expert = ExpertInsight(
+        expert_name="이영수",
+        affiliation="한국증권",
+        key_claims=["AI 투자 확대 전망"],
+        topic="AI",
+        sentiment="BULLISH",
+    )
+    report = _make_report(video_type="EXPERT_INTERVIEW", expert_insights=[expert])
+    md = render_combined_dashboard([report])
+    assert "핵심 주장" in md
+    assert "AI 투자 확대 전망" in md
+    assert "구조화 주장" not in md
 
 
 def test_save_combined_dashboard_creates_file(tmp_path):

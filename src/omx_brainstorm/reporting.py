@@ -238,7 +238,14 @@ def render_combined_dashboard(reports: list[VideoAnalysisReport]) -> str:
             lines.append(f"### {expert.expert_name}{aff}")
             lines.append(f"- 주제: {expert.topic}")
             lines.append(f"- 센티먼트: {expert.sentiment}")
-            if expert.key_claims:
+            if expert.structured_claims:
+                lines.append("- 구조화 주장:")
+                for sc in expert.structured_claims[:5]:
+                    direction_tag = f"[{sc.direction}]" if sc.direction != "NEUTRAL" else ""
+                    lines.append(f"  - {direction_tag} {sc.claim} (신뢰도: {sc.confidence:.0%})")
+                    if sc.reasoning:
+                        lines.append(f"    - 근거: {sc.reasoning}")
+            elif expert.key_claims:
                 lines.append("- 핵심 주장:")
                 for claim in expert.key_claims[:3]:
                     lines.append(f"  - {claim}")
