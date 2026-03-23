@@ -37,19 +37,29 @@ class OMXPipeline:
         self.extractor = HybridTickerExtractor(self.provider, mode=mode)
         self.analyzer = StockAnalyzer(self.provider, mode=mode)
 
+    def _run_stock_analysis(self, video_title, analysis_text, should_analyze):
+        """Extract tickers and run per-stock analysis when signal warrants it."""
+        if not should_analyze:
+            return [], []
+        mentions = self.extractor.extract(video_title, analysis_text)
+        analyses = [
+            self.analyzer.analyze(video_title, analysis_text, mention, self.fundamentals.fetch(mention))
+            for mention in mentions
+        ]
+        return mentions, analyses
+
     def _analyze_resolved_video(self, video):
         transcript_text, language, transcript_source = self._resolve_transcript(video)
         metadata_text = " ".join(part for part in [video.title, video.description or "", " ".join(video.tags)] if part).strip()
-        analyses = []
         signal_assessment = assess_video_signal(
             video.title,
             transcript_text,
             description=video.description or "",
             tags=video.tags,
         )
-        mentions = []
         analysis_text = transcript_text or metadata_text
         video_type = VideoType(signal_assessment.video_type)
+        should = signal_assessment.should_analyze_stocks
 
         # --- VideoType-based branching ---
         macro_insights = []
@@ -57,50 +67,18 @@ class OMXPipeline:
         expert_insights = []
 
         if video_type in (VideoType.STOCK_PICK, VideoType.SECTOR):
-            # Full stock analysis path (existing behavior)
-            if signal_assessment.should_analyze_stocks:
-                mentions = self.extractor.extract(video.title, analysis_text)
-                for mention in mentions:
-                    snapshot = self.fundamentals.fetch(mention)
-                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
-
-        elif video_type == VideoType.MACRO:
-            # Macro insights extraction + indirect stock mentions
-            macro_insights = extract_macro_insights(video.title, analysis_text)
-            if signal_assessment.should_analyze_stocks:
-                mentions = self.extractor.extract(video.title, analysis_text)
-                for mention in mentions:
-                    snapshot = self.fundamentals.fetch(mention)
-                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
-
+            pass  # stock analysis only
         elif video_type == VideoType.MARKET_REVIEW:
-            # Market review summary extraction
             market_review = extract_market_review(video.title, analysis_text)
             macro_insights = market_review.macro_insights
-            if signal_assessment.should_analyze_stocks:
-                mentions = self.extractor.extract(video.title, analysis_text)
-                for mention in mentions:
-                    snapshot = self.fundamentals.fetch(mention)
-                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
-
         elif video_type == VideoType.EXPERT_INTERVIEW:
-            # Expert insight extraction + stock analysis if applicable
             expert_insights = extract_expert_insights(video.title, analysis_text, video.description or "")
             macro_insights = extract_macro_insights(video.title, analysis_text)
-            if signal_assessment.should_analyze_stocks:
-                mentions = self.extractor.extract(video.title, analysis_text)
-                for mention in mentions:
-                    snapshot = self.fundamentals.fetch(mention)
-                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
-
         else:
-            # NEWS_EVENT / OTHER — run stock analysis if signal is strong enough
+            # MACRO, NEWS_EVENT, OTHER
             macro_insights = extract_macro_insights(video.title, analysis_text)
-            if signal_assessment.should_analyze_stocks:
-                mentions = self.extractor.extract(video.title, analysis_text)
-                for mention in mentions:
-                    snapshot = self.fundamentals.fetch(mention)
-                    analyses.append(self.analyzer.analyze(video.title, analysis_text, mention, snapshot))
+
+        mentions, analyses = self._run_stock_analysis(video.title, analysis_text, should)
 
         self.transcript_cache.save(
             video=video,
