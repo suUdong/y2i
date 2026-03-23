@@ -9,7 +9,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from .app_config import AppConfig
-from .notifications import send_telegram_message
+from .notifications import notify_all
 from .utils import write_json, read_json
 
 logger = logging.getLogger(__name__)
@@ -25,13 +25,13 @@ def run_scheduled_job(config: AppConfig, script_path: str = "scripts/run_channel
     if proc.returncode == 0:
         state["last_success_at"] = state["last_run_at"]
         state["status"] = "ok"
-        send_telegram_message(config.notifications, proc.stdout.strip() or "Scheduled job completed")
+        notify_all(config.notifications, proc.stdout.strip() or "Scheduled job completed")
     else:
         state["last_error_at"] = state["last_run_at"]
         state["status"] = "error"
         state["error_count"] = int(state.get("error_count", 0)) + 1
         logger.error("Scheduled job failed: %s", proc.stderr.strip() or proc.stdout.strip())
-        send_telegram_message(config.notifications, "Scheduled job failed. Check server logs for details.")
+        notify_all(config.notifications, "Scheduled job failed. Check server logs for details.")
     write_json(HEALTH_PATH, state)
     return proc.returncode
 

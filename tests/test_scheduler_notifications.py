@@ -30,7 +30,7 @@ def test_run_scheduled_job_writes_success_health(monkeypatch, tmp_path):
 
     monkeypatch.setattr("omx_brainstorm.scheduler.HEALTH_PATH", tmp_path / "health.json")
     monkeypatch.setattr("omx_brainstorm.scheduler.subprocess.run", lambda *a, **k: Proc())
-    monkeypatch.setattr("omx_brainstorm.scheduler.send_telegram_message", lambda *a, **k: True)
+    monkeypatch.setattr("omx_brainstorm.scheduler.notify_all", lambda *a, **k: {"telegram": True, "discord": True})
     config = AppConfig(notifications=NotificationConfig())
     assert run_scheduled_job(config) == 0
     state = json.loads((tmp_path / "health.json").read_text(encoding="utf-8"))
@@ -45,7 +45,7 @@ def test_run_scheduled_job_writes_error_health(monkeypatch, tmp_path):
 
     monkeypatch.setattr("omx_brainstorm.scheduler.HEALTH_PATH", tmp_path / "health.json")
     monkeypatch.setattr("omx_brainstorm.scheduler.subprocess.run", lambda *a, **k: Proc())
-    monkeypatch.setattr("omx_brainstorm.scheduler.send_telegram_message", lambda *a, **k: True)
+    monkeypatch.setattr("omx_brainstorm.scheduler.notify_all", lambda *a, **k: {"telegram": True, "discord": True})
     config = AppConfig(notifications=NotificationConfig())
     assert run_scheduled_job(config) == 2
     state = json.loads((tmp_path / "health.json").read_text(encoding="utf-8"))

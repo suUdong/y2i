@@ -11,6 +11,7 @@ from omx_brainstorm.evaluation import ranking_validation
 from omx_brainstorm.fundamentals import FundamentalsFetcher
 from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic, render_heuristic_dashboard
 from omx_brainstorm.logging_utils import configure_logging
+from omx_brainstorm.notifications import notify_all
 from omx_brainstorm.master_engine import validate_cross_stock_master_quality
 from omx_brainstorm.research import build_cross_video_ranking
 from omx_brainstorm.transcript_cache import TranscriptCache
@@ -60,6 +61,8 @@ def main() -> None:
         context,
     )
     dashboard_path = render_heuristic_dashboard(rows, Path(config.output_dir), label=f"{channel.slug}_30d_dashboard")
+    summary = f"[OMX] {channel.display_name} 30일 분석 완료: {len(rows)}개 영상, {len(ranking)}개 종목 랭킹"
+    notify_all(config.notifications, summary)
     print(json.dumps({
         "json_path": str(json_path),
         "txt_path": str(txt_path),
