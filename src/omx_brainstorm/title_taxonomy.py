@@ -60,10 +60,8 @@ def classify_video_type(
     lower_title = title.lower()
     lower_desc = f"{description} {' '.join(tags)}".lower()
 
-    for video_type, title_keywords, desc_keywords in VIDEO_TYPE_RULES:
+    for video_type, title_keywords, _desc_keywords in VIDEO_TYPE_RULES:
         if any(kw in lower_title for kw in title_keywords):
-            return video_type
-        if any(kw in lower_desc for kw in desc_keywords) and any(kw in lower_title for kw in title_keywords[:3]):
             return video_type
 
     # Fallback: check description/tags alone with higher threshold
