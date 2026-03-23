@@ -1,0 +1,2544 @@
+삼프로TV 최근 30일 분석 (20260323T094413Z)
+채널: https://www.youtube.com/@3protv/videos
+
+[통합 종목 랭킹]
+산식: aggregate_score = avg_signal_strength*0.85 + min(total_mentions*0.35, 8) + min(appearances*1.0, 2) + avg_master_variance*0.2
+1. 047810.KS  Korea Aerospace Industries, Ltd.  aggregate=61.9 (WATCH)  avg_signal=58.6  avg_final=59.6  appearances=27  mentions=27  master_var=10.44  first_signal_at=2026-03-16  latest_checked_at=2026-03-23T09:44:13+00:00  latest_price=KRW 169,900.00
+2. 012450.KS  Hanwha Aerospace Co., Ltd.  aggregate=58.9 (WATCH)  avg_signal=55.7  avg_final=65.2  appearances=30  mentions=30  master_var=7.81  first_signal_at=2026-03-16  latest_checked_at=2026-03-23T09:44:12+00:00  latest_price=KRW 1,278,000.00
+3. 240810.KQ  Wonik IPS Co., Ltd.  aggregate=54.5 (REJECT)  avg_signal=55.9  avg_final=57.4  appearances=10  mentions=10  master_var=7.72  first_signal_at=2026-03-17  latest_checked_at=2026-03-23T09:44:00+00:00  latest_price=KRW 116,200.00
+4. 042660.KS  Hanwha Ocean Co., Ltd.  aggregate=53.2 (REJECT)  avg_signal=50.2  avg_final=59.9  appearances=30  mentions=30  master_var=2.72  first_signal_at=2026-03-16  latest_checked_at=2026-03-23T09:44:12+00:00  latest_price=KRW 118,900.00
+5. 042700.KS  HANMI Semiconductor Co., Ltd.  aggregate=51.7 (REJECT)  avg_signal=53.1  avg_final=59.6  appearances=10  mentions=10  master_var=5.30  first_signal_at=2026-03-17  latest_checked_at=2026-03-23T09:43:59+00:00  latest_price=KRW 297,000.00
+6. 329180.KS  HD Hyundai Heavy Industries Co., Ltd.  aggregate=51.4 (REJECT)  avg_signal=48.4  avg_final=68.0  appearances=27  mentions=27  master_var=1.16  first_signal_at=2026-03-16  latest_checked_at=2026-03-23T09:44:13+00:00  latest_price=KRW 502,000.00
+7. 005930.KS  Samsung Electronics Co., Ltd.  aggregate=50.0 (REJECT)  avg_signal=48.2  avg_final=68.7  appearances=16  mentions=19  master_var=1.58  first_signal_at=2026-03-16  latest_checked_at=2026-03-23T09:44:12+00:00  latest_price=KRW 186,300.00
+8. 000660.KS  SK hynix Inc.  aggregate=50.0 (REJECT)  avg_signal=51.4  avg_final=73.3  appearances=10  mentions=11  master_var=2.61  first_signal_at=2026-03-17  latest_checked_at=2026-03-23T09:43:59+00:00  latest_price=KRW 933,000.00
+9. MU  Micron Technology, Inc.  aggregate=47.0 (REJECT)  avg_signal=50.2  avg_final=75.4  appearances=2  mentions=5  master_var=2.92  first_signal_at=2026-03-19  latest_checked_at=2026-03-23T09:42:40+00:00  latest_price=USD 422.88
+10. 009150.KS  Samsung Electro-Mechanics Co., Ltd.  aggregate=42.1 (REJECT)  avg_signal=47.4  avg_final=62.4  appearances=1  mentions=1  master_var=2.50  first_signal_at=2026-03-18  latest_checked_at=2026-03-23T09:43:23+00:00  latest_price=KRW 427,500.00
+
+[랭킹 검증]
+종료일: 2026-03-23
+top_1 수익률: -8.07%
+top_3 수익률: -4.37%
+top_10 수익률: -2.89%
+
+[품질 점수]
+- overall: 25.1
+- transcript_coverage: 0.0
+- actionable_density: 55.5
+- ranking_predictive_power: 32.5
+- horizon_adequacy: 12.2
+
+영상: 트럼프 레임덕 시나리오가 가져온 에너지 대전환! 구조적 주도주 바뀐다 | 한병화 유진투자증권 이사 [여의도 인사이트]
+URL: https://www.youtube.com/watch?v=rkLWgsW7_eI
+Published At: 20260323
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: [3월 23일 마감시황] 전쟁 장기화는 없다! 트럼프 발목잡은 금리...튼튼한 펀더멘털과 저렴한 밸류에이션에 주목 | 홍선애, 김장열, 이권희 [클로징벨 라이브]
+URL: https://www.youtube.com/watch?v=6rymriIEv_Y
+Published At: 20260323
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:41:29+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:41:30+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:41:30+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:41:30+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 웹3에서 NFT·메타버스는 사라졌다… 스테이블코인은? l 서동주, 김동환, 김재윤 슈퍼블록 대표 [크립토플러스]
+URL: https://www.youtube.com/watch?v=tIYk1swzIQI
+Published At: 20260323
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 트럼프 48시간 최후통첩 "호르무즈 개방해라 " 흔들리는 비트코인. 차기 한은 총재 임명,  스테이블코인 과거 발언 그대로 갈까?, l 서동주, 김동환, 박상혁 [크립토플러스]
+URL: https://www.youtube.com/watch?v=SM8Os2ujEn8
+Published At: 20260323
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 미국증시는 바닥 시그널 나왔다? 결국 하락 시 투자할 투자처는 어디?_26.03.23. | 이혁진, 여도은, 허재무 [아침N투자]
+URL: https://www.youtube.com/watch?v=UFW-jCSwxLc
+Published At: 20260323
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 반도체를 파는 시점은, 이것이 결정합니다 | 하나증권 리서치센터 글로벌투자분석실 이재만 실장 [글로벌 인터뷰]
+URL: https://www.youtube.com/watch?v=kw8wJOc1btY
+Published At: 20260323
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 000660.KS | SK hynix Inc. | signal_strength=50.0 | 최종 BUY (73.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:41:39+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (71.7/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 000660.KS는 52주 수익률 376.1%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=48.7 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:41:39+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=52.9 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:41:39+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=55.6 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:41:40+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 자고 일어나면 일 터지는 장, 어떻게 해야 할까? | 김정환 하나증권 Club1WM센터 과장 [더블 크루]
+URL: https://www.youtube.com/watch?v=eDugVuuonCo
+Published At: 20260323
+Signal: NOISE (4.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 모든 게 파괴되고 있다, 다음을 보면? | 장우진 작가 [더블 체크]
+URL: https://www.youtube.com/watch?v=JpLYSSLfpcw
+Published At: 20260323
+Signal: NOISE (4.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: ‘48시간 통첩’에 중동 전쟁 악화 우려…글로벌 증시 이번주 어디로 갈까 | 박병창 교보증권 이사 [마켓 인사이드]
+URL: https://www.youtube.com/watch?v=hXoLNTU9BQE
+Published At: 20260323
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:41:44+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:41:44+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:41:44+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:41:45+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 전쟁 추경 25조…유류세 인하와 바우처 카드로 유가 충격 완화 | 손정의 "750조원 투자, 미국에 데이터센터 건립" | 권순우 삼프로TV 취재팀장 [뉴스3]
+URL: https://www.youtube.com/watch?v=m48lkmvpPnI
+Published At: 20260322
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:41:46+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:41:47+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:41:47+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:41:47+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 중동 핵시설 '난타전'…트럼프 이란 회담 준비? 48시간 위협 속 전쟁의 앞날은? | 박현도 서강대 유로메나연구소 교수 [글로벌 인터뷰]
+URL: https://www.youtube.com/watch?v=5kIioBTF1PQ
+Published At: 20260322
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:41:49+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:41:49+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:41:49+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:41:50+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: [26.03.23.시황] 미국, 이란에 해군 수천명 파견해 지상전 준비?...주말 사이에 나온 메시지는 TACO? [월가 뉴스레터]
+URL: https://www.youtube.com/watch?v=_AoCW4hCv28
+Published At: 20260322
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:41:51+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:41:52+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:41:52+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:41:52+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 왜 그들은 서울시장이 되려하는가? | 박주민 더불어민주당 의원 [더 피플]
+URL: https://www.youtube.com/watch?v=z1QB2PNkqGM
+Published At: 20260322
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 왜 그들은 서울시장이 되려하는가? | 김영배 더불어민주당 의원 [더 피플]
+URL: https://www.youtube.com/watch?v=w5F_3X_zlDo
+Published At: 20260322
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 왜 그들은 서울시장이 되려하는가? | 전현희 더불어민주당 의원 [더 피플]
+URL: https://www.youtube.com/watch?v=XzVbjdkF5xw
+Published At: 20260322
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 이란전쟁은 오히려 물가를 떨어뜨린다고? | 문홍철 DB증권 자산전략팀장 [신과대화]
+URL: https://www.youtube.com/watch?v=P9LSUz_08g0
+Published At: 20260322
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:41:59+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:41:59+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:41:59+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:41:59+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 이 난리도 버티는 코스피, 다음은 엄청날 것 | 차영주 와이즈경제연구소 소장 [긴급인터뷰]
+URL: https://www.youtube.com/watch?v=Gh9reLirtac
+Published At: 20260322
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 전쟁, 유가, 금리, 그리고 삼성전자와 하이닉스의 매트릭스는? | 장우진 작가 [긴급인터뷰]
+URL: https://www.youtube.com/watch?v=e7frFm0oR28
+Published At: 20260321
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 000660.KS | SK hynix Inc. | signal_strength=48.6 | 최종 BUY (74.2)
+  evidence_source: metadata_fallback
+  evidence: 하이닉스
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:42:02+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (73.9/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 '하이닉스' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 '하이닉스'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (69.8/100.0) | 000660.KS는 52주 수익률 376.1%와 '하이닉스'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=56.1 | 최종 BUY (71.2)
+  evidence_source: metadata_fallback
+  evidence: 삼성 | 삼성전자
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:42:02+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (73.3/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (72.6/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=52.9 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 삼성전자
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:42:02+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=55.6 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 삼성전자
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:42:02+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:42:03+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:42:03+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 주식시장에 대한 애정, 이재명 대통령 다음은 접니다 | 김현정 더불어민주당 의원 [더 피플]
+URL: https://www.youtube.com/watch?v=VAFcAlv_X10
+Published At: 20260321
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 공모주 청약 안 할 이유 있나요? | 윤도선 엠엘투자자문 대표 [주말인터뷰]
+URL: https://www.youtube.com/watch?v=6-oVFz_CezM
+Published At: 20260321
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 이란 가스전 공격… ‘에너지 전쟁’ 시작됐다? | 성일광 서강대학교 유로메나연구소 교수 [긴급인터뷰]
+URL: https://www.youtube.com/watch?v=3AdiPH5v3_4
+Published At: 20260321
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:42:08+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:42:08+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:42:08+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:42:09+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 수렁으로 빠진 미국, 이렇게 될 것입니다  | 알파고 시나씨 중동 전문기자 [긴급인터뷰]
+URL: https://www.youtube.com/watch?v=s32ZFKv5t1Y
+Published At: 20260320
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 돈은 거짓말하지 않는다! 역대급 'CAPEX 증설'로 성장 기대감 커진 3대장 ㅣ 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]
+URL: https://www.youtube.com/watch?v=tBA6ziTO6p0
+Published At: 20260320
+Signal: NOISE (16.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 변동성 속 투자 기회를 제공하는 업종?ㅣ 이재규 SK증권 경인지점 PB차장 [집중 오늘의 주식]
+URL: https://www.youtube.com/watch?v=dP_dYrc1LMs
+Published At: 20260320
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 고유가·강달러에도 수혜주가 있다...4월 실적 시즌 대비 핵심 투자 전략 | 차영주 와이즈경제연구소장 [여의도 인사이트]
+URL: https://www.youtube.com/watch?v=g-F4UdEqS1g
+Published At: 20260320
+Signal: NOISE (20.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: [3월 20일 마감시황] 이익 탄탄 실적 기대감 커진 에너지! 4월 장세 주도할 실적 중심 투자 전략 | 홍선애, 김장열, 이재규 [클로징벨 라이브]
+URL: https://www.youtube.com/watch?v=BdY60hwmwo4
+Published At: 20260320
+Signal: NOISE (20.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 미국, 코인 상품 인정 의미…클래리티 법안 통과되면 벌어질 일들 l 서동주, 김동환 최윤영 한화투자증권 센터장[크립토PLUS]
+URL: https://www.youtube.com/watch?v=TWSRwBkhLG8
+Published At: 20260320
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 승자는 스테이블코인?… 전쟁통에 증명된 '디지털 달러' 써클, 나홀로 고공행진의 진짜 이유ㅣ서동주,김동환,박상혁 디지털애셋 편집장[크립토PLUS]
+URL: https://www.youtube.com/watch?v=se6xs2yaIXA
+Published At: 20260320
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:42:21+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:42:21+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:42:21+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:42:21+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 강남 집값은 떨어져도 15억 미만 아파트 가격은 계속 오르는 이유는?_26.03.20. | 정보현, 김지연, 여도은, 허재무 [아침N투자]
+URL: https://www.youtube.com/watch?v=WoBF3TP_bLc
+Published At: 20260320
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 배터리 산업, 다시 주목해야 하는 이유 | 김현수 연구위원 하나증권 리서치센터 [더블업]
+URL: https://www.youtube.com/watch?v=e9c86-RToJo
+Published At: 20260320
+Signal: NOISE (4.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 방산주가 힘 못 쓰는 건 어떤 신호인가? | 장우진 작가 [더블 체크]
+URL: https://www.youtube.com/watch?v=vq47PScW78o
+Published At: 20260320
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 방산
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:42:26+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 방산
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:42:26+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 방산
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:42:26+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 방산
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:42:26+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 반도체 가격의 미래는 이제 여기가 결정한다 | 권택중 더 센터필드W 과장 [더블 크루]
+URL: https://www.youtube.com/watch?v=-vNURrInXMc
+Published At: 20260320
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 000660.KS | SK hynix Inc. | signal_strength=50.0 | 최종 BUY (73.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:42:28+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (71.7/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 000660.KS는 52주 수익률 376.1%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=48.7 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:42:28+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=52.9 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:42:28+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=55.6 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:42:29+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 유가·기술주 하락·사모대출 공포 예의주시…시장 생존 전략은? | 박병창 교보증권 이사 [마켓 인사이드]
+URL: https://www.youtube.com/watch?v=apXW8xeG-Xc
+Published At: 20260320
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: ‘에너지 급소’ 서로 폭격, 카타르 "한국 등과 장기계약 최장 5년 불가항력 선언 가능" | 삼성전자 ‘밸류업’ 110조원 투자…역대 최대 | 권순우 삼프로TV 취재팀장 [뉴스3]
+URL: https://www.youtube.com/watch?v=eoLngcfsz7A
+Published At: 20260319
+Signal: NOISE (34.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 트럼프, 지상군 파병 선 그었지만...‘하르그섬 상륙 작전’ 시도할까? | 박현도 서강대 유로메나연구소 교수 [글로벌 인터뷰]
+URL: https://www.youtube.com/watch?v=kBmBgxDLPcM
+Published At: 20260319
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:42:34+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:42:34+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:42:34+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:42:35+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: [26.03.20.시황] 마이크론 호실적에 반도체 랠리 지속…네타냐후 기자회견에 낙폭 축소한 뉴욕증시 약세[월가 뉴스레터]
+URL: https://www.youtube.com/watch?v=R_v-HuRD2Rs
+Published At: 20260319
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- MU | Micron Technology, Inc. | signal_strength=51.0 | 최종 BUY (75.8)
+  evidence_source: metadata_fallback
+  evidence: 마이크론
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: USD 422.88
+  - checked_at: 2026-03-23T09:42:36+00:00
+  - 시가총액: USD 476.90B
+  - Trailing PE: 19.96 / Forward PE: 4.29
+  거장 한줄평:
+  - druckenmiller: WATCH (78.2/100.0) | MU는 매출성장률 196.3%와 영상 내 촉매 '마이크론' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (76.0/100.0) | MU는 영업이익률 67.6%와 ROE 39.8%로 사업 질은 좋지만, 부채비율 14.9와 밸류에이션을 감안하면 '마이크론'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (71.2/100.0) | MU는 52주 수익률 336.2%와 '마이크론'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 000660.KS | SK hynix Inc. | signal_strength=52.5 | 최종 BUY (73.2)
+  evidence_source: metadata_fallback
+  evidence: ai | tier:HIGH | tier:LOW
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:42:36+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (71.7/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 'ai' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 'ai'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 000660.KS는 52주 수익률 376.1%와 'ai'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=51.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: ai | tier:HIGH | tier:LOW
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:42:37+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 'ai' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 'ai'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 'ai'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=52.9 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:42:37+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=55.6 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:42:37+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 완성차 비즈니스 모델이 달라진다ㅣ차영주 와이즈경제연구소 소장 [집중 오늘의 주식]
+URL: https://www.youtube.com/watch?v=8tuSvvsf5fw
+Published At: 20260319
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 마이크론 역대급 저평가...메모리 밸류 바닥 국면 진입?ㅣ김장열 유니스토리자산운용 본부장 [집중 오늘의 주식]
+URL: https://www.youtube.com/watch?v=fF7gMAFvu9g
+Published At: 20260319
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- MU | Micron Technology, Inc. | signal_strength=49.4 | 최종 BUY (75.0)
+  evidence_source: metadata_fallback
+  evidence: 마이크론
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: USD 422.88
+  - checked_at: 2026-03-23T09:42:40+00:00
+  - 시가총액: USD 476.90B
+  - Trailing PE: 19.96 / Forward PE: 4.29
+  거장 한줄평:
+  - druckenmiller: WATCH (76.0/100.0) | MU는 매출성장률 196.3%와 영상 내 촉매 '마이크론' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (76.0/100.0) | MU는 영업이익률 67.6%와 ROE 39.8%로 사업 질은 좋지만, 부채비율 14.9와 밸류에이션을 감안하면 '마이크론'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (69.8/100.0) | MU는 52주 수익률 336.2%와 '마이크론'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 000660.KS | SK hynix Inc. | signal_strength=52.5 | 최종 BUY (73.2)
+  evidence_source: metadata_fallback
+  evidence: ai | tier:HIGH | tier:LOW
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:42:40+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (71.7/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 'ai' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 'ai'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 000660.KS는 52주 수익률 376.1%와 'ai'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=51.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: ai | tier:HIGH | tier:LOW
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:42:41+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 'ai' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 'ai'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 'ai'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=52.9 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 메모리
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:42:41+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=55.6 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 메모리
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:42:41+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 급락장은 오히려 기회! 모두가 틀리는 '진짜 반등 신호' | 박병창 교보증권 자산관리전략부 이사 [여의도 인사이트]
+URL: https://www.youtube.com/watch?v=ppmEOePov7U
+Published At: 20260319
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: [3월 19일 마감시황] 지금은 주식 담을 때! 발작하는 시장에 쫄지 말고 '이 종목' 모으세요ㅣ홍선애, 박근형, 이재규 [클로징벨 라이브]
+URL: https://www.youtube.com/watch?v=lDWWaDILRuU
+Published At: 20260319
+Signal: NOISE (16.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: “좋은 제도라더니…” 고교학점제 왜 실패 위기인가 | 유은혜 전 교육부 장관 [더피플]
+URL: https://www.youtube.com/watch?v=OQzPK3hpHsQ
+Published At: 20260319
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 연준 금리 동결 후 비트코인 가격은? 진짜 상승세 탈 진짜 자금 유동성 시그널 l 서동주, 김동환, 진종현 쟁글 리서치 센터장 [크립토PLUS]
+URL: https://www.youtube.com/watch?v=ZF-jWe1DNRo
+Published At: 20260319
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:42:49+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:42:49+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:42:49+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:42:49+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 파월 Fed 의장의 금리 동결 발표... 비트코인 향방은? 중동 리스크 장기화에 따른 코인 내러티브의 변화 | 서동주, 김동환, 김제이 [크립토PLUS]
+URL: https://www.youtube.com/watch?v=WKy8jyoMiCA
+Published At: 20260319
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:42:51+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:42:51+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:42:52+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:42:52+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 현대차그룹주, 자동차 탈을 쓴 '로봇주'...전망만큼 주가 덜 올랐다?!_26.03.19. | 김영롱, 여도은, 허재무 [아침N투자]
+URL: https://www.youtube.com/watch?v=bQNs7qbjvy0
+Published At: 20260319
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 코스닥 액티브 ETF, 로봇투자...현명한 선택지는?_26.03.19. | 박현지, 여도은, 허재무 [아침N투자]
+URL: https://www.youtube.com/watch?v=VX1z5UNoobo
+Published At: 20260319
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 삼전, 하이닉스 목표주가가 여기까지 간다고? 이유는 ? | 김록호 하나증권 리서치센터 팀장 [더블 업]
+URL: https://www.youtube.com/watch?v=IZibOgbwdy0
+Published At: 20260319
+Signal: NOISE (4.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 전쟁 끝나면 돈은 이쪽으로 몰릴 것 | 이성원 하나증권 네이버그린팩토리점 PB [더블 크루]
+URL: https://www.youtube.com/watch?v=zDPbvCStP8M
+Published At: 20260319
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:42:58+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:42:59+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:42:59+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:42:59+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 결국 동결...주식시장은 이렇게 될 것 | 장우진 작가 [더블 체크]
+URL: https://www.youtube.com/watch?v=sBceSZQDTFU
+Published At: 20260319
+Signal: NOISE (4.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 커지는 중동발 리스크 시장은 ‘유가’를 본다…육천피의 기회 다시올까? | 박병창 교보증권 이사 [마켓 인사이드]
+URL: https://www.youtube.com/watch?v=pLAZYPqlRSw
+Published At: 20260319
+Signal: NOISE (22.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: UAE, 한국에 원유 최우선 공급…러시아 원유도 검토 | 중복 상장 원칙적 금지…주식 결제일도 하루 당긴다 | 권순우 삼프로TV 취재팀장 [뉴스3]
+URL: https://www.youtube.com/watch?v=cCPEWBRvVd4
+Published At: 20260318
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 이스라엘의 이란 가스전 공격…"사실상 자폭행위" | 박현도 서강대 유로메나연구소 교수 [글로벌 인터뷰]
+URL: https://www.youtube.com/watch?v=BFrOGv4-Xmc
+Published At: 20260318
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:06+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:06+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:06+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:07+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: [26.03.19.시황] 연준 금리 동결, 향후 전망 불투명…마이크론, 역대급 호실적에도 시간외 약세[월가 뉴스레터]
+URL: https://www.youtube.com/watch?v=MuTXW5rbIYo
+Published At: 20260318
+Signal: NOISE (24.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 재고자산 변화에 따른 기업의 이익 변화 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]
+URL: https://www.youtube.com/watch?v=6SBIJ5Tkp3E
+Published At: 20260318
+Signal: NOISE (16.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 돌발 악재 발생? 남들 다 팔 때 줍는 역발상 투자법 | 이재규 SK증권 경인지점 PB 차장 [집중 오늘의 주식]
+URL: https://www.youtube.com/watch?v=yJHTyCBLosg
+Published At: 20260318
+Signal: NOISE (12.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 무한 에너지 전쟁 시작 향후 10년동안 돈이 쏟아질 메가 트렌드 | 장우진 작가 [여의도 인사이트]
+URL: https://www.youtube.com/watch?v=zHcTYbgiMUo
+Published At: 20260318
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:13+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:14+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:14+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:14+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 왜 미국은 굳이 중동으로 들어갔을까? | 삼프로TV 레전드 중동학 개론 인남식 교수
+URL: https://www.youtube.com/watch?v=UW_6l1hYcCo
+Published At: 20260318
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:15+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:16+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:16+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:16+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: “비트코인·이더리움 증권 아냐” 이제 코인은 ‘상품’이다? 미국 증권거래위원회가 선 그었다. 코인시장 바뀔까? ㅣ서동주, 김동환, 조동현 언디파인랩스 대표,조선생[크립토PLUS]
+URL: https://www.youtube.com/watch?v=ZTgqBhuAWDY
+Published At: 20260318
+Signal: NOISE (8.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 스테이블코인 이자가 변수다…코인 가격 변수인 미국 ‘클래리티 법안’ 통과 현황, 이란전쟁 라리자니 사망, 전쟁 지속 가능성 ㅣ서동주,김동환,박상혁 디지털애셋 편집장[크립토PLUS]
+URL: https://www.youtube.com/watch?v=F88sT7FdwJs
+Published At: 20260318
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:21+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:21+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:21+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:21+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 확산되는 반도체 수혜, 소부장 탑픽은?_26.03.18. | 박지훈, 여도은, 허재무 [아침N투자]
+URL: https://www.youtube.com/watch?v=n0NVtz2BbIQ
+Published At: 20260318
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=46.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: 삼성
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:43:23+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 009150.KS | Samsung Electro-Mechanics Co., Ltd. | signal_strength=47.4 | 최종 WATCH (62.4)
+  evidence_source: metadata_fallback
+  evidence: 삼성전기
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 427,500.00
+  - checked_at: 2026-03-23T09:43:23+00:00
+  - 시가총액: KRW 32296.45B
+  - Trailing PE: - / Forward PE: 21.60
+  거장 한줄평:
+  - druckenmiller: WATCH (65.8/100.0) | 009150.KS는 매출성장률 16.4%와 영상 내 촉매 '삼성전기' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 21.6배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (62.3/100.0) | 009150.KS는 영업이익률 8.3%와 ROE 7.8%로 사업 질은 좋지만, 부채비율 23.2와 밸류에이션을 감안하면 '삼성전기'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 009150.KS는 52주 수익률 237.6%와 '삼성전기'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 000660.KS | SK hynix Inc. | signal_strength=52.5 | 최종 BUY (73.2)
+  evidence_source: metadata_fallback
+  evidence: ai | tier:HIGH | tier:LOW
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:43:24+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (71.7/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 'ai' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 'ai'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 000660.KS는 52주 수익률 376.1%와 'ai'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=52.9 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:43:24+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=55.6 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:43:24+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 전쟁통에 오른 기자재, 주가에는 어떤 영향이? | 김승준 연구위원 하나증권 리서치센터 [더블업]
+URL: https://www.youtube.com/watch?v=R-syEQEYexc
+Published At: 20260318
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:26+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:26+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:26+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:26+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 아직까지도 '반도체 의심' 하는 투자자가 있다면 | 배재원 하나증권 인천지점 PB [더블 크루]
+URL: https://www.youtube.com/watch?v=E6mJSnnbxI8
+Published At: 20260318
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 000660.KS | SK hynix Inc. | signal_strength=50.0 | 최종 BUY (73.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:43:28+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (71.7/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 000660.KS는 52주 수익률 376.1%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=48.7 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:43:29+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=52.9 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:43:29+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=55.6 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:43:29+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 이란 전쟁 전용, 매매 패턴이 생긴 걸까? | 장우진 작가 [더블 체크]
+URL: https://www.youtube.com/watch?v=V_-JM3Uc_z4
+Published At: 20260318
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:31+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:31+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:31+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:31+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 중동 전쟁 지속·리사수 방한…유가 상승 고비에도 반도체가 살릴까? | 박병창 교보증권 이사 [마켓 인사이드]
+URL: https://www.youtube.com/watch?v=mCOCn5lwZFw
+Published At: 20260318
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 000660.KS | SK hynix Inc. | signal_strength=52.5 | 최종 BUY (73.2)
+  evidence_source: metadata_fallback
+  evidence: ai | tier:HIGH | tier:LOW
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:43:33+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (71.7/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 'ai' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 'ai'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 000660.KS는 52주 수익률 376.1%와 'ai'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=51.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: ai | tier:HIGH | tier:LOW
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:43:33+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 'ai' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 'ai'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 'ai'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=52.9 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:43:34+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=55.6 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:43:34+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:34+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=52.6 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | tier:MEDIUM | 유가 상승
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:34+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: GTC서 SK 최태원 출동·삼성 HBM4E 첫 공개 | 트럼프, 한국 등에 호르무즈 파병 연일 압박…고심 깊어진 한국 | 권순우 삼프로TV 취재팀장 [뉴스3]
+URL: https://www.youtube.com/watch?v=0nJpsGR-7BM
+Published At: 20260317
+Signal: NOISE (34.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 트럼프 “파병 거부? 실수한 것” 중동 전쟁 장기화 조짐…언제까지 가나? | 성일광 서강대 유로메나연구소 교수 [글로벌 인터뷰]
+URL: https://www.youtube.com/watch?v=HX6VqxN5nCE
+Published At: 20260317
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:38+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:38+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:39+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:39+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: [26.03.18.시황] 마이크론, 실적 발표 앞두고 신고가 경신…국제유가는 여전히 불확실성 [월가 뉴스레터]
+URL: https://www.youtube.com/watch?v=Pl5S882-TvY
+Published At: 20260317
+Signal: NOISE (20.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 흔들리지 않는 본업 경쟁력 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]
+URL: https://www.youtube.com/watch?v=Y7skC04V0EE
+Published At: 20260317
+Signal: NOISE (20.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 메모리 슈퍼사이클에 숨겨진 '부메랑 효과' 주의보 | 김장열 유니스토리자산운용 본부장 [집중 오늘의 주식]
+URL: https://www.youtube.com/watch?v=pWa2mjtYZmk
+Published At: 20260317
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=46.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: 삼성
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:43:44+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 000660.KS | SK hynix Inc. | signal_strength=52.5 | 최종 BUY (73.2)
+  evidence_source: metadata_fallback
+  evidence: ai | tier:HIGH | tier:LOW
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:43:44+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (71.7/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 'ai' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 'ai'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 000660.KS는 52주 수익률 376.1%와 'ai'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=55.4 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 메모리 | 슈퍼사이클
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:43:44+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=58.1 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 메모리 | 슈퍼사이클
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:43:44+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 중동 갈등이 "전략적 허세"인 3가지 이유! 비이성적 공포에 빠진 시장이 놓치고 있는 '이것' | 김한진 삼프로TV 이코노미스트 [여의도 인사이트]
+URL: https://www.youtube.com/watch?v=-sCqCBLoYHQ
+Published At: 20260317
+Signal: NOISE (24.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: [3월 17일 마감시황] "유가가 또...." 전쟁 중엔 몸 사리자? 모멘텀 있는 개별 업종 투자 전략 | 홍선애, 김장열, 이재규 [클로징벨 라이브]
+URL: https://www.youtube.com/watch?v=t9RP_q6se9M
+Published At: 20260317
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=46.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: 삼성
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:43:48+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:48+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:48+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:48+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:48+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 전쟁으로 흔들린 계좌, 멘탈을 지켜 줄 '삼대장' 몰아보기  | 윤지호, 이선엽, 박병창 [신과대화]
+URL: https://www.youtube.com/watch?v=HQ5D52KpntE
+Published At: 20260317
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=46.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: 삼성
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:43:50+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:50+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:51+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:51+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:52+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 보이스피싱,사기 이젠 코인 거래소가 책임진다… 코인 보이스피싱의 충격적 실태와 예방법. 피해금 환급 의무화 핵심 정리ㅣ서동주,김동환,이해붕 투자자보호센터 센터장[ 크립토PLUS]
+URL: https://www.youtube.com/watch?v=dGNP0lk2W6I
+Published At: 20260317
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=46.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: 삼성
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:43:54+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:54+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:54+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:55+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:55+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 이란 전쟁보다 더 큰 게 온다. 트럼프의 글로벌 혼란, 엡스타인 리스트가 비트코인 상승세에 영향줄까? l 서동주, 김동환, 김제이 블록미디어 편집장[크립토PLUS]
+URL: https://www.youtube.com/watch?v=2m7DdQOALuo
+Published At: 20260317
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=46.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: 삼성
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:43:57+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:43:57+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:43:57+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:43:57+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:43:57+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 전쟁과 AI가 만든 2026년 반도체 강력 모멘텀은?_26.03.17. | 정우창, 여도은, 허재무 [아침N투자]
+URL: https://www.youtube.com/watch?v=sdKCqBLWN0Q
+Published At: 20260317
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=46.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: 삼성
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:43:59+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 000660.KS | SK hynix Inc. | signal_strength=52.5 | 최종 BUY (73.2)
+  evidence_source: metadata_fallback
+  evidence: ai | tier:HIGH | tier:LOW
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 933,000.00
+  - checked_at: 2026-03-23T09:43:59+00:00
+  - 시가총액: KRW 644194.76B
+  - Trailing PE: - / Forward PE: 4.28
+  거장 한줄평:
+  - druckenmiller: WATCH (71.7/100.0) | 000660.KS는 매출성장률 66.1%와 영상 내 촉매 'ai' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 4.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (74.9/100.0) | 000660.KS는 영업이익률 58.4%와 ROE 44.1%로 사업 질은 좋지만, 부채비율 20.5와 밸류에이션을 감안하면 'ai'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 000660.KS는 52주 수익률 376.1%와 'ai'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042700.KS | HANMI Semiconductor Co., Ltd. | signal_strength=52.9 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 297,000.00
+  - checked_at: 2026-03-23T09:43:59+00:00
+  - 시가총액: KRW 28171.34B
+  - Trailing PE: - / Forward PE: 57.01
+  거장 한줄평:
+  - druckenmiller: REJECT (53.0/100.0) | 042700.KS는 매출성장률 -44.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 57.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (57.5/100.0) | 042700.KS는 영업이익률 33.3%와 ROE 34.8%로 사업 질은 좋지만, 부채비율 0.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (65.8/100.0) | 042700.KS는 52주 수익률 255.7%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 240810.KQ | Wonik IPS Co., Ltd. | signal_strength=55.6 | 최종 WATCH (57.4)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 반도체
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 116,200.00
+  - checked_at: 2026-03-23T09:44:00+00:00
+  - 시가총액: KRW 5653.79B
+  - Trailing PE: - / Forward PE: 30.45
+  거장 한줄평:
+  - druckenmiller: WATCH (63.0/100.0) | 240810.KQ는 매출성장률 -6.7%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 30.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (50.0/100.0) | 240810.KQ는 영업이익률 6.3%와 ROE 9.0%로 사업 질은 좋지만, 부채비율 0.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 240810.KQ는 52주 수익률 373.5%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:44:00+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:44:00+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 이란전쟁, 대한항공에게는 오히려 기회인 이유 | 안도현 선임연구원 하나증권 리서치센터 [더블업]
+URL: https://www.youtube.com/watch?v=mVBBN64bqYk
+Published At: 20260317
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:44:02+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:44:02+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:44:02+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:44:03+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: 호재가 이렇게 많은데 왜 안 오르냐면요 | 백인재 하나증권 영업부금융센터 부센터장 [더블 크루]
+URL: https://www.youtube.com/watch?v=0cCZlGGT9tU
+Published At: 20260317
+Signal: NOISE (4.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 100만 닉스 회복, 그리고 최태원 회장의 발언? | 장우진 작가 [더블 체크]
+URL: https://www.youtube.com/watch?v=AcPSHh2Gqaw
+Published At: 20260317
+Signal: NOISE (4.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: 코스닥 액티브 ETF 전쟁 지속…하락세 견디고 삼천스닥 도전장? | 박병창 교보증권 이사 [마켓 인사이드]
+URL: https://www.youtube.com/watch?v=S0o4XQH7VNM
+Published At: 20260317
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=46.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: 삼성
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:44:08+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:44:08+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:44:08+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:44:08+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:44:08+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+
+영상: GTC서 삼성 HBM4E 첫 공개·SK는 최태원 출동 | 트럼프, 한국 등에 호르무즈 파병 연일 압박…고심 깊어진 한국 | 권순우 삼프로TV 취재팀장 [뉴스3]
+URL: https://www.youtube.com/watch?v=Or4Nqbf3V_U
+Published At: 20260316
+Signal: NOISE (34.0) | analyze=False
+Reason: 종목 분석에 활용할 실질 신호가 부족함
+종목 결과: 없음
+
+영상: [중동 특집] '틀린' 주한미군숫자 거론하며 호르무즈 파병 압박…트럼프의 속내는? | 문희정 국제정치평론가 [글로벌 인터뷰]
+URL: https://www.youtube.com/watch?v=BKMyW_wpICo
+Published At: 20260316
+Signal: ACTIONABLE (70.0) | analyze=True
+Reason: 직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음
+종목 결과:
+- 005930.KS | Samsung Electronics Co., Ltd. | signal_strength=46.2 | 최종 BUY (68.5)
+  evidence_source: metadata_fallback
+  evidence: 삼성
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 186,300.00
+  - checked_at: 2026-03-23T09:44:12+00:00
+  - 시가총액: KRW 1245617.29B
+  - Trailing PE: - / Forward PE: 6.49
+  거장 한줄평:
+  - druckenmiller: WATCH (66.7/100.0) | 005930.KS는 매출성장률 23.8%와 영상 내 촉매 '삼성' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 6.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.9/100.0) | 005930.KS는 영업이익률 21.3%와 ROE 10.8%로 사업 질은 좋지만, 부채비율 5.8와 밸류에이션을 감안하면 '삼성'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 005930.KS는 52주 수익률 229.6%와 '삼성'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 012450.KS | Hanwha Aerospace Co., Ltd. | signal_strength=55.7 | 최종 WATCH (65.2)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표는 준수하지만 가격 또는 성장 지속성 확인이 필요한 상태
+  - 현재가: KRW 1,278,000.00
+  - checked_at: 2026-03-23T09:44:12+00:00
+  - 시가총액: KRW 65751.55B
+  - Trailing PE: - / Forward PE: 22.01
+  거장 한줄평:
+  - druckenmiller: WATCH (72.7/100.0) | 012450.KS는 매출성장률 74.5%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 22.0배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (54.3/100.0) | 012450.KS는 영업이익률 9.5%와 ROE 15.6%로 사업 질은 좋지만, 부채비율 76.4와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.0/100.0) | 012450.KS는 52주 수익률 95.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 042660.KS | Hanwha Ocean Co., Ltd. | signal_strength=50.1 | 최종 WATCH (59.9)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 118,900.00
+  - checked_at: 2026-03-23T09:44:12+00:00
+  - 시가총액: KRW 36430.63B
+  - Trailing PE: - / Forward PE: 20.55
+  거장 한줄평:
+  - druckenmiller: WATCH (64.1/100.0) | 042660.KS는 매출성장률 2.1%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 20.5배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (59.6/100.0) | 042660.KS는 영업이익률 7.4%와 ROE 22.6%로 사업 질은 좋지만, 부채비율 93.6와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (66.1/100.0) | 042660.KS는 52주 수익률 76.6%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 047810.KS | Korea Aerospace Industries, Ltd. | signal_strength=58.6 | 최종 WATCH (59.6)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 지표만으로는 적극적 진입 근거가 약한 상태
+  - 현재가: KRW 169,900.00
+  - checked_at: 2026-03-23T09:44:13+00:00
+  - 시가총액: KRW 16561.02B
+  - Trailing PE: - / Forward PE: 32.29
+  거장 한줄평:
+  - druckenmiller: WATCH (67.9/100.0) | 047810.KS는 매출성장률 34.0%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 32.3배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: REJECT (46.0/100.0) | 047810.KS는 영업이익률 5.2%와 ROE 10.3%로 사업 질은 좋지만, 부채비율 115.1와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (68.4/100.0) | 047810.KS는 52주 수익률 121.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.
+- 329180.KS | HD Hyundai Heavy Industries Co., Ltd. | signal_strength=48.4 | 최종 BUY (68.0)
+  evidence_source: metadata_fallback
+  evidence: tier:HIGH | 전쟁
+  기본재무상태: 기본 재무/수익성 지표가 전반적으로 양호한 상태
+  - 현재가: KRW 502,000.00
+  - checked_at: 2026-03-23T09:44:13+00:00
+  - 시가총액: KRW 52690.53B
+  - Trailing PE: - / Forward PE: 16.11
+  거장 한줄평:
+  - druckenmiller: WATCH (66.5/100.0) | 329180.KS는 매출성장률 22.4%와 영상 내 촉매 'tier:HIGH' 덕분에 18~24개월 선행 드라이버는 강하지만, forward PER 16.1배 구간이라 추격 강매수보다는 유동성 점검이 먼저다.
+  - buffett: WATCH (64.4/100.0) | 329180.KS는 영업이익률 12.6%와 ROE 21.7%로 사업 질은 좋지만, 부채비율 11.9와 밸류에이션을 감안하면 'tier:HIGH'만으로 안전마진이 충분하다고 보긴 어렵다.
+  - soros: WATCH (67.1/100.0) | 329180.KS는 52주 수익률 87.3%와 'tier:HIGH'가 맞물려 서사가 아직 자기강화 구간에 있지만, 신호 점수 70.0가 높을수록 반사성 꺾임도 빨라질 수 있다.

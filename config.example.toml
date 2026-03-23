@@ -1,0 +1,43 @@
+[app]
+provider = "auto"
+output_dir = "output"
+registry_path = "channels.json"
+paper_trading_mode = true
+
+[[channels]]
+slug = "itgod"
+display_name = "IT의 신 이형수"
+url = "https://www.youtube.com/channel/UCQW05vzztAlwV54WL3pjGBQ/videos"
+enabled = true
+
+[[channels]]
+slug = "kimjakgatv"
+display_name = "김작가TV"
+url = "https://www.youtube.com/@lucky_tv/videos"
+enabled = true
+
+[[channels]]
+slug = "sampro"
+display_name = "삼프로TV"
+url = "https://www.youtube.com/@3protv/videos"
+enabled = true
+
+[strategy]
+window_days = 30
+max_scan = 80
+top_n = 3
+paper_trade_capital = 10000.0
+
+[notifications]
+telegram_bot_token = ""
+telegram_chat_id = ""
+
+[schedule]
+enabled = false
+daily_time = "09:00"
+timezone = "Asia/Seoul"
+
+[logging]
+json = true
+log_dir = ".omx/logs"
+retention_days = 7
