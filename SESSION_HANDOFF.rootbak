@@ -33,11 +33,15 @@ then the agent should:
 - Combined dashboard report (render_combined_dashboard)
 - Channel-level auto-dashboard generation
 - Transcript cache with TTL-based staleness check
+- Error-resilient pipeline (extractor failures don't crash reports)
+- Enhanced CLI output with video_type, signal, macro/expert counts
+- analyze-all CLI command for batch multi-channel analysis
+- Comprehensive test coverage (177 tests passing)
 
 ## Important files
 - `AGENTS.md` / `OMX_AGENT_NOTES.md` / `SESSION_HANDOFF.rootbak`
 - `src/omx_brainstorm/models.py` — all dataclasses including ExpertInsight
-- `src/omx_brainstorm/pipeline.py` — VideoType-based branching, _run_stock_analysis helper
+- `src/omx_brainstorm/pipeline.py` — VideoType branching, error resilience, _run_stock_analysis
 - `src/omx_brainstorm/heuristic_pipeline.py` — fast heuristic lane with VideoType parity
 - `src/omx_brainstorm/expert_interview.py` — expert name/affiliation/claims extraction
 - `src/omx_brainstorm/reporting.py` — render_combined_dashboard, save_combined_dashboard
@@ -46,44 +50,48 @@ then the agent should:
 - `src/omx_brainstorm/title_taxonomy.py` — VideoType classification
 - `src/omx_brainstorm/signal_gate.py` — video signal assessment
 - `src/omx_brainstorm/transcript_cache.py` — cache with is_stale() TTL check
-- `src/omx_brainstorm/transcript_runtime.py` — resolve with staleness-aware caching
-- `src/omx_brainstorm/fundamentals.py`
-- `src/omx_brainstorm/analysis.py`
-- `src/omx_brainstorm/llm.py`
+- `src/omx_brainstorm/transcript_runtime.py` — staleness-aware transcript resolution
+- `src/omx_brainstorm/cli.py` — CLI with analyze-all, enhanced output
+- `src/omx_brainstorm/app_config.py` — TOML config with channel registry
+- `src/omx_brainstorm/youtube.py` — YouTube resolver, transcript fetcher, channel registry
+- `src/omx_brainstorm/evaluation.py` — ranking validation, Spearman correlation
+- `src/omx_brainstorm/stock_registry.py` — company/sector mappings
 - `tests/`
 
 ## Validation state
-- Tests passing: 148 passed (ignoring test_channel_runner.py which has import issues)
+- Tests passing: 177 passed (ignoring test_channel_runner.py which has import issues)
 
 ## Session 4 commits (2026-03-23)
-### Phase 1: Feature additions
-1. `1dba2cf` — Add VideoType-based pipeline branching and expert interview extraction
-2. `dc6db17` — Add combined stock + macro signal unified dashboard report
-3. `9a1b1ee` — Update session handoff
+### Phase 1: Feature additions (삼프로TV 4단계)
+1. `1dba2cf` — VideoType-based pipeline branching + expert interview extraction
+2. `dc6db17` — Combined stock + macro signal unified dashboard report
+3. `9a1b1ee` — Session handoff update
 
 ### Phase 2: Quality/functionality improvements
-4. `e5455c4` — Refactor pipeline: extract _run_stock_analysis to eliminate duplication
-5. `4c08d5c` — Add channel-level combined dashboard auto-generation
-6. `da02b88` — Integrate VideoType branching into heuristic pipeline
-7. `6d46271` — Add transcript cache staleness check with configurable TTL
+4. `e5455c4` — Refactor pipeline: extract _run_stock_analysis
+5. `4c08d5c` — Channel-level combined dashboard auto-generation
+6. `da02b88` — Heuristic pipeline VideoType integration
+7. `6d46271` — Transcript cache staleness check with TTL
+
+### Phase 3: Testing, error handling, CLI, extensibility
+8. `cb8ea60` — Unit tests for youtube helpers, stock_registry, evaluation
+9. `a1219e2` — CLI output enhancement with video_type and analysis metadata
+10. `1d5d761` — Error resilience in pipeline extractors
+11. `7749de9` — analyze-all CLI command for multi-channel batch analysis
 
 ## Key design decisions
 - Pipeline branching routes by VideoType from signal_assessment
-- STOCK_PICK/SECTOR → stock analysis only
-- MACRO/NEWS_EVENT/OTHER → macro insights + conditional stock analysis
-- MARKET_REVIEW → market review summary + macro insights from review
-- EXPERT_INTERVIEW → expert insights + macro + conditional stock analysis
 - ExpertInsight uses heuristic regex patterns (no LLM call)
 - Combined dashboard deduplicates macro by indicator, stocks by ticker
-- Channel analysis auto-generates dashboard file alongside per-video reports
-- Pipeline refactored: _run_stock_analysis eliminates 5x duplication
-- Heuristic pipeline now has parity with LLM pipeline on VideoType output
-- Cache staleness defaults to 7 days; resolve_transcript_text prefers re-fetch over stale
+- Pipeline extractors wrapped in try/except for resilience
+- analyze-all creates per-channel output subdirectories
+- Cache TTL defaults to 7 days; stale entries trigger re-fetch attempt
 
 ## Next recommended steps
 1. Add LLM-powered expert insight extraction for deeper claim analysis
-2. Build aggregated stock ranking across multiple channel analyses
+2. Build aggregated cross-channel stock ranking
 3. Stabilize transcript acquisition with retry/backoff strategy
 4. Implement backtest / replay engine
-5. Add sector rotation tracking across time series of market reviews
-6. Improve test_channel_runner.py import issues
+5. Add sector rotation tracking across time series
+6. Fix test_channel_runner.py import issues
+7. Add notification integration for analyze-all results
