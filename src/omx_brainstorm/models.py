@@ -59,6 +59,27 @@ class VideoSignalAssessment:
 
 
 @dataclass(slots=True)
+class MacroInsight:
+    indicator: str          # e.g. "interest_rate", "fx", "oil", "fomc", "cpi", "employment"
+    direction: str          # "UP", "DOWN", "NEUTRAL"
+    label: str              # human-readable Korean label
+    confidence: float       # 0.0 ~ 1.0
+    matched_keywords: list[str] = field(default_factory=list)
+    sentiment: str = "NEUTRAL"  # "BULLISH", "BEARISH", "NEUTRAL"
+    beneficiary_sectors: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class MarketReviewSummary:
+    indices: list[dict[str, str]] = field(default_factory=list)       # [{"name": "코스피", "direction": "UP", "detail": "2600 돌파"}]
+    direction: str = "NEUTRAL"                                         # overall market direction
+    risk_events: list[str] = field(default_factory=list)
+    sector_focus: list[str] = field(default_factory=list)
+    key_points: list[str] = field(default_factory=list)
+    macro_insights: list[MacroInsight] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class AnalysisScore:
     framework: str
     score: float
