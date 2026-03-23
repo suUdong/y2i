@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -140,6 +141,7 @@ DEFAULT_PROVIDER_COMMANDS = {
     "claude": ["claude", "--print"],
     "gemini": ["gemini", "-p"],
 }
+ALLOWED_BINARIES = {"codex", "claude", "gemini", "ollama"}
 
 
 def resolve_provider(provider: str) -> LLMProvider:
@@ -159,7 +161,15 @@ def resolve_provider(provider: str) -> LLMProvider:
     env_name = f"OMX_PROVIDER_{provider.upper()}"
     custom = os.getenv(env_name)
     if custom:
-        return CLIProvider(provider, custom.split())
+        parts = shlex.split(custom)
+        if not parts:
+            raise LLMError(f"{env_name} 값이 비어 있습니다")
+        binary = os.path.basename(parts[0])
+        if binary not in ALLOWED_BINARIES:
+            raise LLMError(f"허용되지 않은 provider 실행 파일: {binary}")
+        if not shutil.which(parts[0]):
+            raise LLMError(f"{binary} 실행 파일을 찾지 못했습니다")
+        return CLIProvider(provider, parts)
     raise LLMError(f"지원하지 않는 provider: {provider}")
 
 
