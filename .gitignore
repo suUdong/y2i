@@ -7,3 +7,10 @@ __pycache__/
 *.pyc
 .venv/
 *.egg-info/
+.codex/
+.coverage
+.pytest_cache/
+logs/
+*.rootbak
+.venv.rootbak/
+README.rootbak
