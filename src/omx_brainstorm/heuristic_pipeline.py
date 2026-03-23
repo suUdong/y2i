@@ -200,5 +200,91 @@ def analyze_video_heuristic(
             }
         )
     return row
+def heuristic_rows_to_reports(rows: list[dict]) -> list[VideoAnalysisReport]:
+    """Convert heuristic pipeline dict rows into VideoAnalysisReport objects for dashboard rendering."""
+    from .models import (
+        AnalysisScore, ExpertInsight, MacroInsight, MarketReviewSummary,
+        MasterOpinion, StockAnalysis, TickerMention, VideoAnalysisReport,
+        VideoInput, VideoSignalAssessment,
+    )
+
+    reports: list[VideoAnalysisReport] = []
+    for row in rows:
+        video = VideoInput(
+            video_id=row["video_id"],
+            title=row["title"],
+            url=row["url"],
+            published_at=row.get("published_at"),
+            description=row.get("description"),
+            tags=row.get("tags", []),
+        )
+        signal = VideoSignalAssessment(
+            signal_score=row["signal_score"],
+            video_signal_class=row["video_signal_class"],
+            should_analyze_stocks=row["should_analyze_stocks"],
+            reason=row["reason"],
+            video_type=row.get("video_type", "OTHER"),
+        )
+        macro_insights = [MacroInsight(**m) for m in row.get("macro_insights", [])]
+        expert_insights = [ExpertInsight(**e) for e in row.get("expert_insights", [])]
+        mr_data = row.get("market_review")
+        market_review = None
+        if mr_data:
+            mr_macros = [MacroInsight(**m) for m in mr_data.pop("macro_insights", [])]
+            market_review = MarketReviewSummary(**mr_data, macro_insights=mr_macros)
+
+        stock_analyses = []
+        for s in row.get("stocks", []):
+            mops = [MasterOpinion(**m) for m in s.get("master_opinions", [])]
+            snap = FundamentalSnapshot(**s["fundamentals"])
+            stock_analyses.append(StockAnalysis(
+                ticker=s["ticker"],
+                company_name=s.get("company_name"),
+                extracted_from_video=row["video_id"],
+                fundamentals=snap,
+                basic_state=s.get("basic_state", ""),
+                basic_signal_summary=s.get("basic_signal_summary", ""),
+                basic_signal_verdict=s.get("basic_signal_verdict", ""),
+                master_opinions=mops,
+                thesis_summary="",
+                framework_scores=[],
+                total_score=s.get("final_score", 0.0),
+                max_score=100.0,
+                final_verdict=s.get("final_verdict", ""),
+                invalidation_triggers=s.get("invalidation_triggers", []),
+            ))
+
+        mentions = [
+            TickerMention(ticker=s["ticker"], company_name=s.get("company_name"))
+            for s in row.get("stocks", [])
+        ]
+        reports.append(VideoAnalysisReport(
+            run_id=row["video_id"][:10],
+            created_at=row.get("published_at") or "",
+            provider="heuristic",
+            mode="heuristic",
+            video=video,
+            signal_assessment=signal,
+            transcript_text="",
+            transcript_language=row.get("transcript_language"),
+            ticker_mentions=mentions,
+            stock_analyses=stock_analyses,
+            macro_insights=macro_insights,
+            market_review=market_review,
+            expert_insights=expert_insights,
+        ))
+    return reports
+
+
+def render_heuristic_dashboard(rows: list[dict], output_dir, label: str = "heuristic_dashboard"):
+    """Generate a combined dashboard from heuristic pipeline results."""
+    from .reporting import save_combined_dashboard
+    from pathlib import Path
+    reports = heuristic_rows_to_reports(rows)
+    if not reports:
+        return None
+    return save_combined_dashboard(reports, Path(output_dir), label=label)
+
+
 def _safe_pct(value: float | None) -> float:
     return 0.0 if value is None else value * 100
