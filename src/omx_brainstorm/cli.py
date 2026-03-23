@@ -67,6 +67,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_all = sub.add_parser("analyze-all", help="Analyze all enabled channels from config")
     p_all.add_argument("--config", default="config.toml")
     p_all.add_argument("--limit", type=int, default=3, help="Videos per channel")
+
+    p_30d = sub.add_parser("analyze-channel-30d", help="Run 30-day heuristic analysis with dashboard for a channel slug")
+    p_30d.add_argument("slug", help="Channel slug from config (e.g. sampro)")
+    p_30d.add_argument("--config", default="config.toml")
+    p_30d.add_argument("--days", type=int, default=30, help="Window in days")
     return parser
 
 
@@ -172,6 +177,54 @@ def main() -> None:
             from .healthcheck import read_health_state
 
             print(json.dumps(read_health_state(args.path), ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "analyze-channel-30d":
+            from datetime import date, datetime, timezone as tz
+            from .comparison import RunContext, quality_scorecard, save_channel_artifacts
+            from .evaluation import ranking_validation
+            from .fundamentals import FundamentalsFetcher
+            from .heuristic_pipeline import analyze_video_heuristic, render_heuristic_dashboard
+            from .master_engine import validate_cross_stock_master_quality
+            from .research import build_cross_video_ranking
+            from .transcript_cache import TranscriptCache
+            from .youtube import TranscriptFetcher
+
+            config = load_app_config(args.config)
+            configure_logging(verbose=args.verbose, json_logs=config.logging.json, log_dir=config.logging.log_dir, retention_days=config.logging.retention_days)
+            channel = next((ch for ch in config.channels if ch.slug == args.slug), None)
+            if not channel:
+                logger.error("Channel slug '%s' not found in config", args.slug)
+                raise SystemExit(1)
+            resolver = YoutubeResolver()
+            videos = resolver.resolve_channel_videos_since(channel.url, days=args.days)
+            cache = TranscriptCache()
+            cache.warm_from_output_dir(Path(args.output_dir))
+            fetcher = TranscriptFetcher()
+            fundamentals = FundamentalsFetcher()
+            rows = [analyze_video_heuristic(video, cache, fetcher, fundamentals) for video in videos]
+            validate_cross_stock_master_quality([stock for row in rows for stock in row["stocks"]])
+            ranking = build_cross_video_ranking(rows)
+            context = RunContext(
+                run_id=datetime.now(tz.utc).strftime("%Y%m%dT%H%M%SZ"),
+                today=date.today().isoformat(),
+                output_dir=Path(args.output_dir),
+                window_days=args.days,
+            )
+            validation = ranking_validation(ranking, context.today)
+            scorecard = quality_scorecard(rows, validation, ranking)
+            json_path, txt_path = save_channel_artifacts(
+                channel.slug, channel.display_name, channel.url,
+                rows, ranking, validation, scorecard, context,
+            )
+            dashboard_path = render_heuristic_dashboard(rows, Path(args.output_dir), label=f"{channel.slug}_30d_dashboard")
+            print(json.dumps({
+                "json_path": str(json_path),
+                "txt_path": str(txt_path),
+                "dashboard_path": str(dashboard_path) if dashboard_path else None,
+                "video_count": len(rows),
+                "scorecard": scorecard,
+            }, ensure_ascii=False, indent=2))
             return
 
         if args.command == "analyze-all":

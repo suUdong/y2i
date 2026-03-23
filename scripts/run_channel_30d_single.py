@@ -9,7 +9,7 @@ from omx_brainstorm.app_config import load_app_config
 from omx_brainstorm.comparison import RunContext, quality_scorecard, save_channel_artifacts
 from omx_brainstorm.evaluation import ranking_validation
 from omx_brainstorm.fundamentals import FundamentalsFetcher
-from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic
+from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic, render_heuristic_dashboard
 from omx_brainstorm.logging_utils import configure_logging
 from omx_brainstorm.master_engine import validate_cross_stock_master_quality
 from omx_brainstorm.research import build_cross_video_ranking
@@ -59,7 +59,13 @@ def main() -> None:
         scorecard,
         context,
     )
-    print(json.dumps({"json_path": str(json_path), "txt_path": str(txt_path), "video_count": len(rows)}, ensure_ascii=False, indent=2))
+    dashboard_path = render_heuristic_dashboard(rows, Path(config.output_dir), label=f"{channel.slug}_30d_dashboard")
+    print(json.dumps({
+        "json_path": str(json_path),
+        "txt_path": str(txt_path),
+        "dashboard_path": str(dashboard_path) if dashboard_path else None,
+        "video_count": len(rows),
+    }, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
