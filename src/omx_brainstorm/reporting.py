@@ -20,6 +20,16 @@ def save_report(report: VideoAnalysisReport, output_dir: Path) -> tuple[Path, Pa
     return json_path, md_path, txt_path
 
 
+def save_combined_dashboard(reports: list[VideoAnalysisReport], output_dir: Path, label: str = "dashboard") -> Path:
+    """Render and save a combined dashboard for multiple reports."""
+    ensure_dir(output_dir)
+    from .models import utc_now_iso
+    timestamp = utc_now_iso().replace(":", "").replace("-", "")[:15]
+    md_path = output_dir / f"{label}_{timestamp}.md"
+    md_path.write_text(render_combined_dashboard(reports), encoding="utf-8")
+    return md_path
+
+
 def render_markdown(report: VideoAnalysisReport) -> str:
     lines = [
         f"# OMX 분석 리포트 - {report.video.title}",

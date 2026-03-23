@@ -225,6 +225,17 @@ def test_extract_no_expert_returns_empty():
     assert insights == []
 
 
+def test_channel_analysis_produces_dashboard(tmp_path):
+    video = VideoInput(video_id="ch1", title="반도체 수혜주 종목 분석", url="https://youtube.com/watch?v=ch1")
+    pipeline = _make_pipeline(tmp_path, video)
+    results = pipeline.analyze_channel("https://youtube.com/channel/test", limit=1)
+    assert len(results) == 1
+    dashboards = list(tmp_path.glob("channel_dashboard_*.md"))
+    assert len(dashboards) == 1
+    content = dashboards[0].read_text(encoding="utf-8")
+    assert "OMX 통합 대시보드" in content
+
+
 def test_expert_mentioned_tickers():
     insights = extract_expert_insights(
         title="박사 인터뷰",

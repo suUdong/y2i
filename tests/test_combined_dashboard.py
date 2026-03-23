@@ -211,3 +211,15 @@ def test_dashboard_video_source_list():
     assert "영상B" in md
     assert "STOCK_PICK" in md
     assert "MACRO" in md
+
+
+def test_save_combined_dashboard_creates_file(tmp_path):
+    from omx_brainstorm.reporting import save_combined_dashboard
+    report = _make_report(stock_analyses=[_make_stock()])
+    path = save_combined_dashboard([report], tmp_path, label="test_dash")
+    assert path.exists()
+    assert path.name.startswith("test_dash_")
+    assert path.suffix == ".md"
+    content = path.read_text(encoding="utf-8")
+    assert "OMX 통합 대시보드" in content
+    assert "NVDA" in content

@@ -13,7 +13,7 @@ from .llm import resolve_provider
 from .macro_signals import extract_macro_insights
 from .market_review import extract_market_review
 from .models import VideoAnalysisReport, VideoType, utc_now_iso
-from .reporting import save_report
+from .reporting import save_combined_dashboard, save_report
 from .signal_gate import assess_video_signal
 from .transcript_cache import TranscriptCache
 from .transcript_runtime import resolve_transcript_text
@@ -115,8 +115,18 @@ class OMXPipeline:
 
     def analyze_channel(self, channel_url: str, limit: int = 5):
         videos = self.resolver.resolve_channel_videos(channel_url, limit=limit)
-        return [self._analyze_resolved_video(video) for video in videos]
+        results = [self._analyze_resolved_video(video) for video in videos]
+        if results:
+            reports = [report for report, _paths in results]
+            dashboard_path = save_combined_dashboard(reports, self.output_dir, label="channel_dashboard")
+            logger.info("Combined dashboard saved to %s", dashboard_path)
+        return results
 
     def analyze_channel_since(self, channel_url: str, days: int = 30, max_entries: int = 80):
         videos = self.resolver.resolve_channel_videos_since(channel_url, days=days, max_entries=max_entries)
-        return [self._analyze_resolved_video(video) for video in videos]
+        results = [self._analyze_resolved_video(video) for video in videos]
+        if results:
+            reports = [report for report, _paths in results]
+            dashboard_path = save_combined_dashboard(reports, self.output_dir, label="channel_dashboard")
+            logger.info("Combined dashboard saved to %s", dashboard_path)
+        return results
