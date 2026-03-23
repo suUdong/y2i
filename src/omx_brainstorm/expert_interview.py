@@ -5,20 +5,27 @@ import re
 from .models import ExpertInsight
 from .stock_registry import COMPANY_MAP
 
+TITLE_SUFFIXES = r"대표|이사|교수|박사|위원|애널리스트|연구위원|연구원|센터장|부센터장|본부장|팀장|소장|원장|이코노미스트|과장|평론가"
+
+# Pipe-separated pattern for YouTube titles: "... | 이름 소속 직함 [코너명]"
+PIPE_EXPERT_RE = re.compile(
+    r"\|\s*([가-힣]{2,3})\s+([가-힣A-Za-z\s]{2,25}?)\s+(?:" + TITLE_SUFFIXES + r")"
+)
+
 # Patterns for detecting expert name + affiliation in Korean financial YouTube titles/transcripts
-# Common patterns: "홍길동 대표", "김교수 박사", "이OO 위원"
 TITLE_EXPERT_PATTERNS = [
-    # "홍길동 OO증권 대표" or "홍길동 대표"
-    re.compile(r"([가-힣]{2,4})\s+([\w가-힣]*(?:증권|자산운용|투자|캐피탈|리서치|경제연구|연구원|대학교?)?)\s*(대표|이사|교수|박사|위원|애널리스트|연구원|센터장|본부장|팀장|소장|원장|이코노미스트)"),
-    # "대표 홍길동"
-    re.compile(r"(대표|이사|교수|박사|위원|애널리스트|연구원|센터장|본부장|팀장|소장|원장|이코노미스트)\s+([가-힣]{2,4})"),
-    # Simpler: name + title alone
-    re.compile(r"([가-힣]{2,4})\s*(대표|이사|교수|박사|위원|애널리스트|연구원|센터장|본부장|팀장|소장|원장|이코노미스트)"),
+    # "이름 소속 직함" — name is exactly 2-3 Korean chars, followed by affiliation then title
+    re.compile(r"(?:^|[\s|,])([가-힣]{2,3})\s+([가-힣A-Za-z]{2,20}(?:증권|자산운용|투자자문|캐피탈|리서치|경제연구|연구소|대학교?|금융))\s+(?:" + TITLE_SUFFIXES + r")"),
+    # "이름 직함" without affiliation — must be at start or after whitespace/pipe
+    re.compile(r"(?:^|[\s|,])([가-힣]{2,3})\s+(?:" + TITLE_SUFFIXES + r")"),
 ]
 
 AFFILIATION_PATTERNS = [
-    re.compile(r"([가-힣A-Za-z]{2,15}(?:증권|자산운용|투자|캐피탈|리서치|경제연구소|연구원|대학교?|금융|은행))"),
+    re.compile(r"([가-힣A-Za-z]{2,20}(?:증권|자산운용|투자자문|캐피탈|리서치|경제연구소|연구소|연구원|대학교?|금융|은행|리서치센터))"),
 ]
+
+# Strings that look like names but aren't
+NOT_NAMES = {"업계", "미국", "중동", "한국", "일본", "중국", "개론", "이번", "최고", "올해", "내년", "마감", "시황", "최고의", "글로벌", "레전드", "전문가"}
 
 BULLISH_CUES = {"상승", "반등", "강세", "매수", "좋다", "긍정", "호재", "기대", "수혜", "유망", "추천", "사세요", "올라"}
 BEARISH_CUES = {"하락", "약세", "매도", "위험", "리스크", "부정", "악재", "경계", "조심", "팔아", "내려"}
@@ -67,30 +74,50 @@ def _extract_experts_from_text(text: str) -> list[tuple[str, str]]:
     experts: list[tuple[str, str]] = []
     seen_names: set[str] = set()
 
-    for pattern in TITLE_EXPERT_PATTERNS:
-        for match in pattern.finditer(text):
-            groups = match.groups()
-            if len(groups) == 3:
-                name, affiliation, _title = groups[0], groups[1], groups[2]
-            elif len(groups) == 2:
-                # Could be (title, name) or (name, title)
-                g0, g1 = groups
-                if len(g0) <= 6 and any(c in g0 for c in "대이교박위애연센본팀소원"):
-                    name, affiliation = g1, ""
-                else:
-                    name, affiliation = g0, ""
-            else:
-                continue
+    # 1. Try pipe-separated pattern first (YouTube title convention: "... | 이름 소속 직함")
+    for match in PIPE_EXPERT_RE.finditer(text):
+        name = match.group(1).strip()
+        affiliation = match.group(2).strip()
+        if _is_valid_name(name) and name not in seen_names:
+            seen_names.add(name)
+            experts.append((name, affiliation))
 
-            name = name.strip()
-            affiliation = affiliation.strip()
-            if name and name not in seen_names and 2 <= len(name) <= 4:
-                seen_names.add(name)
-                if not affiliation:
-                    affiliation = _find_affiliation_nearby(text, name)
-                experts.append((name, affiliation))
+    # 2. Fall back to general patterns
+    if not experts:
+        for pattern in TITLE_EXPERT_PATTERNS:
+            for match in pattern.finditer(text):
+                groups = match.groups()
+                if len(groups) == 2:
+                    name = groups[0].strip()
+                    second = groups[1].strip()
+                    # Check if second group is an affiliation or just a title suffix
+                    if any(second.endswith(s) for s in ("증권", "대학", "대학교", "연구", "금융", "자문", "리서치")):
+                        affiliation = second
+                    else:
+                        affiliation = ""
+                elif len(groups) == 1:
+                    name = groups[0].strip()
+                    affiliation = ""
+                else:
+                    continue
+
+                if _is_valid_name(name) and name not in seen_names:
+                    seen_names.add(name)
+                    if not affiliation:
+                        affiliation = _find_affiliation_nearby(text, name)
+                    experts.append((name, affiliation))
 
     return experts[:3]
+
+
+def _is_valid_name(name: str) -> bool:
+    """Check if a string looks like a valid Korean person name."""
+    if not name or len(name) < 2 or len(name) > 3:
+        return False
+    if name in NOT_NAMES:
+        return False
+    # All characters should be Korean
+    return all('\uac00' <= c <= '\ud7a3' for c in name)
 
 
 def _find_affiliation_nearby(text: str, name: str) -> str:
