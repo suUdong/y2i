@@ -12,6 +12,8 @@ dependencies = [
   "youtube-transcript-api>=1.2.0",
   "yt-dlp>=2025.1.26",
   "yfinance>=0.2.54",
+  "streamlit>=1.45.0",
+  "plotly>=6.0.0",
 ]
 
 [project.optional-dependencies]
