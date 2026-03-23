@@ -1,0 +1,193 @@
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+from pathlib import Path
+
+from .app_config import load_app_config
+from .backtest import BacktestEngine, BacktestIdea
+from .backtest_automation import run_backtest_for_artifact
+from .logging_utils import configure_logging
+from .scheduler import run_scheduled_job, run_scheduler_forever
+from .pipeline import OMXPipeline
+from .youtube import ChannelRegistry, YoutubeResolver
+
+logger = logging.getLogger(__name__)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="omx-brainstorm",
+        description="Analyze YouTube finance videos into stock signals, reports, and backtests.",
+    )
+    parser.add_argument("--provider", default="auto", help="auto|codex|claude|gemini|mock")
+    parser.add_argument("--output-dir", default="output")
+    parser.add_argument("--mode", default="ralph", help="analysis mode, default=ralph")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose progress logging")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_register = sub.add_parser("register-channel", help="Register a YouTube channel URL")
+    p_register.add_argument("url")
+    p_register.add_argument("--registry", default="channels.json")
+
+    p_list = sub.add_parser("list-channels", help="List registered channels")
+    p_list.add_argument("--registry", default="channels.json")
+
+    p_video = sub.add_parser("analyze-video", help="Analyze a single video URL")
+    p_video.add_argument("url")
+
+    p_channel = sub.add_parser("analyze-channel", help="Analyze the latest N videos from a channel")
+    p_channel.add_argument("url")
+    p_channel.add_argument("--limit", type=int, default=3)
+
+    p_backtest = sub.add_parser("backtest-ranked", help="Run a backtest from a saved ranking artifact")
+    p_backtest.add_argument("input_path", help="JSON artifact containing cross_video_ranking")
+    p_backtest.add_argument("--start-date", required=True)
+    p_backtest.add_argument("--end-date", required=True)
+    p_backtest.add_argument("--top-n", type=int, default=5)
+    p_backtest.add_argument("--initial-capital", type=float, default=10000.0)
+
+    p_artifact = sub.add_parser("backtest-artifact", help="Run automated backtest evaluation on a saved channel artifact")
+    p_artifact.add_argument("artifact_path")
+    p_artifact.add_argument("--end-date")
+    p_artifact.add_argument("--top-n", type=int)
+    p_artifact.add_argument("--initial-capital", type=float, default=10000.0)
+
+    p_compare = sub.add_parser("run-comparison", help="Run the configured multi-channel comparison job")
+    p_compare.add_argument("--config", default="config.toml")
+
+    p_scheduler = sub.add_parser("run-scheduler", help="Run the configured daily scheduler")
+    p_scheduler.add_argument("--config", default="config.toml")
+    p_scheduler.add_argument("--once", action="store_true")
+
+    p_health = sub.add_parser("run-healthcheck", help="Read scheduler health state")
+    p_health.add_argument("--path", default=".omx/state/scheduler_health.json")
+    return parser
+
+
+def _report_summary(report, paths) -> dict:
+    """Build a JSON-serializable summary dict from a report and its output paths."""
+    return {
+        "video": report.video.title,
+        "video_type": report.signal_assessment.video_type,
+        "signal_class": report.signal_assessment.video_signal_class,
+        "signal_score": round(report.signal_assessment.signal_score, 1),
+        "tickers": [m.ticker for m in report.ticker_mentions],
+        "final_verdicts": {s.ticker: s.final_verdict for s in report.stock_analyses},
+        "macro_insights_count": len(report.macro_insights),
+        "expert_insights_count": len(report.expert_insights),
+        "has_market_review": report.market_review is not None,
+        "json_path": str(paths[0]),
+        "markdown_path": str(paths[1]),
+        "text_path": str(paths[2]),
+    }
+
+
+def main() -> None:
+    parser = build_parser()
+    args = parser.parse_args()
+    configure_logging(verbose=args.verbose)
+
+    try:
+        if args.command == "register-channel":
+            resolver = YoutubeResolver()
+            videos = resolver.resolve_channel_videos(args.url, limit=1)
+            channel_title = videos[0].channel_title if videos else None
+            channel_id = videos[0].channel_id if videos else None
+            registry = ChannelRegistry(Path(args.registry))
+            row = registry.register(args.url, {"channel_id": channel_id, "channel_title": channel_title})
+            print(json.dumps(row, ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "list-channels":
+            registry = ChannelRegistry(Path(args.registry))
+            print(json.dumps(registry.load(), ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "backtest-ranked":
+            logger.info("Running ranked backtest from %s", args.input_path)
+            payload = json.loads(Path(args.input_path).read_text(encoding="utf-8"))
+            ideas = [
+                BacktestIdea(
+                    ticker=item["ticker"],
+                    company_name=item.get("company_name"),
+                    score=float(item.get("aggregate_score", 0.0)),
+                    signal_date=item.get("first_signal_at"),
+                )
+                for item in payload.get("cross_video_ranking", [])
+            ]
+            report = BacktestEngine().run_buy_and_hold(
+                ideas=ideas,
+                start_date=args.start_date,
+                end_date=args.end_date,
+                top_n=args.top_n,
+                initial_capital=args.initial_capital,
+            )
+            print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "backtest-artifact":
+            payload = run_backtest_for_artifact(
+                args.artifact_path,
+                end_date=args.end_date,
+                top_n=args.top_n,
+                initial_capital=args.initial_capital,
+            )
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "run-comparison":
+            from scripts.run_channel_30d_comparison import run_comparison_job
+
+            config = load_app_config(args.config)
+            configure_logging(
+                verbose=args.verbose,
+                json_logs=config.logging.json,
+                log_dir=config.logging.log_dir,
+                retention_days=config.logging.retention_days,
+            )
+            payload = run_comparison_job(config)
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "run-scheduler":
+            config = load_app_config(args.config)
+            configure_logging(
+                verbose=args.verbose,
+                json_logs=config.logging.json,
+                log_dir=config.logging.log_dir,
+                retention_days=config.logging.retention_days,
+            )
+            if args.once:
+                raise SystemExit(run_scheduled_job(config))
+            run_scheduler_forever(config)
+            return
+
+        if args.command == "run-healthcheck":
+            from .healthcheck import read_health_state
+
+            print(json.dumps(read_health_state(args.path), ensure_ascii=False, indent=2))
+            return
+
+        pipeline = OMXPipeline(provider_name=args.provider, output_dir=Path(args.output_dir), mode=args.mode)
+
+        if args.command == "analyze-video":
+            logger.info("Analyzing video %s", args.url)
+            report, (json_path, md_path, txt_path) = pipeline.analyze_video(args.url)
+            print(json.dumps(_report_summary(report, (json_path, md_path, txt_path)), ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "analyze-channel":
+            logger.info("Analyzing channel %s (limit=%s)", args.url, args.limit)
+            results = pipeline.analyze_channel(args.url, limit=args.limit)
+            summary = [_report_summary(report, paths) for report, paths in results]
+            print(json.dumps(summary, ensure_ascii=False, indent=2))
+            return
+    except Exception as exc:
+        logger.error("Command failed: %s", exc)
+        raise SystemExit(1) from exc
+
+
+if __name__ == "__main__":
+    main()
