@@ -30,40 +30,38 @@ then the agent should:
 - **P2**: 전문가 인터뷰 인사이트 구조화 (expert_interview.py)
 - **P3**: 종목 + 매크로 시그널 결합 대시보드 (reporting.py)
 
-### 품질/성능 개선 (세션 6 — 현재)
+### 품질/성능 개선 (세션 6)
 - **테스트 커버리지 86% → 94%**: 92개 신규 테스트 (184 → 276)
-  - `test_comparison.py` (10) — 품질 스코어카드, 아티팩트 저장, 채널 비교
-  - `test_notifications_and_eval.py` (16) — Telegram, Spearman, 검증, 펀더멘털
-  - `test_cli_commands.py` (10) — CLI 전체 서브커맨드
-  - `test_youtube_extended.py` (15) — 리졸버, 레지스트리, 파싱
-  - `test_parallel_and_extensibility.py` (9) — 병렬 분석, 채널 확장성
-  - `test_heuristic_dashboard.py` (11) — heuristic→dashboard 어댑터
-  - `test_llm_providers.py` (21) — LLM provider 전체 커버리지
-- **병렬 처리 최적화**: `ThreadPoolExecutor` 기반 병렬 비디오 분석 (`max_workers` 파라미터)
+- **병렬 처리 최적화**: `ThreadPoolExecutor` 기반 병렬 비디오 분석
 - **Heuristic→Dashboard 어댑터**: `heuristic_rows_to_reports()` + `render_heuristic_dashboard()`
-  - heuristic dict 결과를 VideoAnalysisReport로 변환하여 통합 대시보드 생성 가능
 - **llm.py 100% 커버리지**: CLIProvider, resolve_provider, extract_json_object 전체 테스트
-- **채널 확장성 검증**: 등록→설정→분석 E2E 테스트 완료
+
+### 알림/대시보드/LLM 강화 (세션 7 — 현재)
+- **30일 대시보드 생성** (US-001): `run_channel_30d_single.py`에 `render_heuristic_dashboard()` 통합, CLI `analyze-channel-30d` 서브커맨드 추가 (+7 tests)
+- **Discord 알림 지원** (US-002): `send_discord_message()` 웹훅 지원, `NotificationConfig`에 `discord_webhook_url` 추가, env var `DISCORD_WEBHOOK_URL` 지원 (+10 tests)
+- **통합 알림 디스패치** (US-003): `notify_all()` → Telegram + Discord 동시 발송, scheduler.py + 30d 파이프라인 연동
+- **LLM 기반 expert claim 강화** (US-004): `StructuredClaim` 모델, `extract_expert_claims_llm()`, `extract_expert_insights_with_llm()` with heuristic fallback, MockProvider 응답 추가, pipeline 통합 (+11 tests)
 
 ## 2. 현재 검증 상태
-- pytest: **276 passed**
-- coverage: **94%**
-- 전체 커밋: 26개
+- pytest: **304 passed**
+- 전체 커밋: 31개 (이번 세션 +4)
+- 이번 세션 신규 테스트: 28개
 
 ## 3. 주요 파일 구조
 ```
 src/omx_brainstorm/
-├── models.py            — VideoType, ExpertInsight, MacroInsight, MarketReviewSummary 등
-├── pipeline.py          — OMXPipeline (LLM 분석 + VideoType 분기 + 병렬 처리)
+├── models.py            — VideoType, StructuredClaim, ExpertInsight, MacroInsight 등
+├── pipeline.py          — OMXPipeline (LLM 분석 + VideoType 분기 + 병렬 처리 + LLM expert claims)
 ├── heuristic_pipeline.py — 휴리스틱 분석 + VideoType 분기 + dashboard 어댑터
-├── expert_interview.py  — 전문가 인터뷰 인사이트 추출
+├── expert_interview.py  — 전문가 인사이트 추출 (heuristic + LLM 경로)
 ├── macro_signals.py     — 매크로 시그널/인사이트 추출
 ├── market_review.py     — 시장리뷰 요약 추출 + MD 렌더링
-├── title_taxonomy.py    — VideoType 분류
-├── signal_gate.py       — 영상 신호 평가
+├── notifications.py     — Telegram + Discord 알림 + notify_all()
+├── scheduler.py         — 스케줄러 (notify_all 통합)
 ├── reporting.py         — 개별 리포트 + 통합 대시보드
-├── llm.py               — LLM provider (Mock/CLI/auto resolve)
-├── cli.py               — CLI 엔트리포인트
+├── llm.py               — LLM provider (Mock/CLI/auto resolve + expert claim mock)
+├── cli.py               — CLI 엔트리포인트 (analyze-channel-30d 포함)
+├── app_config.py        — AppConfig (discord_webhook_url 포함)
 ├── ...                  — 기타 지원 모듈
 ```
 
@@ -72,21 +70,28 @@ src/omx_brainstorm/
 - 삼프로TV는 "콘텐츠 유형 구분 + 유형별 인사이트 추출"이 핵심
 - transcript fetch는 IP-block 이슈 → cache + metadata fallback 유지
 - 병렬 처리는 ThreadPoolExecutor (I/O bound 작업에 적합)
+- LLM expert claim 추출은 fallback 우선 — LLM 실패 시 heuristic으로 자동 전환
+- 알림은 notify_all()로 통합 — 새 채널 추가 시 notify_all만 확장
 
 ## 5. 다음 세션에서 할 수 있는 작업
 
-1. **실제 삼프로TV 30일 재실행 + 대시보드 생성**
-   - video_type 분기 + expert/macro/market_review 추출 포함 상태로 재실행
-   - `render_heuristic_dashboard()` 사용하여 통합 대시보드 생성
+1. **실제 삼프로TV 실행 테스트** (실 YouTube API 연동)
+   - `omx-brainstorm analyze-channel-30d sampro` 실행하여 실제 데이터로 검증
+   - Telegram/Discord 알림 실제 발송 확인
 
-2. **알림 시스템 연동**
-   - notifications.py 기반 Telegram/Discord 알림 연결
-
-3. **LLM 기반 expert claim 강화**
-   - 현재 규칙 기반 claim 추출 → LLM으로 더 정교한 주장/근거 추출
-
-4. **heuristic_pipeline 나머지 커버리지 (94% → 97%+)**
+2. **heuristic_pipeline 나머지 커버리지 (94% → 97%+)**
    - 에러 처리 분기 (lines 88-89, 94-95, 103, 105, 108)
+
+3. **LLM expert claim 고도화**
+   - 현재 MockProvider만 테스트 → 실제 LLM provider로 품질 검증
+   - 구조화된 claim을 대시보드에 렌더링
+
+4. **백테스트 자동화 개선**
+   - 30일 분석 결과를 자동 백테스트와 연결
+   - 성과 추적 대시보드
+
+5. **스케줄러 Cron 연동**
+   - systemd/cron으로 일일 자동 실행 설정
 
 ## 6. 다음 세션 시작 체크리스트
 다음 세션에서 가장 먼저 읽을 것:
