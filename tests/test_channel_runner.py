@@ -1,5 +1,7 @@
+import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from scripts.run_channel_30d_comparison import quality_scorecard, recent_feed_video_ids, run_comparison_job
 from omx_brainstorm.app_config import AppConfig, ChannelConfig
 
