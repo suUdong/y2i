@@ -1,55 +1,48 @@
 {
   "stories": [
     {
-      "id": "US-001",
-      "title": "30-day re-run script with heuristic dashboard generation",
-      "description": "Enhance run_channel_30d_single.py to generate heuristic dashboard via render_heuristic_dashboard() after analysis, and add a CLI subcommand analyze-channel-30d for convenience",
+      "id": "US-005",
+      "title": "Render structured claims in dashboard expert insights section",
       "acceptanceCriteria": [
-        "run_channel_30d_single.py calls render_heuristic_dashboard(rows, output_dir) after analysis",
-        "CLI has analyze-channel-30d subcommand that runs heuristic pipeline for a configured channel slug",
-        "Dashboard markdown file is generated in the output directory",
-        "Tests verify dashboard generation from heuristic rows end-to-end",
-        "All existing tests still pass"
+        "render_combined_dashboard() shows structured_claims with direction and confidence when present",
+        "Gracefully handles ExpertInsight with empty structured_claims (existing behavior preserved)",
+        "Test verifies structured claims appear in dashboard markdown output",
+        "All existing reporting tests still pass"
       ],
       "passes": true
     },
     {
-      "id": "US-002",
-      "title": "Discord webhook notification support",
-      "description": "Add send_discord_message() to notifications.py with webhook URL support, add discord fields to NotificationConfig and AppConfig",
+      "id": "US-006",
+      "title": "Boost backtest_automation.py coverage to 95%+",
       "acceptanceCriteria": [
-        "send_discord_message(config, text) sends via Discord webhook URL",
-        "NotificationConfig has discord_webhook_url field",
-        "AppConfig loads discord_webhook_url from TOML and env var DISCORD_WEBHOOK_URL",
-        "Returns False when credentials missing, True on success, False on error",
-        "Tests cover success, missing credentials, and error cases"
+        "Test covers empty ranking path (returns status=no_ranking)",
+        "Test covers missing signal dates path (returns status=missing_signal_dates)",
+        "Test covers successful backtest execution path",
+        "backtest_automation.py coverage >= 95%"
       ],
       "passes": true
     },
     {
-      "id": "US-003",
-      "title": "Unified notification dispatch in scheduler and pipeline",
-      "description": "Create notify_all() that sends to both Telegram and Discord, integrate into scheduler.py and the 30d pipeline completion",
+      "id": "US-007",
+      "title": "Boost research.py coverage to 95%+",
       "acceptanceCriteria": [
-        "notify_all(config, text) dispatches to both Telegram and Discord",
-        "scheduler.py uses notify_all() instead of direct send_telegram_message()",
-        "run_channel_30d_single.py sends notification on completion with summary",
-        "Tests verify notify_all dispatches to both channels",
-        "All existing scheduler tests still pass"
+        "_normalize_signal_date() tested for 8-digit, ISO, and None inputs",
+        "_is_newer_timestamp() and _is_earlier_timestamp() tested for None and comparison cases",
+        "_signal_strength() tested with and without signal_strength_score",
+        "render_cross_video_ranking_text() tested for empty and populated rankings",
+        "research.py coverage >= 95%"
       ],
       "passes": true
     },
     {
-      "id": "US-004",
-      "title": "LLM-based expert claim extraction",
-      "description": "Add LLM-powered claim extraction path in expert_interview.py that produces richer structured claims with reasoning and confidence, falling back to heuristic when LLM unavailable",
+      "id": "US-008",
+      "title": "Boost heuristic_pipeline error branch coverage to 98%+",
       "acceptanceCriteria": [
-        "extract_expert_insights_llm() uses LLM provider to extract structured claims",
-        "Each claim includes claim text, reasoning, confidence, and direction (bullish/bearish/neutral)",
-        "ExpertInsight model gains structured_claims field for LLM-extracted claims",
-        "Graceful fallback to heuristic _extract_key_claims() when LLM fails or is unavailable",
-        "Pipeline integrates LLM claim extraction for EXPERT_INTERVIEW videos when provider != mock",
-        "Tests verify LLM extraction, fallback behavior, and integration"
+        "Test covers extract_mentions with no matches returning empty list",
+        "Test covers extract_mentions low-confidence indirect mention skip",
+        "Test covers basic_assessment BUY, WATCH, REJECT verdicts",
+        "Test covers final_verdict all branches",
+        "heuristic_pipeline.py coverage >= 98%"
       ],
       "passes": true
     }
