@@ -236,6 +236,48 @@ def test_channel_analysis_produces_dashboard(tmp_path):
     assert "OMX 통합 대시보드" in content
 
 
+def test_pipeline_resilient_to_expert_extraction_failure(tmp_path, monkeypatch):
+    """Pipeline should still produce a report even if expert extraction crashes."""
+    import omx_brainstorm.pipeline as pipeline_mod
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("expert extraction exploded")
+
+    monkeypatch.setattr(pipeline_mod, "extract_expert_insights", _boom)
+
+    video = VideoInput(
+        video_id="fail1",
+        title="김영호 대표 인터뷰 반도체 전망",
+        url="https://youtube.com/watch?v=fail1",
+        description="인터뷰",
+    )
+    pipeline = _make_pipeline(tmp_path, video)
+    report, _ = pipeline.analyze_video(video.url)
+    # Report still created, expert_insights empty due to failure
+    assert report.expert_insights == []
+    assert report.video is not None
+
+
+def test_pipeline_resilient_to_macro_extraction_failure(tmp_path, monkeypatch):
+    """Pipeline should still produce a report even if macro extraction crashes."""
+    import omx_brainstorm.pipeline as pipeline_mod
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("macro extraction exploded")
+
+    monkeypatch.setattr(pipeline_mod, "extract_macro_insights", _boom)
+
+    video = VideoInput(
+        video_id="fail2",
+        title="금리 인하와 환율 하락이 시작되면",
+        url="https://youtube.com/watch?v=fail2",
+    )
+    pipeline = _make_pipeline(tmp_path, video)
+    report, _ = pipeline.analyze_video(video.url)
+    assert report.macro_insights == []
+    assert report.video is not None
+
+
 def test_expert_mentioned_tickers():
     insights = extract_expert_insights(
         title="박사 인터뷰",

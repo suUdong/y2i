@@ -69,14 +69,26 @@ class OMXPipeline:
         if video_type in (VideoType.STOCK_PICK, VideoType.SECTOR):
             pass  # stock analysis only
         elif video_type == VideoType.MARKET_REVIEW:
-            market_review = extract_market_review(video.title, analysis_text)
-            macro_insights = market_review.macro_insights
+            try:
+                market_review = extract_market_review(video.title, analysis_text)
+                macro_insights = market_review.macro_insights
+            except Exception as exc:
+                logger.warning("Market review extraction failed for %s: %s", video.video_id, exc)
         elif video_type == VideoType.EXPERT_INTERVIEW:
-            expert_insights = extract_expert_insights(video.title, analysis_text, video.description or "")
-            macro_insights = extract_macro_insights(video.title, analysis_text)
+            try:
+                expert_insights = extract_expert_insights(video.title, analysis_text, video.description or "")
+            except Exception as exc:
+                logger.warning("Expert insight extraction failed for %s: %s", video.video_id, exc)
+            try:
+                macro_insights = extract_macro_insights(video.title, analysis_text)
+            except Exception as exc:
+                logger.warning("Macro insight extraction failed for %s: %s", video.video_id, exc)
         else:
             # MACRO, NEWS_EVENT, OTHER
-            macro_insights = extract_macro_insights(video.title, analysis_text)
+            try:
+                macro_insights = extract_macro_insights(video.title, analysis_text)
+            except Exception as exc:
+                logger.warning("Macro insight extraction failed for %s: %s", video.video_id, exc)
 
         mentions, analyses = self._run_stock_analysis(video.title, analysis_text, should)
 
