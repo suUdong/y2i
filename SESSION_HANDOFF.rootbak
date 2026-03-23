@@ -18,83 +18,126 @@ then the agent should:
 - Mode: `ralph`
 - Operating rule: continue without user intervention unless there is a real blocker
 
-## Current implemented state (fully tested)
-- YouTube channel/video analysis pipeline with VideoType-based branching
-- Transcript-based stock extraction with hybrid (LLM + heuristic) paths
-- Basic fundamentals snapshot via `yfinance`
-- Master one-line opinions (druckenmiller, buffett, soros)
-- Text / Markdown / JSON output
+---
+
+## Completed stages
+
+### 1단계: 기본 파이프라인 구축 (이전 세션)
+- YouTube 채널/영상 분석 파이프라인
+- 자막 기반 종목 추출 (HybridTickerExtractor)
+- yfinance 기본 재무 스냅샷
+- 거장 한줄평 (druckenmiller, buffett, soros)
 - Video usefulness gate (ACTIONABLE, SECTOR_ONLY, LOW_SIGNAL, NOISE, NON_EQUITY)
+- Text / Markdown / JSON 출력
+
+### 2단계: 시그널 강화 (이전 세션)
+- 매크로 시그널 → 섹터 → 종목 연결 (indirect_macro_mentions)
+- 주가 stale-price 방지 (checked_at)
+- IT의 신 이형수 채널 분석 실행
+
+### 3단계: VideoType 분류 (이전 세션)
 - VideoType enum: STOCK_PICK, MACRO, MARKET_REVIEW, EXPERT_INTERVIEW, SECTOR, NEWS_EVENT, OTHER
-- classify_video_type() heuristic classifier
-- Macro insight extraction with per-indicator direction/confidence
-- Market review extraction with index/risk/sector parsing
-- Expert interview insight extraction (pipe-separator pattern for YouTube titles)
-- Combined dashboard report (render_combined_dashboard)
-- Channel-level auto-dashboard generation
-- Transcript cache with TTL-based staleness check (7 day default)
-- Error-resilient pipeline (extractor failures don't crash reports)
-- Enhanced CLI output with video_type, signal, macro/expert counts
-- analyze-all CLI command for batch multi-channel analysis
-- Integration tested against 80 cached 삼프로TV videos
-- 177 unit tests passing
+- classify_video_type() 휴리스틱 분류기
+- 매크로 인사이트 구조화 (extract_macro_insights)
+- 마켓 리뷰 요약 추출 (extract_market_review)
 
-## Important files
+### 4단계: 파이프라인 분기 + 통합 대시보드 (2026-03-23, 이번 세션)
+
+**Phase 1 — 핵심 기능 추가:**
+- VideoType 기반 파이프라인 분기 — 영상 유형별 다른 분석 경로 실행
+- ExpertInsight 추출 — 전문가명, 소속, 핵심 주장, 센티먼트, 언급 종목
+- 통합 대시보드 리포트 (render_combined_dashboard) — 매크로 + 종목 + 전문가 통합
+
+**Phase 2 — 품질/기능 개선:**
+- 파이프라인 중복 제거 (_run_stock_analysis 헬퍼)
+- 채널 분석 시 자동 대시보드 생성 (channel_dashboard_*.md)
+- 휴리스틱 파이프라인도 VideoType 분기 적용 (LLM 파이프라인과 동일 출력 구조)
+- 자막 캐시 TTL 만료 체크 (기본 7일, is_stale)
+
+**Phase 3 — 테스트/에러핸들링/CLI/확장성:**
+- youtube helpers, stock_registry, evaluation 유닛 테스트 추가 (+25 tests)
+- CLI 출력에 video_type, signal_class, macro/expert 카운트 추가
+- 파이프라인 extractor 에러 격리 (try/except) — 하나 실패해도 리포트 생성
+- analyze-all CLI 커맨드 — config.toml 기반 멀티 채널 일괄 분석
+
+**Phase 4 — 삼프로TV 통합 테스트:**
+- 80개 캐시된 삼프로TV 영상으로 전체 파이프라인 검증
+- 전문가명 추출 정확도 82% (성일광, 박현도, 윤도선, 차영주, 박병창 등)
+- pipe-separator 패턴 도입으로 삼프로TV 제목 형식 대응 (`제목 | 이름 소속 직함 [코너명]`)
+- 0건 파이프라인 크래시, 모든 VideoType 분기 정상 동작 확인
+
+---
+
+## 이번 세션 커밋 목록 (14개)
+1. `1dba2cf` — VideoType 기반 파이프라인 분기 + 전문가 인터뷰 추출
+2. `dc6db17` — 종목 + 매크로 시그널 통합 대시보드 리포트
+3. `9a1b1ee` — 세션 핸드오프 업데이트
+4. `e5455c4` — 파이프라인 리팩토링: _run_stock_analysis 추출
+5. `4c08d5c` — 채널 분석 시 자동 대시보드 생성
+6. `da02b88` — 휴리스틱 파이프라인 VideoType 분기 통합
+7. `6d46271` — 자막 캐시 TTL 만료 체크
+8. `cb8ea60` — youtube helpers, stock_registry, evaluation 유닛 테스트
+9. `a1219e2` — CLI 출력 강화 (video_type, signal 메타데이터)
+10. `1d5d761` — 파이프라인 extractor 에러 격리
+11. `7749de9` — analyze-all CLI 멀티 채널 일괄 분석
+12. `798cef2` — 세션 핸드오프 업데이트
+13. `de9c062` — 전문가명 추출 수정 + 통합 테스트 + 품질 리포트
+14. `bea8819` — 세션 핸드오프 업데이트
+
+## 현재 테스트 상태
+- **177개 유닛 테스트 통과**
+- **80개 삼프로TV 영상 통합 테스트 통과**
+- test_channel_runner.py는 import 문제로 제외 (기존 이슈)
+
+## 주요 설계 결정
+- 파이프라인 분기는 signal_assessment.video_type 기반
+- ExpertInsight는 휴리스틱 regex (LLM 호출 없음)
+- 삼프로TV 제목 패턴: pipe(`|`) 구분자 우선 매칭
+- 통합 대시보드는 매크로 인사이트를 indicator별 중복 제거 (최고 confidence 유지)
+- 캐시 만료 시 재취득 시도, 실패하면 stale 캐시 fallback
+
+## 통합 테스트 결과 요약 (삼프로TV 80개 영상)
+| 지표 | 결과 |
+|---|---|
+| VideoType 분류 | EXPERT_INTERVIEW 27.5%, STOCK_PICK 15%, NEWS_EVENT 15%, SECTOR 10%, MARKET_REVIEW 5%, MACRO 5%, OTHER 22.5% |
+| Signal Gate | ACTIONABLE 46.2%, NOISE 53.8% |
+| 전문가명 추출 | 18/22 성공 (82%) |
+| 매크로 인사이트 | 49/80 영상에서 감지 (61%) |
+| 파이프라인 크래시 | 0건 |
+
+---
+
+## 다음 세션에서 할 작업 (우선순위순)
+
+### P1 — 즉시 실행 가능
+1. **삼프로TV 쇼 포맷 패턴 추가** — "더블 크루", "마켓 인사이드", "집중 오늘의 주식" 등을 인식해서 OTHER 비율 22.5% → 10% 이하로 줄이기
+2. **실제 자막 확보** — 현재 metadata_fallback만 사용 중. 자막 API 재시도 전략 또는 캐시 warming으로 개선
+3. **크로스 채널 종목 랭킹** — 여러 채널 분석 결과를 합쳐서 aggregate stock ranking 생성
+
+### P2 — 기능 확장
+4. **LLM 기반 전문가 주장 추출** — 현재 휴리스틱만 사용. LLM으로 더 깊은 claim 분석
+5. **전문가 출현 빈도 추적** — 어떤 전문가가 자주 나오는지, 그 전문가의 예측 정확도 추적
+6. **섹터 로테이션 추적** — 시계열 마켓 리뷰 기반 섹터 흐름 분석
+
+### P3 — 고도화
+7. **백테스트/리플레이 엔진** — 시그널 기반 종목 추천의 실제 수익률 검증
+8. **Notification 연동** — analyze-all 결과를 Telegram/Slack으로 알림
+9. **스케줄러 실행** — config.toml 기반 자동 일일 분석
+
+## 중요 파일 목록
 - `AGENTS.md` / `OMX_AGENT_NOTES.md` / `SESSION_HANDOFF.rootbak`
-- `src/omx_brainstorm/models.py` — all dataclasses including ExpertInsight
-- `src/omx_brainstorm/pipeline.py` — VideoType branching, error resilience
-- `src/omx_brainstorm/heuristic_pipeline.py` — fast heuristic lane with VideoType parity
-- `src/omx_brainstorm/expert_interview.py` — pipe-separator expert extraction
-- `src/omx_brainstorm/reporting.py` — render_combined_dashboard, save_combined_dashboard
-- `src/omx_brainstorm/cli.py` — CLI with analyze-all, enhanced output
-- `src/omx_brainstorm/app_config.py` — TOML config with channel registry
-- `src/omx_brainstorm/transcript_cache.py` — cache with is_stale() TTL check
-- `scripts/run_sampro_integration_test.py` — 삼프로TV integration test
-
-## Validation state
-- Unit tests: 177 passed
-- Integration test: 80 삼프로TV videos processed, 0 crashes
-- Expert extraction: 82% accuracy (18/22 correct names)
-- VideoType classification: reasonable distribution, 22.5% OTHER
-
-## Session 4 commits (2026-03-23)
-### Phase 1: Feature additions (삼프로TV 4단계)
-1. `1dba2cf` — VideoType-based pipeline branching + expert interview extraction
-2. `dc6db17` — Combined stock + macro signal unified dashboard report
-3. `9a1b1ee` — Session handoff update
-
-### Phase 2: Quality/functionality improvements
-4. `e5455c4` — Refactor pipeline: extract _run_stock_analysis
-5. `4c08d5c` — Channel-level combined dashboard auto-generation
-6. `da02b88` — Heuristic pipeline VideoType integration
-7. `6d46271` — Transcript cache staleness check with TTL
-
-### Phase 3: Testing, error handling, CLI, extensibility
-8. `cb8ea60` — Unit tests for youtube helpers, stock_registry, evaluation
-9. `a1219e2` — CLI output enhancement with video_type and analysis metadata
-10. `1d5d761` — Error resilience in pipeline extractors
-11. `7749de9` — analyze-all CLI command for multi-channel batch analysis
-12. `798cef2` — Session handoff update
-
-### Phase 4: Integration testing and quality fixes
-13. `de9c062` — Fix expert name extraction + integration test + quality report
-
-## Integration test results (삼프로TV, 80 videos)
-- EXPERT_INTERVIEW: 22 (27.5%) — 성일광, 박현도, 윤도선, 차영주, 박병창 등 추출
-- OTHER: 18 (22.5%) — 삼프로TV 쇼 포맷 패턴 추가로 개선 가능
-- NEWS_EVENT: 12 (15.0%)
-- STOCK_PICK: 12 (15.0%)
-- SECTOR: 8 (10.0%)
-- MARKET_REVIEW: 4 (5.0%)
-- MACRO: 4 (5.0%)
-- Signal: NOISE 53.8% / ACTIONABLE 46.2% (metadata_fallback 기반이라 예상 범위)
-- Macro insights detected in 61% of videos
-
-## Next recommended steps
-1. Add 삼프로TV show name patterns to reduce OTHER classification ("더블 크루" → EXPERT_INTERVIEW, "마켓 인사이드" → MARKET_REVIEW)
-2. Acquire real transcripts for improved signal quality (currently metadata_fallback)
-3. Add LLM-powered expert claim extraction for deeper analysis
-4. Build cross-video expert frequency tracking
-5. Implement aggregated cross-channel stock ranking
-6. Backtest / replay engine
-7. Fix test_channel_runner.py import issues
+- `src/omx_brainstorm/pipeline.py` — 파이프라인 핵심 (VideoType 분기)
+- `src/omx_brainstorm/heuristic_pipeline.py` — 휴리스틱 분석 레인
+- `src/omx_brainstorm/expert_interview.py` — 전문가 추출
+- `src/omx_brainstorm/reporting.py` — 대시보드 렌더링
+- `src/omx_brainstorm/cli.py` — CLI (analyze-all 포함)
+- `src/omx_brainstorm/models.py` — 전체 dataclass
+- `src/omx_brainstorm/app_config.py` — config.toml 파싱
+- `src/omx_brainstorm/macro_signals.py` — 매크로 시그널
+- `src/omx_brainstorm/market_review.py` — 마켓 리뷰 추출
+- `src/omx_brainstorm/title_taxonomy.py` — VideoType 분류
+- `src/omx_brainstorm/signal_gate.py` — 영상 시그널 평가
+- `src/omx_brainstorm/transcript_cache.py` — 자막 캐시 (TTL)
+- `scripts/run_sampro_integration_test.py` — 통합 테스트
+- `config.toml` — 채널/전략/스케줄 설정
+- `tests/` — 177개 유닛 테스트
