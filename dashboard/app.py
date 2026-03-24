@@ -1,6 +1,7 @@
-"""OMX Brainstorm Streamlit Dashboard — visualise output/ pipeline results."""
+"""OMX Brainstorm Streamlit Dashboard — mobile-first responsive design."""
 from __future__ import annotations
 
+import os
 import streamlit as st
 import plotly.express as px
 import pandas as pd
@@ -21,92 +22,250 @@ from data_loader import (
     load_video_titles,
 )
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# -- Page config (no wide layout for mobile) ----------------------------------
 
-st.set_page_config(page_title="OMX Dashboard", page_icon=":chart_with_upwards_trend:", layout="wide")
-st.title("OMX Brainstorm Dashboard")
+st.set_page_config(
+    page_title="OMX Dashboard",
+    page_icon=":chart_with_upwards_trend:",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+)
+
+# -- Mobile-first CSS ---------------------------------------------------------
+
+st.markdown("""
+<style>
+/* ── Base: mobile-first (Galaxy Z Fold7 cover: ~375px logical) ── */
+
+/* Larger base font for touch readability */
+html, body, [class*="css"] {
+    font-size: 16px !important;
+}
+
+/* Streamlit block container: reduce padding on mobile */
+.block-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    padding-top: 1rem !important;
+    max-width: 100% !important;
+}
+
+/* Metric cards: larger text, better spacing */
+[data-testid="stMetric"] {
+    background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+}
+[data-testid="stMetricValue"] {
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.8rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    opacity: 0.7;
+}
+
+/* Tabs: scrollable, larger touch targets */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 0px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+}
+.stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
+    display: none;
+}
+.stTabs [data-baseweb="tab"] {
+    min-height: 48px;
+    padding: 0 16px;
+    font-size: 0.85rem !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Expanders: larger touch target */
+.streamlit-expanderHeader {
+    font-size: 1rem !important;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+}
+
+/* DataFrames: horizontal scroll wrapper */
+[data-testid="stDataFrame"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Plotly charts: minimum height on mobile */
+.js-plotly-plot {
+    min-height: 280px;
+}
+
+/* Buttons and inputs: 48px min touch target (WCAG) */
+.stButton > button,
+.stTextInput > div > div > input,
+.stSelectbox > div > div {
+    min-height: 48px !important;
+    font-size: 1rem !important;
+}
+
+/* Hide sidebar toggle hint on mobile — we use tabs instead */
+[data-testid="collapsedControl"] {
+    display: none;
+}
+
+/* ── Tablet/desktop enhancements (Galaxy Z Fold7 inner: ~600px+) ── */
+@media (min-width: 600px) {
+    .block-container {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+        max-width: 900px !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1.6rem !important;
+    }
+}
+
+/* ── Desktop (>960px) ── */
+@media (min-width: 960px) {
+    .block-container {
+        max-width: 1100px !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# -- Auth gate ----------------------------------------------------------------
+
+DASHBOARD_TOKEN = os.environ.get("DASHBOARD_TOKEN", "jS-GpK2lpXoeLGGm17hRSmmPoAQxahs3")
+
+query_token = st.query_params.get("token", "")
+if query_token != DASHBOARD_TOKEN:
+    st.error("Access denied. Append ?token=<your-token> to the URL.")
+    st.stop()
+
+st.title("OMX Dashboard")
 
 OUTPUT_DIR = DEFAULT_OUTPUT_DIR
 
-# ── Sidebar ──────────────────────────────────────────────────────────────────
+# -- Load channels (replaces sidebar) -----------------------------------------
 
-st.sidebar.header("Settings")
 available_channels = get_available_channels(OUTPUT_DIR)
 if not available_channels:
     st.warning("No output data found. Run the pipeline first.")
     st.stop()
 
-# ── Tabs ─────────────────────────────────────────────────────────────────────
+# -- Helper: responsive metrics ------------------------------------------------
 
-tab_names = ["Overview", "Stock Ranking", "Macro Signals", "Expert Insights"] + [
-    f"Channel: {ch}" for ch in available_channels
-] + ["Channel Comparison"]
 
-tabs = st.tabs(tab_names)
+def render_metrics_row(metrics: list[tuple[str, str]], cols_desktop: int = 4) -> None:
+    """Render metrics in a 2-column grid (mobile) or N-column grid (desktop).
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# TAB 0 — Overview (content type distribution)
-# ═══════════════════════════════════════════════════════════════════════════════
+    Each item is a (label, value) tuple.
+    Streamlit auto-stacks columns on very narrow viewports, but we help
+    by using 2 columns as the base to keep metrics readable on ~375px screens.
+    """
+    col_count = min(len(metrics), cols_desktop)
+    cols = st.columns(col_count)
+    for i, (label, value) in enumerate(metrics):
+        cols[i % col_count].metric(label, value)
+
+
+def render_chart(fig, key: str | None = None) -> None:
+    """Render a Plotly chart with mobile-friendly defaults."""
+    fig.update_layout(
+        margin=dict(l=16, r=16, t=40, b=16),
+        font=dict(size=13),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.25,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=11),
+        ),
+        height=320,
+    )
+    st.plotly_chart(fig, use_container_width=True, key=key)
+
+
+# -- Build tab names (short labels for mobile) --------------------------------
+
+tab_labels = [
+    "Overview",
+    "Ranking",
+    "Macro",
+    "Expert",
+] + [ch[:12] for ch in available_channels] + ["Compare"]
+
+tabs = st.tabs(tab_labels)
+
+# ==============================================================================
+# TAB 0 — Overview
+# ==============================================================================
 
 with tabs[0]:
-    st.header("Content Type Distribution")
+    st.header("Overview")
     report = load_integration_report(OUTPUT_DIR)
 
     if report:
-        col1, col2 = st.columns(2)
-
-        # Pie chart — video type distribution
+        # Pie chart — video type distribution (full width on mobile)
         type_dist = extract_type_distribution(report)
         if type_dist:
             df_type = pd.DataFrame(
                 {"type": list(type_dist.keys()), "count": list(type_dist.values())}
             )
-            with col1:
-                fig_pie = px.pie(
-                    df_type, names="type", values="count",
-                    title="Video Type Distribution",
-                    color_discrete_sequence=px.colors.qualitative.Set2,
-                )
-                st.plotly_chart(fig_pie, use_container_width=True)
+            fig_pie = px.pie(
+                df_type, names="type", values="count",
+                title="Video Type Distribution",
+                color_discrete_sequence=px.colors.qualitative.Set2,
+            )
+            render_chart(fig_pie, key="overview_pie")
 
-        # Bar chart — signal distribution
+        # Bar chart — signal distribution (full width on mobile)
         sig_dist = extract_signal_distribution(report)
         if sig_dist:
             df_sig = pd.DataFrame(
                 {"signal": list(sig_dist.keys()), "count": list(sig_dist.values())}
             )
-            with col2:
-                fig_bar = px.bar(
-                    df_sig, x="signal", y="count",
-                    title="Signal Distribution (ACTIONABLE vs NOISE)",
-                    color="signal",
-                    color_discrete_map={"ACTIONABLE": "#2ecc71", "NOISE": "#e74c3c"},
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
+            fig_bar = px.bar(
+                df_sig, x="signal", y="count",
+                title="Signal Distribution",
+                color="signal",
+                color_discrete_map={"ACTIONABLE": "#2ecc71", "NOISE": "#e74c3c"},
+            )
+            render_chart(fig_bar, key="overview_bar")
 
-        # Summary metrics
+        # Summary metrics — 2x2 grid on mobile, 4-col on desktop
         st.subheader("Pipeline Summary")
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total Videos", report.get("total_videos", 0))
-        m2.metric("Analyzable", report.get("analyzable_count", 0))
-        m3.metric("Expert Extraction", report.get("expert_extraction_rate", "N/A"))
-        m4.metric("Macro Coverage", report.get("macro_coverage", "N/A"))
+        render_metrics_row([
+            ("Total Videos", str(report.get("total_videos", 0))),
+            ("Analyzable", str(report.get("analyzable_count", 0))),
+            ("Expert Rate", str(report.get("expert_extraction_rate", "N/A"))),
+            ("Macro Coverage", str(report.get("macro_coverage", "N/A"))),
+        ], cols_desktop=4)
 
-        # Per-video table
+        # Per-video table — compact columns for mobile
         per_video = extract_per_video(report)
         if per_video:
-            st.subheader("Per-Video Signal Breakdown")
+            st.subheader("Per-Video Breakdown")
             df_pv = pd.DataFrame(per_video)
-            display_cols = [c for c in ["video_id", "title", "video_type", "signal_class", "signal_score", "should_analyze", "macro_count", "expert_count"] if c in df_pv.columns]
-            st.dataframe(df_pv[display_cols], use_container_width=True, height=400)
+            mobile_cols = [c for c in ["title", "video_type", "signal_class", "signal_score"] if c in df_pv.columns]
+            st.dataframe(df_pv[mobile_cols] if mobile_cols else df_pv, use_container_width=True, height=350)
 
     else:
         st.info("No integration report found. Run the sampro pipeline to generate data.")
 
-    # Video titles label distribution (from sampro_video_titles.json)
+    # Video titles label distribution
     titles_data = load_video_titles(OUTPUT_DIR)
     if titles_data and "titles" in titles_data:
-        st.subheader("Title-Based Label Distribution")
+        st.subheader("Title Labels")
         all_labels: list[str] = []
         for t in titles_data["titles"]:
             all_labels.extend(t.get("labels", []))
@@ -115,79 +274,85 @@ with tabs[0]:
             label_counts.columns = ["label", "count"]
             fig_labels = px.bar(
                 label_counts, x="label", y="count",
-                title="Content Labels from Video Titles",
+                title="Content Labels",
                 color="label",
                 color_discrete_sequence=px.colors.qualitative.Pastel,
             )
-            st.plotly_chart(fig_labels, use_container_width=True)
+            render_chart(fig_labels, key="overview_labels")
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # TAB 1 — Stock Ranking
-# ═══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 
 with tabs[1]:
     st.header("Stock Ranking")
-    ranking_channel = st.selectbox("Select channel for ranking", available_channels, key="rank_ch")
+    ranking_channel = st.selectbox("Channel", available_channels, key="rank_ch")
     data_30d = load_30d_results(ranking_channel, OUTPUT_DIR)
     ranking = extract_cross_video_ranking(data_30d)
 
     if ranking:
         df_rank = pd.DataFrame(ranking)
-        # Filter
-        filter_text = st.text_input("Filter by ticker or company name", "", key="rank_filter")
+        filter_text = st.text_input("Filter ticker / company", "", key="rank_filter")
         if filter_text:
             mask = df_rank.apply(lambda row: filter_text.upper() in str(row.values).upper(), axis=1)
             df_rank = df_rank[mask]
 
-        st.dataframe(
-            df_rank.sort_values(by="total_score", ascending=False) if "total_score" in df_rank.columns else df_rank,
-            use_container_width=True,
-            height=500,
-        )
-    else:
-        st.info(f"No ranking data for channel '{ranking_channel}'. Run the 30-day pipeline first.")
+        if "total_score" in df_rank.columns:
+            df_rank = df_rank.sort_values(by="total_score", ascending=False)
 
-# ═══════════════════════════════════════════════════════════════════════════════
+        st.dataframe(df_rank, use_container_width=True, height=450)
+    else:
+        st.info(f"No ranking data for '{ranking_channel}'.")
+
+# ==============================================================================
 # TAB 2 — Macro Signals
-# ═══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 
 with tabs[2]:
-    st.header("Macro Signal Summary")
-    macro_channel = st.selectbox("Select channel", available_channels, key="macro_ch")
+    st.header("Macro Signals")
+    macro_channel = st.selectbox("Channel", available_channels, key="macro_ch")
     macro_30d = load_30d_results(macro_channel, OUTPUT_DIR)
     videos = extract_videos(macro_30d)
     macro_signals = extract_macro_signals(videos)
 
     if macro_signals:
         df_macro = pd.DataFrame(macro_signals)
-        display_cols = [c for c in ["indicator", "direction", "label", "confidence", "sentiment", "beneficiary_sectors", "source_video"] if c in df_macro.columns]
-        st.dataframe(df_macro[display_cols] if display_cols else df_macro, use_container_width=True, height=400)
+        # Show fewer columns on mobile
+        mobile_cols = [c for c in ["indicator", "direction", "confidence", "sentiment"] if c in df_macro.columns]
+        st.dataframe(df_macro[mobile_cols] if mobile_cols else df_macro, use_container_width=True, height=350)
 
-        # Direction summary
         if "direction" in df_macro.columns:
             st.subheader("Direction Breakdown")
             dir_counts = df_macro["direction"].value_counts().reset_index()
             dir_counts.columns = ["direction", "count"]
-            fig_dir = px.pie(dir_counts, names="direction", values="count", title="Macro Signal Directions",
-                             color_discrete_map={"UP": "#2ecc71", "DOWN": "#e74c3c", "NEUTRAL": "#95a5a6"})
-            st.plotly_chart(fig_dir, use_container_width=True)
+            fig_dir = px.pie(
+                dir_counts, names="direction", values="count",
+                title="Macro Signal Directions",
+                color_discrete_map={"UP": "#2ecc71", "DOWN": "#e74c3c", "NEUTRAL": "#95a5a6"},
+            )
+            render_chart(fig_dir, key="macro_pie")
     else:
         st.info(f"No macro signals for '{macro_channel}'.")
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # TAB 3 — Expert Insights
-# ═══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 
 with tabs[3]:
     st.header("Expert Insights")
-    expert_channel = st.selectbox("Select channel", available_channels, key="expert_ch")
+    expert_channel = st.selectbox("Channel", available_channels, key="expert_ch")
     expert_30d = load_30d_results(expert_channel, OUTPUT_DIR)
     expert_videos = extract_videos(expert_30d)
     insights = extract_expert_insights(expert_videos)
 
     if insights:
         for i, insight in enumerate(insights):
-            with st.expander(f"{insight.get('expert_name', 'Unknown')} — {insight.get('affiliation', '')}", expanded=(i < 3)):
+            expert_name = insight.get("expert_name", "Unknown")
+            affiliation = insight.get("affiliation", "")
+            label = f"{expert_name} — {affiliation}" if affiliation else expert_name
+
+            with st.expander(label, expanded=(i < 2)):
+                # Use vertical layout instead of cramped columns
                 st.markdown(f"**Topic:** {insight.get('topic', 'N/A')}")
                 st.markdown(f"**Sentiment:** {insight.get('sentiment', 'NEUTRAL')}")
                 st.markdown(f"**Source:** {insight.get('source_video', '')}")
@@ -205,19 +370,20 @@ with tabs[3]:
                         direction = sc.get("direction", "NEUTRAL")
                         icon = {"BULLISH": ":green_circle:", "BEARISH": ":red_circle:"}.get(direction, ":white_circle:")
                         conf = sc.get("confidence", 0)
-                        st.markdown(f"  {icon} **{sc.get('claim', '')}** (confidence: {conf:.0%}, {direction})")
+                        st.markdown(f"{icon} **{sc.get('claim', '')}**")
+                        st.caption(f"Confidence: {conf:.0%} | {direction}")
                         if sc.get("reasoning"):
-                            st.caption(f"    Reasoning: {sc['reasoning']}")
+                            st.caption(f"Reasoning: {sc['reasoning']}")
 
                 tickers = insight.get("mentioned_tickers", [])
                 if tickers:
-                    st.markdown(f"**Mentioned Tickers:** {', '.join(tickers)}")
+                    st.markdown(f"**Tickers:** {', '.join(tickers)}")
     else:
         st.info(f"No expert insights for '{expert_channel}'.")
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # CHANNEL TABS (dynamic)
-# ═══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 
 for idx, ch_slug in enumerate(available_channels):
     tab_idx = 4 + idx
@@ -229,37 +395,41 @@ for idx, ch_slug in enumerate(available_channels):
             st.info(f"No 30-day data for '{ch_slug}'.")
             continue
 
-        # Channel info
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Channel", ch_data.get("channel_name", ch_slug))
-        c2.metric("Window", f"{ch_data.get('window_days', 30)} days")
-        c3.metric("Generated", ch_data.get("generated_at", "N/A"))
+        # Channel info — 2-col on mobile (3rd wraps)
+        render_metrics_row([
+            ("Channel", ch_data.get("channel_name", ch_slug)),
+            ("Window", f"{ch_data.get('window_days', 30)}d"),
+            ("Generated", ch_data.get("generated_at", "N/A")),
+        ], cols_desktop=3)
 
-        # Quality scorecard
+        # Quality scorecard — 2-col on mobile, stacked
         scorecard = ch_data.get("quality_scorecard", {})
         if scorecard:
             st.subheader("Quality Scorecard")
-            sc1, sc2, sc3, sc4, sc5 = st.columns(5)
-            sc1.metric("Overall", f"{scorecard.get('overall', 0):.1f}")
-            sc2.metric("Transcript", f"{scorecard.get('transcript_coverage', 0):.1f}")
-            sc3.metric("Actionable Density", f"{scorecard.get('actionable_density', 0):.1f}")
-            sc4.metric("Ranking Power", f"{scorecard.get('ranking_predictive_power', 0):.1f}")
-            sc5.metric("Horizon Adequacy", f"{scorecard.get('horizon_adequacy', 0):.1f}")
+            render_metrics_row([
+                ("Overall", f"{scorecard.get('overall', 0):.1f}"),
+                ("Transcript", f"{scorecard.get('transcript_coverage', 0):.1f}"),
+                ("Actionable", f"{scorecard.get('actionable_density', 0):.1f}"),
+                ("Ranking", f"{scorecard.get('ranking_predictive_power', 0):.1f}"),
+            ], cols_desktop=4)
 
-        # Videos in this channel
+        # Videos
         ch_videos = extract_videos(ch_data)
         if ch_videos:
             st.subheader(f"Videos ({len(ch_videos)})")
 
-            # Signal distribution for this channel
             signal_classes = [v.get("video_signal_class", "UNKNOWN") for v in ch_videos]
             sig_series = pd.Series(signal_classes).value_counts().reset_index()
             sig_series.columns = ["signal", "count"]
-            fig = px.bar(sig_series, x="signal", y="count", title=f"{ch_slug} Signal Distribution",
-                         color="signal", color_discrete_map={"ACTIONABLE": "#2ecc71", "NOISE": "#e74c3c"})
-            st.plotly_chart(fig, use_container_width=True)
+            fig = px.bar(
+                sig_series, x="signal", y="count",
+                title=f"{ch_slug} Signals",
+                color="signal",
+                color_discrete_map={"ACTIONABLE": "#2ecc71", "NOISE": "#e74c3c"},
+            )
+            render_chart(fig, key=f"ch_{ch_slug}_signals")
 
-            # Timeline: videos by published date
+            # Timeline
             dates = [v.get("published_at", "") for v in ch_videos]
             if any(dates):
                 df_timeline = pd.DataFrame({"date": dates, "signal": signal_classes})
@@ -268,15 +438,15 @@ for idx, ch_slug in enumerate(available_channels):
                     timeline_counts = df_timeline.groupby(["date", "signal"]).size().reset_index(name="count")
                     fig_timeline = px.bar(
                         timeline_counts, x="date", y="count", color="signal",
-                        title=f"{ch_slug} — 30-Day Video Timeline",
+                        title=f"{ch_slug} — 30-Day Timeline",
                         color_discrete_map={"ACTIONABLE": "#2ecc71", "NOISE": "#e74c3c"},
                     )
-                    st.plotly_chart(fig_timeline, use_container_width=True)
+                    render_chart(fig_timeline, key=f"ch_{ch_slug}_timeline")
 
-            # Video table
+            # Video table — mobile-friendly columns
             df_vids = pd.DataFrame(ch_videos)
-            display_cols = [c for c in ["video_id", "title", "video_signal_class", "signal_score", "published_at"] if c in df_vids.columns]
-            st.dataframe(df_vids[display_cols] if display_cols else df_vids, use_container_width=True, height=400)
+            mobile_cols = [c for c in ["title", "video_signal_class", "signal_score", "published_at"] if c in df_vids.columns]
+            st.dataframe(df_vids[mobile_cols] if mobile_cols else df_vids, use_container_width=True, height=350)
 
         # Ranking
         ch_ranking = extract_cross_video_ranking(ch_data)
@@ -284,45 +454,52 @@ for idx, ch_slug in enumerate(available_channels):
             st.subheader("Cross-Video Ranking")
             st.dataframe(pd.DataFrame(ch_ranking), use_container_width=True, height=300)
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # LAST TAB — Channel Comparison
-# ═══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 
 with tabs[-1]:
-    st.header("Channel Comparison (30-Day)")
+    st.header("Channel Comparison")
     comp_data = load_channel_comparison(OUTPUT_DIR)
 
     if comp_data and "channels" in comp_data:
         channels_info = comp_data["channels"]
 
-        # Comparison table
         rows = []
         for slug, info in channels_info.items():
             row = {"channel": info.get("display_name", slug)}
-            row["total_videos"] = info.get("total_videos", 0)
-            row["actionable_videos"] = info.get("actionable_videos", 0)
-            row["actionable_ratio"] = info.get("actionable_ratio", 0.0)
+            row["videos"] = info.get("total_videos", 0)
+            row["actionable"] = info.get("actionable_videos", 0)
+            row["ratio"] = f"{info.get('actionable_ratio', 0.0):.0%}"
             sc = info.get("quality_scorecard", {})
-            row["overall_quality"] = sc.get("overall", 0.0)
-            row["transcript_coverage"] = sc.get("transcript_coverage", 0.0)
-            row["ranking_power"] = sc.get("ranking_predictive_power", 0.0)
+            row["quality"] = f"{sc.get('overall', 0.0):.1f}"
             rows.append(row)
 
         df_comp = pd.DataFrame(rows)
         st.dataframe(df_comp, use_container_width=True)
 
-        # Radar chart for quality scorecards
+        # Quality comparison chart
         if len(rows) >= 2:
-            st.subheader("Quality Scorecard Comparison")
-            categories = ["overall_quality", "transcript_coverage", "ranking_power"]
-            fig_radar = px.bar(
-                df_comp.melt(id_vars="channel", value_vars=categories, var_name="metric", value_name="score"),
-                x="metric", y="score", color="channel", barmode="group",
-                title="Channel Quality Metrics",
+            st.subheader("Quality Comparison")
+            # Rebuild with numeric values for charting
+            chart_rows = []
+            for slug, info in channels_info.items():
+                sc = info.get("quality_scorecard", {})
+                name = info.get("display_name", slug)
+                for metric in ["overall", "transcript_coverage", "ranking_predictive_power"]:
+                    chart_rows.append({
+                        "channel": name,
+                        "metric": metric.replace("_", " ").title(),
+                        "score": sc.get(metric, 0.0),
+                    })
+            df_chart = pd.DataFrame(chart_rows)
+            fig_comp = px.bar(
+                df_chart, x="metric", y="score", color="channel",
+                barmode="group", title="Channel Quality Metrics",
             )
-            st.plotly_chart(fig_radar, use_container_width=True)
+            render_chart(fig_comp, key="compare_chart")
 
-        st.markdown(f"**More Actionable Channel:** {comp_data.get('more_actionable_channel', 'N/A')}")
-        st.markdown(f"**Better Ranking Channel:** {comp_data.get('better_ranking_channel', 'N/A')}")
+        st.markdown(f"**More Actionable:** {comp_data.get('more_actionable_channel', 'N/A')}")
+        st.markdown(f"**Better Ranking:** {comp_data.get('better_ranking_channel', 'N/A')}")
     else:
         st.info("No channel comparison data found.")
