@@ -85,12 +85,20 @@ class YoutubeResolver:
             video_id = entry.get("id")
             if not video_id:
                 continue
-            video = self.resolve_video(video_id)
-            published = _parse_upload_date(video.published_at)
-            if published is None:
-                continue
-            if published < cutoff:
+            upload_date = str(entry.get("upload_date") or "")
+            published = _parse_upload_date(upload_date)
+            if published is not None and published < cutoff:
                 break
+            video = VideoInput(
+                video_id=video_id,
+                title=entry.get("title") or video_id,
+                url=f"https://www.youtube.com/watch?v={video_id}",
+                channel_id=entry.get("channel_id") or entry.get("uploader_id"),
+                channel_title=entry.get("channel") or entry.get("uploader"),
+                published_at=upload_date,
+                description=entry.get("description"),
+                tags=list(entry.get("tags") or []),
+            )
             videos.append(video)
         return videos
 

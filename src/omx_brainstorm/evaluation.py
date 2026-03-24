@@ -11,7 +11,10 @@ def ranking_validation(ranking: list, end_date: str) -> dict[str, Any]:
     """Run signal-date aware backtests over ranked channel ideas."""
     if not ranking:
         return {}
-    start_date = min(item.first_signal_at for item in ranking if item.first_signal_at)
+    valid_dates = [item.first_signal_at for item in ranking if item.first_signal_at]
+    if not valid_dates:
+        return {}
+    start_date = min(valid_dates)
     ideas = [
         BacktestIdea(
             ticker=item.ticker,

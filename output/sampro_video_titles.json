@@ -3,9 +3,168 @@
   "years": 3,
   "titles": [
     {
+      "video_id": "ADSkGlnL8ic",
+      "title": "압도적인 외형 확장...중장기적 실적 도약 기대되는 기업은?  | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=ADSkGlnL8ic",
+      "labels": [
+        "투자종목",
+        "경제전망"
+      ]
+    },
+    {
+      "video_id": "MoxSWrxmGKg",
+      "title": "견고한 반도체 시장 펀더멘털...실적 대비 저평가된 반도체 기업은? | 김장열 유니스토리자산운용 본부장 [집중 오늘의 주식]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=MoxSWrxmGKg",
+      "labels": [
+        "투자종목",
+        "산업분석",
+        "시장리뷰"
+      ]
+    },
+    {
+      "video_id": "V3oTIA4XQ2o",
+      "title": "[📖책 이벤트🎊] 변동성은 감당해야 할 숙명! '방향성'이 맞다면 흔들리지 마세요 | 강대권 라이프자산운용 대표 [여의도 인사이트]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=V3oTIA4XQ2o",
+      "labels": [
+        "전문가인터뷰"
+      ]
+    },
+    {
+      "video_id": "dryYuxpvZr0",
+      "title": "[3월 24일 마감시황] 외인 없이도 나름(?) 선방! 트럼프 '타코'에 국내 증시는 하루 만에 40% 복구 | 홍선애, 김장열, 이재규 [클로징벨 라이브]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=dryYuxpvZr0",
+      "labels": [
+        "시장리뷰",
+        "전문가인터뷰"
+      ]
+    },
+    {
+      "video_id": "ODMcNPeK04E",
+      "title": "“단 하루, 전문가들과 만나는 시간\" 2026 최고 전략가 릴레이 세미나",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=ODMcNPeK04E",
+      "labels": [
+        "기타"
+      ]
+    },
+    {
+      "video_id": "UajJLZwOSh4",
+      "title": "가상자산 과세, 지금 상황 제대로 정리해드립니다 l 서동주, 김동환 이장원 세무법인 리치 대표 [크립토PLUS]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=UajJLZwOSh4",
+      "labels": [
+        "전문가인터뷰"
+      ]
+    },
+    {
+      "video_id": "XToRV51X9CA",
+      "title": "트럼프 협상 주장, 이란은 전면 부인…전쟁보다 중요한 디지털자산의 핵심 변수 l 서동주,김동환, 김제이 블록미디어 편집장 [크립토PLUS]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=XToRV51X9CA",
+      "labels": [
+        "기타"
+      ]
+    },
+    {
+      "video_id": "r3MsRzDEZxo",
+      "title": "정리하고 전부 팔까요? 변동성 장세 속 이렇게 투자하면 됩니다._26.03.24. | 김종문, 여도은, 허재무 [아침N투자]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=r3MsRzDEZxo",
+      "labels": [
+        "시장리뷰"
+      ]
+    },
+    {
+      "video_id": "7glInXnjkvU",
+      "title": "올해와 내년은 우주로 가득한 시기될 것| 김승현 하나자산운용 ETF/퀀트솔루션 본부장",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=7glInXnjkvU",
+      "labels": [
+        "기타"
+      ]
+    },
+    {
+      "video_id": "arPgTDBNcLU",
+      "title": "코스피의 저력, 외국인은 이미 알고 있다 | 장우진 작가 [더블 체크]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=arPgTDBNcLU",
+      "labels": [
+        "기타"
+      ]
+    },
+    {
+      "video_id": "T4pza9iVX1Y",
+      "title": "또 시작된 트럼프, 그래도 담자 | 백인재 하나증권 영업부금융센터 부센터장 [더블 크루]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=T4pza9iVX1Y",
+      "labels": [
+        "기타"
+      ]
+    },
+    {
+      "video_id": "WYTdR8seEio",
+      "title": "유가 급락·환율 안정세…흔들린 코스피 제자리 찾나? | 박병창 교보증권 이사 [마켓 인사이드]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=WYTdR8seEio",
+      "labels": [
+        "매크로",
+        "전문가인터뷰"
+      ]
+    },
+    {
+      "video_id": "0a-ZB3gYZrk",
+      "title": "LG화학 여수2공장 셧다운…석유화학 공급망 위기 현실로 | 롯데머티-두산 손잡고 엔비디아향 고성능 PCB 개발…동박의 부활 | 권순우 삼프로TV 취재팀장 [뉴스3]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=0a-ZB3gYZrk",
+      "labels": [
+        "기타"
+      ]
+    },
+    {
+      "video_id": "iCqHLdy-_5Y",
+      "title": "트럼프 \"이란과 쟁점 합의\"...이스라엘은 훼방꾼? | 박현도 서강대 유로메나연구소 교수 [글로벌 인터뷰]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=iCqHLdy-_5Y",
+      "labels": [
+        "전문가인터뷰"
+      ]
+    },
+    {
+      "video_id": "xVLgK7RbwjU",
+      "title": "[26.03.24.시황] 트럼프 “이란과 협상 잘 되고 있다”…여전히 5일 뒤를 걱정하는 시장 [월가 뉴스레터]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=xVLgK7RbwjU",
+      "labels": [
+        "시장리뷰"
+      ]
+    },
+    {
+      "video_id": "V2_6h1dFjRs",
+      "title": "주총 시즌 막바지...공시 속 ‘전환사채’가 투자 힌트 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=V2_6h1dFjRs",
+      "labels": [
+        "투자종목",
+        "경제전망"
+      ]
+    },
+    {
+      "video_id": "cuYTt8LnOyA",
+      "title": "투자 심리 위축 됐지만...긍정적인 수치에 주목해보세요 | 이재규 SK증권 경인지점 PB차장 [집중 오늘의 주식]",
+      "published_at": null,
+      "url": "https://www.youtube.com/watch?v=cuYTt8LnOyA",
+      "labels": [
+        "투자종목"
+      ]
+    },
+    {
       "video_id": "rkLWgsW7_eI",
       "title": "트럼프 레임덕 시나리오가 가져온 에너지 대전환! 구조적 주도주 바뀐다 | 한병화 유진투자증권 이사 [여의도 인사이트]",
-      "published_at": "2026-03-23",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=rkLWgsW7_eI",
       "labels": [
         "전문가인터뷰"
@@ -14,7 +173,7 @@
     {
       "video_id": "6rymriIEv_Y",
       "title": "[3월 23일 마감시황] 전쟁 장기화는 없다! 트럼프 발목잡은 금리...튼튼한 펀더멘털과 저렴한 밸류에이션에 주목 | 홍선애, 김장열, 이권희 [클로징벨 라이브]",
-      "published_at": "2026-03-23",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=6rymriIEv_Y",
       "labels": [
         "매크로",
@@ -24,8 +183,8 @@
     },
     {
       "video_id": "tIYk1swzIQI",
-      "title": "웹3에서 NFT·메타버스는 사라졌다… 스테이블코인은? l 서동주, 김동환, 김재윤 슈퍼블록 대표 [크립토플러스]",
-      "published_at": "2026-03-23",
+      "title": "웹3에서 NFT·메타버스는 사라졌다… 스테이블코인은? l 서동주, 김동환, 김재윤 슈퍼블록 대표 [크립토PLUS]",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=tIYk1swzIQI",
       "labels": [
         "전문가인터뷰"
@@ -33,8 +192,8 @@
     },
     {
       "video_id": "SM8Os2ujEn8",
-      "title": "트럼프 48시간 최후통첩 \"호르무즈 개방해라 \" 흔들리는 비트코인. 차기 한은 총재 임명,  스테이블코인 과거 발언 그대로 갈까?, l 서동주, 김동환, 박상혁 [크립토플러스]",
-      "published_at": "2026-03-23",
+      "title": "트럼프 48시간 최후통첩 \"호르무즈 개방해라 \" 흔들리는 비트코인. 차기 한국은행 총재 임명,  스테이블코인 과거 발언 그대로 갈까?, l 서동주, 김동환, 박상혁 [크립토플러스]",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=SM8Os2ujEn8",
       "labels": [
         "기타"
@@ -43,7 +202,7 @@
     {
       "video_id": "UFW-jCSwxLc",
       "title": "미국증시는 바닥 시그널 나왔다? 결국 하락 시 투자할 투자처는 어디?_26.03.23. | 이혁진, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-23",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=UFW-jCSwxLc",
       "labels": [
         "시장리뷰"
@@ -52,7 +211,7 @@
     {
       "video_id": "kw8wJOc1btY",
       "title": "반도체를 파는 시점은, 이것이 결정합니다 | 하나증권 리서치센터 글로벌투자분석실 이재만 실장 [글로벌 인터뷰]",
-      "published_at": "2026-03-23",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=kw8wJOc1btY",
       "labels": [
         "산업분석",
@@ -62,7 +221,7 @@
     {
       "video_id": "eDugVuuonCo",
       "title": "자고 일어나면 일 터지는 장, 어떻게 해야 할까? | 김정환 하나증권 Club1WM센터 과장 [더블 크루]",
-      "published_at": "2026-03-23",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=eDugVuuonCo",
       "labels": [
         "기타"
@@ -71,7 +230,7 @@
     {
       "video_id": "JpLYSSLfpcw",
       "title": "모든 게 파괴되고 있다, 다음을 보면? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-23",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=JpLYSSLfpcw",
       "labels": [
         "기타"
@@ -80,7 +239,7 @@
     {
       "video_id": "hXoLNTU9BQE",
       "title": "‘48시간 통첩’에 중동 전쟁 악화 우려…글로벌 증시 이번주 어디로 갈까 | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-23",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=hXoLNTU9BQE",
       "labels": [
         "전문가인터뷰"
@@ -89,7 +248,7 @@
     {
       "video_id": "m48lkmvpPnI",
       "title": "전쟁 추경 25조…유류세 인하와 바우처 카드로 유가 충격 완화 | 손정의 \"750조원 투자, 미국에 데이터센터 건립\" | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-22",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=m48lkmvpPnI",
       "labels": [
         "기타"
@@ -98,7 +257,7 @@
     {
       "video_id": "5kIioBTF1PQ",
       "title": "중동 핵시설 '난타전'…트럼프 이란 회담 준비? 48시간 위협 속 전쟁의 앞날은? | 박현도 서강대 유로메나연구소 교수 [글로벌 인터뷰]",
-      "published_at": "2026-03-22",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=5kIioBTF1PQ",
       "labels": [
         "전문가인터뷰"
@@ -107,7 +266,7 @@
     {
       "video_id": "_AoCW4hCv28",
       "title": "[26.03.23.시황] 미국, 이란에 해군 수천명 파견해 지상전 준비?...주말 사이에 나온 메시지는 TACO? [월가 뉴스레터]",
-      "published_at": "2026-03-22",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=_AoCW4hCv28",
       "labels": [
         "기타"
@@ -116,7 +275,7 @@
     {
       "video_id": "z1QB2PNkqGM",
       "title": "왜 그들은 서울시장이 되려하는가? | 박주민 더불어민주당 의원 [더 피플]",
-      "published_at": "2026-03-22",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=z1QB2PNkqGM",
       "labels": [
         "시장리뷰"
@@ -125,7 +284,7 @@
     {
       "video_id": "w5F_3X_zlDo",
       "title": "왜 그들은 서울시장이 되려하는가? | 김영배 더불어민주당 의원 [더 피플]",
-      "published_at": "2026-03-22",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=w5F_3X_zlDo",
       "labels": [
         "시장리뷰"
@@ -134,7 +293,7 @@
     {
       "video_id": "XzVbjdkF5xw",
       "title": "왜 그들은 서울시장이 되려하는가? | 전현희 더불어민주당 의원 [더 피플]",
-      "published_at": "2026-03-22",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=XzVbjdkF5xw",
       "labels": [
         "시장리뷰"
@@ -143,7 +302,7 @@
     {
       "video_id": "P9LSUz_08g0",
       "title": "이란전쟁은 오히려 물가를 떨어뜨린다고? | 문홍철 DB증권 자산전략팀장 [신과대화]",
-      "published_at": "2026-03-22",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=P9LSUz_08g0",
       "labels": [
         "기타"
@@ -152,7 +311,7 @@
     {
       "video_id": "Gh9reLirtac",
       "title": "이 난리도 버티는 코스피, 다음은 엄청날 것 | 차영주 와이즈경제연구소 소장 [긴급인터뷰]",
-      "published_at": "2026-03-22",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Gh9reLirtac",
       "labels": [
         "경제전망",
@@ -162,7 +321,7 @@
     {
       "video_id": "e7frFm0oR28",
       "title": "전쟁, 유가, 금리, 그리고 삼성전자와 하이닉스의 매트릭스는? | 장우진 작가 [긴급인터뷰]",
-      "published_at": "2026-03-21",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=e7frFm0oR28",
       "labels": [
         "매크로",
@@ -172,7 +331,7 @@
     {
       "video_id": "VAFcAlv_X10",
       "title": "주식시장에 대한 애정, 이재명 대통령 다음은 접니다 | 김현정 더불어민주당 의원 [더 피플]",
-      "published_at": "2026-03-21",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=VAFcAlv_X10",
       "labels": [
         "투자종목",
@@ -182,7 +341,7 @@
     {
       "video_id": "6-oVFz_CezM",
       "title": "공모주 청약 안 할 이유 있나요? | 윤도선 엠엘투자자문 대표 [주말인터뷰]",
-      "published_at": "2026-03-21",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=6-oVFz_CezM",
       "labels": [
         "전문가인터뷰"
@@ -191,7 +350,7 @@
     {
       "video_id": "3AdiPH5v3_4",
       "title": "이란 가스전 공격… ‘에너지 전쟁’ 시작됐다? | 성일광 서강대학교 유로메나연구소 교수 [긴급인터뷰]",
-      "published_at": "2026-03-21",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=3AdiPH5v3_4",
       "labels": [
         "전문가인터뷰"
@@ -200,7 +359,7 @@
     {
       "video_id": "s32ZFKv5t1Y",
       "title": "수렁으로 빠진 미국, 이렇게 될 것입니다  | 알파고 시나씨 중동 전문기자 [긴급인터뷰]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=s32ZFKv5t1Y",
       "labels": [
         "전문가인터뷰"
@@ -209,7 +368,7 @@
     {
       "video_id": "tBA6ziTO6p0",
       "title": "돈은 거짓말하지 않는다! 역대급 'CAPEX 증설'로 성장 기대감 커진 3대장 ㅣ 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=tBA6ziTO6p0",
       "labels": [
         "투자종목",
@@ -219,7 +378,7 @@
     {
       "video_id": "dP_dYrc1LMs",
       "title": "변동성 속 투자 기회를 제공하는 업종?ㅣ 이재규 SK증권 경인지점 PB차장 [집중 오늘의 주식]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=dP_dYrc1LMs",
       "labels": [
         "투자종목"
@@ -228,7 +387,7 @@
     {
       "video_id": "g-F4UdEqS1g",
       "title": "고유가·강달러에도 수혜주가 있다...4월 실적 시즌 대비 핵심 투자 전략 | 차영주 와이즈경제연구소장 [여의도 인사이트]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=g-F4UdEqS1g",
       "labels": [
         "투자종목",
@@ -238,7 +397,7 @@
     {
       "video_id": "BdY60hwmwo4",
       "title": "[3월 20일 마감시황] 이익 탄탄 실적 기대감 커진 에너지! 4월 장세 주도할 실적 중심 투자 전략 | 홍선애, 김장열, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=BdY60hwmwo4",
       "labels": [
         "시장리뷰",
@@ -248,7 +407,7 @@
     {
       "video_id": "TWSRwBkhLG8",
       "title": "미국, 코인 상품 인정 의미…클래리티 법안 통과되면 벌어질 일들 l 서동주, 김동환 최윤영 한화투자증권 센터장[크립토PLUS]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=TWSRwBkhLG8",
       "labels": [
         "기타"
@@ -257,7 +416,7 @@
     {
       "video_id": "se6xs2yaIXA",
       "title": "승자는 스테이블코인?… 전쟁통에 증명된 '디지털 달러' 써클, 나홀로 고공행진의 진짜 이유ㅣ서동주,김동환,박상혁 디지털애셋 편집장[크립토PLUS]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=se6xs2yaIXA",
       "labels": [
         "기타"
@@ -266,7 +425,7 @@
     {
       "video_id": "WoBF3TP_bLc",
       "title": "강남 집값은 떨어져도 15억 미만 아파트 가격은 계속 오르는 이유는?_26.03.20. | 정보현, 김지연, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=WoBF3TP_bLc",
       "labels": [
         "시장리뷰"
@@ -275,7 +434,7 @@
     {
       "video_id": "e9c86-RToJo",
       "title": "배터리 산업, 다시 주목해야 하는 이유 | 김현수 연구위원 하나증권 리서치센터 [더블업]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=e9c86-RToJo",
       "labels": [
         "산업분석",
@@ -285,7 +444,7 @@
     {
       "video_id": "vq47PScW78o",
       "title": "방산주가 힘 못 쓰는 건 어떤 신호인가? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=vq47PScW78o",
       "labels": [
         "산업분석"
@@ -294,7 +453,7 @@
     {
       "video_id": "-vNURrInXMc",
       "title": "반도체 가격의 미래는 이제 여기가 결정한다 | 권택중 더 센터필드W 과장 [더블 크루]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=-vNURrInXMc",
       "labels": [
         "산업분석"
@@ -303,7 +462,7 @@
     {
       "video_id": "apXW8xeG-Xc",
       "title": "유가·기술주 하락·사모대출 공포 예의주시…시장 생존 전략은? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-20",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=apXW8xeG-Xc",
       "labels": [
         "시장리뷰",
@@ -313,7 +472,7 @@
     {
       "video_id": "eoLngcfsz7A",
       "title": "‘에너지 급소’ 서로 폭격, 카타르 \"한국 등과 장기계약 최장 5년 불가항력 선언 가능\" | 삼성전자 ‘밸류업’ 110조원 투자…역대 최대 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=eoLngcfsz7A",
       "labels": [
         "기타"
@@ -322,7 +481,7 @@
     {
       "video_id": "kBmBgxDLPcM",
       "title": "트럼프, 지상군 파병 선 그었지만...‘하르그섬 상륙 작전’ 시도할까? | 박현도 서강대 유로메나연구소 교수 [글로벌 인터뷰]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=kBmBgxDLPcM",
       "labels": [
         "전문가인터뷰"
@@ -331,7 +490,7 @@
     {
       "video_id": "R_v-HuRD2Rs",
       "title": "[26.03.20.시황] 마이크론 호실적에 반도체 랠리 지속…네타냐후 기자회견에 낙폭 축소한 뉴욕증시 약세[월가 뉴스레터]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=R_v-HuRD2Rs",
       "labels": [
         "산업분석"
@@ -340,7 +499,7 @@
     {
       "video_id": "8tuSvvsf5fw",
       "title": "완성차 비즈니스 모델이 달라진다ㅣ차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=8tuSvvsf5fw",
       "labels": [
         "투자종목",
@@ -350,7 +509,7 @@
     {
       "video_id": "fF7gMAFvu9g",
       "title": "마이크론 역대급 저평가...메모리 밸류 바닥 국면 진입?ㅣ김장열 유니스토리자산운용 본부장 [집중 오늘의 주식]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=fF7gMAFvu9g",
       "labels": [
         "투자종목"
@@ -359,7 +518,7 @@
     {
       "video_id": "ppmEOePov7U",
       "title": "급락장은 오히려 기회! 모두가 틀리는 '진짜 반등 신호' | 박병창 교보증권 자산관리전략부 이사 [여의도 인사이트]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ppmEOePov7U",
       "labels": [
         "전문가인터뷰"
@@ -368,7 +527,7 @@
     {
       "video_id": "lDWWaDILRuU",
       "title": "[3월 19일 마감시황] 지금은 주식 담을 때! 발작하는 시장에 쫄지 말고 '이 종목' 모으세요ㅣ홍선애, 박근형, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=lDWWaDILRuU",
       "labels": [
         "투자종목",
@@ -379,7 +538,7 @@
     {
       "video_id": "OQzPK3hpHsQ",
       "title": "“좋은 제도라더니…” 고교학점제 왜 실패 위기인가 | 유은혜 전 교육부 장관 [더피플]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=OQzPK3hpHsQ",
       "labels": [
         "기타"
@@ -388,7 +547,7 @@
     {
       "video_id": "ZF-jWe1DNRo",
       "title": "연준 금리 동결 후 비트코인 가격은? 진짜 상승세 탈 진짜 자금 유동성 시그널 l 서동주, 김동환, 진종현 쟁글 리서치 센터장 [크립토PLUS]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ZF-jWe1DNRo",
       "labels": [
         "매크로"
@@ -397,7 +556,7 @@
     {
       "video_id": "WKy8jyoMiCA",
       "title": "파월 Fed 의장의 금리 동결 발표... 비트코인 향방은? 중동 리스크 장기화에 따른 코인 내러티브의 변화 | 서동주, 김동환, 김제이 [크립토PLUS]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=WKy8jyoMiCA",
       "labels": [
         "매크로"
@@ -406,7 +565,7 @@
     {
       "video_id": "bQNs7qbjvy0",
       "title": "현대차그룹주, 자동차 탈을 쓴 '로봇주'...전망만큼 주가 덜 올랐다?!_26.03.19. | 김영롱, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=bQNs7qbjvy0",
       "labels": [
         "경제전망",
@@ -417,7 +576,7 @@
     {
       "video_id": "VX1z5UNoobo",
       "title": "코스닥 액티브 ETF, 로봇투자...현명한 선택지는?_26.03.19. | 박현지, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=VX1z5UNoobo",
       "labels": [
         "시장리뷰"
@@ -426,7 +585,7 @@
     {
       "video_id": "IZibOgbwdy0",
       "title": "삼전, 하이닉스 목표주가가 여기까지 간다고? 이유는 ? | 김록호 하나증권 리서치센터 팀장 [더블 업]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=IZibOgbwdy0",
       "labels": [
         "기타"
@@ -435,7 +594,7 @@
     {
       "video_id": "zDPbvCStP8M",
       "title": "전쟁 끝나면 돈은 이쪽으로 몰릴 것 | 이성원 하나증권 네이버그린팩토리점 PB [더블 크루]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=zDPbvCStP8M",
       "labels": [
         "기타"
@@ -444,7 +603,7 @@
     {
       "video_id": "sBceSZQDTFU",
       "title": "결국 동결...주식시장은 이렇게 될 것 | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=sBceSZQDTFU",
       "labels": [
         "투자종목",
@@ -454,7 +613,7 @@
     {
       "video_id": "pLAZYPqlRSw",
       "title": "커지는 중동발 리스크 시장은 ‘유가’를 본다…육천피의 기회 다시올까? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-19",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=pLAZYPqlRSw",
       "labels": [
         "시장리뷰",
@@ -464,7 +623,7 @@
     {
       "video_id": "cCPEWBRvVd4",
       "title": "UAE, 한국에 원유 최우선 공급…러시아 원유도 검토 | 중복 상장 원칙적 금지…주식 결제일도 하루 당긴다 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=cCPEWBRvVd4",
       "labels": [
         "투자종목"
@@ -473,7 +632,7 @@
     {
       "video_id": "BFrOGv4-Xmc",
       "title": "이스라엘의 이란 가스전 공격…\"사실상 자폭행위\" | 박현도 서강대 유로메나연구소 교수 [글로벌 인터뷰]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=BFrOGv4-Xmc",
       "labels": [
         "전문가인터뷰"
@@ -482,7 +641,7 @@
     {
       "video_id": "MuTXW5rbIYo",
       "title": "[26.03.19.시황] 연준 금리 동결, 향후 전망 불투명…마이크론, 역대급 호실적에도 시간외 약세[월가 뉴스레터]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=MuTXW5rbIYo",
       "labels": [
         "매크로",
@@ -492,7 +651,7 @@
     {
       "video_id": "6SBIJ5Tkp3E",
       "title": "재고자산 변화에 따른 기업의 이익 변화 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=6SBIJ5Tkp3E",
       "labels": [
         "투자종목",
@@ -502,7 +661,7 @@
     {
       "video_id": "yJHTyCBLosg",
       "title": "돌발 악재 발생? 남들 다 팔 때 줍는 역발상 투자법 | 이재규 SK증권 경인지점 PB 차장 [집중 오늘의 주식]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=yJHTyCBLosg",
       "labels": [
         "투자종목"
@@ -511,7 +670,7 @@
     {
       "video_id": "zHcTYbgiMUo",
       "title": "무한 에너지 전쟁 시작 향후 10년동안 돈이 쏟아질 메가 트렌드 | 장우진 작가 [여의도 인사이트]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=zHcTYbgiMUo",
       "labels": [
         "기타"
@@ -520,7 +679,7 @@
     {
       "video_id": "UW_6l1hYcCo",
       "title": "왜 미국은 굳이 중동으로 들어갔을까? | 삼프로TV 레전드 중동학 개론 인남식 교수",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=UW_6l1hYcCo",
       "labels": [
         "전문가인터뷰"
@@ -529,7 +688,7 @@
     {
       "video_id": "ZTgqBhuAWDY",
       "title": "“비트코인·이더리움 증권 아냐” 이제 코인은 ‘상품’이다? 미국 증권거래위원회가 선 그었다. 코인시장 바뀔까? ㅣ서동주, 김동환, 조동현 언디파인랩스 대표,조선생[크립토PLUS]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ZTgqBhuAWDY",
       "labels": [
         "산업분석",
@@ -540,7 +699,7 @@
     {
       "video_id": "F88sT7FdwJs",
       "title": "스테이블코인 이자가 변수다…코인 가격 변수인 미국 ‘클래리티 법안’ 통과 현황, 이란전쟁 라리자니 사망, 전쟁 지속 가능성 ㅣ서동주,김동환,박상혁 디지털애셋 편집장[크립토PLUS]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=F88sT7FdwJs",
       "labels": [
         "기타"
@@ -549,7 +708,7 @@
     {
       "video_id": "n0NVtz2BbIQ",
       "title": "확산되는 반도체 수혜, 소부장 탑픽은?_26.03.18. | 박지훈, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=n0NVtz2BbIQ",
       "labels": [
         "산업분석",
@@ -559,7 +718,7 @@
     {
       "video_id": "R-syEQEYexc",
       "title": "전쟁통에 오른 기자재, 주가에는 어떤 영향이? | 김승준 연구위원 하나증권 리서치센터 [더블업]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=R-syEQEYexc",
       "labels": [
         "전문가인터뷰"
@@ -568,7 +727,7 @@
     {
       "video_id": "E6mJSnnbxI8",
       "title": "아직까지도 '반도체 의심' 하는 투자자가 있다면 | 배재원 하나증권 인천지점 PB [더블 크루]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=E6mJSnnbxI8",
       "labels": [
         "산업분석"
@@ -577,7 +736,7 @@
     {
       "video_id": "V_-JM3Uc_z4",
       "title": "이란 전쟁 전용, 매매 패턴이 생긴 걸까? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=V_-JM3Uc_z4",
       "labels": [
         "기타"
@@ -586,7 +745,7 @@
     {
       "video_id": "mCOCn5lwZFw",
       "title": "중동 전쟁 지속·리사수 방한…유가 상승 고비에도 반도체가 살릴까? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-18",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=mCOCn5lwZFw",
       "labels": [
         "산업분석",
@@ -596,7 +755,7 @@
     {
       "video_id": "0nJpsGR-7BM",
       "title": "GTC서 SK 최태원 출동·삼성 HBM4E 첫 공개 | 트럼프, 한국 등에 호르무즈 파병 연일 압박…고심 깊어진 한국 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=0nJpsGR-7BM",
       "labels": [
         "기타"
@@ -605,7 +764,7 @@
     {
       "video_id": "HX6VqxN5nCE",
       "title": "트럼프 “파병 거부? 실수한 것” 중동 전쟁 장기화 조짐…언제까지 가나? | 성일광 서강대 유로메나연구소 교수 [글로벌 인터뷰]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=HX6VqxN5nCE",
       "labels": [
         "전문가인터뷰"
@@ -614,7 +773,7 @@
     {
       "video_id": "Pl5S882-TvY",
       "title": "[26.03.18.시황] 마이크론, 실적 발표 앞두고 신고가 경신…국제유가는 여전히 불확실성 [월가 뉴스레터]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Pl5S882-TvY",
       "labels": [
         "기타"
@@ -623,7 +782,7 @@
     {
       "video_id": "Y7skC04V0EE",
       "title": "흔들리지 않는 본업 경쟁력 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Y7skC04V0EE",
       "labels": [
         "투자종목",
@@ -633,7 +792,7 @@
     {
       "video_id": "pWa2mjtYZmk",
       "title": "메모리 슈퍼사이클에 숨겨진 '부메랑 효과' 주의보 | 김장열 유니스토리자산운용 본부장 [집중 오늘의 주식]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=pWa2mjtYZmk",
       "labels": [
         "투자종목"
@@ -642,7 +801,7 @@
     {
       "video_id": "-sCqCBLoYHQ",
       "title": "중동 갈등이 \"전략적 허세\"인 3가지 이유! 비이성적 공포에 빠진 시장이 놓치고 있는 '이것' | 김한진 삼프로TV 이코노미스트 [여의도 인사이트]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=-sCqCBLoYHQ",
       "labels": [
         "시장리뷰"
@@ -651,7 +810,7 @@
     {
       "video_id": "t9RP_q6se9M",
       "title": "[3월 17일 마감시황] \"유가가 또....\" 전쟁 중엔 몸 사리자? 모멘텀 있는 개별 업종 투자 전략 | 홍선애, 김장열, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=t9RP_q6se9M",
       "labels": [
         "시장리뷰",
@@ -661,7 +820,7 @@
     {
       "video_id": "HQ5D52KpntE",
       "title": "전쟁으로 흔들린 계좌, 멘탈을 지켜 줄 '삼대장' 몰아보기  | 윤지호, 이선엽, 박병창 [신과대화]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=HQ5D52KpntE",
       "labels": [
         "기타"
@@ -670,7 +829,7 @@
     {
       "video_id": "dGNP0lk2W6I",
       "title": "보이스피싱,사기 이젠 코인 거래소가 책임진다… 코인 보이스피싱의 충격적 실태와 예방법. 피해금 환급 의무화 핵심 정리ㅣ서동주,김동환,이해붕 투자자보호센터 센터장[ 크립토PLUS]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=dGNP0lk2W6I",
       "labels": [
         "기타"
@@ -679,7 +838,7 @@
     {
       "video_id": "2m7DdQOALuo",
       "title": "이란 전쟁보다 더 큰 게 온다. 트럼프의 글로벌 혼란, 엡스타인 리스트가 비트코인 상승세에 영향줄까? l 서동주, 김동환, 김제이 블록미디어 편집장[크립토PLUS]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=2m7DdQOALuo",
       "labels": [
         "기타"
@@ -688,7 +847,7 @@
     {
       "video_id": "sdKCqBLWN0Q",
       "title": "전쟁과 AI가 만든 2026년 반도체 강력 모멘텀은?_26.03.17. | 정우창, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=sdKCqBLWN0Q",
       "labels": [
         "산업분석",
@@ -698,7 +857,7 @@
     {
       "video_id": "mVBBN64bqYk",
       "title": "이란전쟁, 대한항공에게는 오히려 기회인 이유 | 안도현 선임연구원 하나증권 리서치센터 [더블업]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=mVBBN64bqYk",
       "labels": [
         "기타"
@@ -707,7 +866,7 @@
     {
       "video_id": "0cCZlGGT9tU",
       "title": "호재가 이렇게 많은데 왜 안 오르냐면요 | 백인재 하나증권 영업부금융센터 부센터장 [더블 크루]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=0cCZlGGT9tU",
       "labels": [
         "기타"
@@ -716,7 +875,7 @@
     {
       "video_id": "AcPSHh2Gqaw",
       "title": "100만 닉스 회복, 그리고 최태원 회장의 발언? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=AcPSHh2Gqaw",
       "labels": [
         "경제전망"
@@ -725,7 +884,7 @@
     {
       "video_id": "S0o4XQH7VNM",
       "title": "코스닥 액티브 ETF 전쟁 지속…하락세 견디고 삼천스닥 도전장? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-17",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=S0o4XQH7VNM",
       "labels": [
         "전문가인터뷰"
@@ -734,7 +893,7 @@
     {
       "video_id": "Or4Nqbf3V_U",
       "title": "GTC서 삼성 HBM4E 첫 공개·SK는 최태원 출동 | 트럼프, 한국 등에 호르무즈 파병 연일 압박…고심 깊어진 한국 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Or4Nqbf3V_U",
       "labels": [
         "기타"
@@ -743,7 +902,7 @@
     {
       "video_id": "BKMyW_wpICo",
       "title": "[중동 특집] '틀린' 주한미군숫자 거론하며 호르무즈 파병 압박…트럼프의 속내는? | 문희정 국제정치평론가 [글로벌 인터뷰]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=BKMyW_wpICo",
       "labels": [
         "전문가인터뷰"
@@ -752,7 +911,7 @@
     {
       "video_id": "OdQpKSxpJfU",
       "title": "[26.03.17.시황] 호르무즈 호위 연합 기대감에 WTI 하락...엔비디아 GTC, 기대가 컸을까? [월가 뉴스레터]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=OdQpKSxpJfU",
       "labels": [
         "기타"
@@ -761,7 +920,7 @@
     {
       "video_id": "ocToqeVP0aQ",
       "title": "실적 우상향 및 기업 가치 상승 기대감이 커진다 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ocToqeVP0aQ",
       "labels": [
         "투자종목",
@@ -771,7 +930,7 @@
     {
       "video_id": "u3KPyCU7b8M",
       "title": "내 주식만 안 오른다? 남들 따라 매수하면 계좌만 망가집니다 | 이재규 SK증권 경인지점 PB차장 [집중 오늘의 주식]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=u3KPyCU7b8M",
       "labels": [
         "투자종목"
@@ -780,7 +939,7 @@
     {
       "video_id": "lxngJGG2M5E",
       "title": "하이브의 운명을 바꿀 BTS의 컴백. 주가는 '퀀텀점프'? | 유성만 리딩투자증권 센터장 [여의도 인사이트]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=lxngJGG2M5E",
       "labels": [
         "기타"
@@ -789,7 +948,7 @@
     {
       "video_id": "wjLSyAy7m_M",
       "title": "[3월 16일 마감시황] “헷갈리면 주식하지 마세요”…외인 변심에 브레이크 걸린 국내 시장 | 홍선애, 김장열, 이권희 [클로징벨 라이브]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=wjLSyAy7m_M",
       "labels": [
         "투자종목",
@@ -800,7 +959,7 @@
     {
       "video_id": "lTGUR7LOdLs",
       "title": "\"찾아가서 네타냐후 죽인다\" 어디서부터 잘못된 걸까 | 삼프로TV 레전드 중동학 개론 인남식 교수",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=lTGUR7LOdLs",
       "labels": [
         "전문가인터뷰"
@@ -809,7 +968,7 @@
     {
       "video_id": "FTGZ4PyMOB0",
       "title": "비트코인 폭등, 폭락 패턴 분석…월가 큰손이 설계했나? l 서동주,김동환,김창익 작가[크립토PLUS]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=FTGZ4PyMOB0",
       "labels": [
         "기타"
@@ -818,7 +977,7 @@
     {
       "video_id": "1uTrFHMj8vQ",
       "title": "비트코인 강세장? 트럼프밈코인의 급등 이유, 미국 이란 전쟁중 금,나스닥 하락 하지만 버티는 암호화폐ㅣ서동주, 김동환, 박상혁 디지털애셋 편집장[크립토PLUS]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=1uTrFHMj8vQ",
       "labels": [
         "시장리뷰"
@@ -827,7 +986,7 @@
     {
       "video_id": "x1dztPfyDA4",
       "title": "극한의 변동성 종료? 코스피는 '반도체+방산', 코스닥은 무엇을 투자해야할까?_26.03.16. | 이혁진, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=x1dztPfyDA4",
       "labels": [
         "산업분석",
@@ -837,7 +996,7 @@
     {
       "video_id": "axzFtwZn1Vg",
       "title": "미국에서 이 말 나오면 진짜 위험 신호 | 하나증권 리서치센터 글로벌투자분석실 이재만 실장 [더블 업]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=axzFtwZn1Vg",
       "labels": [
         "기타"
@@ -846,7 +1005,7 @@
     {
       "video_id": "N7NbIxVKHqY",
       "title": "호르무즈 봉쇄는 K-반도체를 막을 수 없다 | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=N7NbIxVKHqY",
       "labels": [
         "산업분석"
@@ -855,7 +1014,7 @@
     {
       "video_id": "DtGjO_KmejM",
       "title": "특히 지금 같은 장은 위험천만한 이유 | 김정환 하나증권 Club1WM센터 과장 [더블 크루]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=DtGjO_KmejM",
       "labels": [
         "기타"
@@ -864,7 +1023,7 @@
     {
       "video_id": "g-QbLKxBUcM",
       "title": "“호르무즈 해협 봉쇄 지속” 전세계 에너지 시장 공포 더 심화된다…시장 충격의 결말은? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-16",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=g-QbLKxBUcM",
       "labels": [
         "시장리뷰",
@@ -874,7 +1033,7 @@
     {
       "video_id": "9kqJA9H-AUU",
       "title": "미국, 이란 석유섬 하르그 때리더니… 한중일 5개국에 군함 파견 요구 | 더 센 ‘주가 누르기 방지법’ 시동…주가 방치 상장사 초비상 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-15",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=9kqJA9H-AUU",
       "labels": [
         "기타"
@@ -883,7 +1042,7 @@
     {
       "video_id": "WeKfCApP0LU",
       "title": "[중동 특집] 이란 전쟁 '장기전'으로 가나…\"4월 초까지 갈 수도\" | 박현도 서강대 유로메나연구소 교수 [글로벌 인터뷰]",
-      "published_at": "2026-03-15",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=WeKfCApP0LU",
       "labels": [
         "전문가인터뷰"
@@ -892,7 +1051,7 @@
     {
       "video_id": "QFkUOp2eKaw",
       "title": "[26.03.16.시황] 뉴욕포스트 \"이란, 미국·이스라엘 제외 호르무즈 통과 허용\"...마이크론, 실적 발표 앞두고 급반등 [월가 뉴스레터]",
-      "published_at": "2026-03-15",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=QFkUOp2eKaw",
       "labels": [
         "기타"
@@ -901,7 +1060,7 @@
     {
       "video_id": "oHd7gxCjx74",
       "title": "이란 전쟁이 미중 패권 경쟁에 미칠 영향은? | 김희교 광운대 동북아문화산업학과 교수 [신과대화]",
-      "published_at": "2026-03-15",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=oHd7gxCjx74",
       "labels": [
         "전문가인터뷰"
@@ -910,7 +1069,7 @@
     {
       "video_id": "H24lLJgj_W8",
       "title": "변동성 커진 증시… 투자 기회는 어디에? | 윤지호 경제평론가 [신과대화]",
-      "published_at": "2026-03-15",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=H24lLJgj_W8",
       "labels": [
         "경제전망"
@@ -919,7 +1078,7 @@
     {
       "video_id": "Wh7jOumUM8s",
       "title": "지금이 포트폴리오 조정의 최고의 순간! | 박병창 교보증권 이사 [신과대화]",
-      "published_at": "2026-03-14",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Wh7jOumUM8s",
       "labels": [
         "전문가인터뷰"
@@ -928,7 +1087,7 @@
     {
       "video_id": "afW_uaN0d7Q",
       "title": "신기술 자랑은 끝, 전기차 부진에 배터리 업계가 선택한 생존 전략 (인터배터리 2026)",
-      "published_at": "2026-03-14",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=afW_uaN0d7Q",
       "labels": [
         "산업분석"
@@ -937,7 +1096,7 @@
     {
       "video_id": "15uyH5n4r9M",
       "title": "[한국어] 켄 피셔가 삼프로TV에 돌아왔다! 이란 전쟁은 단기 노이즈, 시장의 진짜 변수는 따로 있다? | Ken Fisher 피셔 인베스트먼트 [Global Money Talk]",
-      "published_at": "2026-03-14",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=15uyH5n4r9M",
       "labels": [
         "시장리뷰"
@@ -946,7 +1105,7 @@
     {
       "video_id": "F4YJxPa_4p8",
       "title": "이제 전쟁보다 \"이놈\"을 볼 때입니다 (스윙당하지 않는 법) | 이선엽 AFW파트너스 대표 [신과대화]",
-      "published_at": "2026-03-14",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=F4YJxPa_4p8",
       "labels": [
         "전문가인터뷰"
@@ -955,7 +1114,7 @@
     {
       "video_id": "dQNMutDUNEw",
       "title": "조금만 늦었어도 미사일이 떨어졌을 겁니다 | 임상우 외교부 공공외교대사 [긴급인터뷰]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=dQNMutDUNEw",
       "labels": [
         "전문가인터뷰"
@@ -964,7 +1123,7 @@
     {
       "video_id": "FIsgRBKtD1s",
       "title": "1분기 실적 시즌 앞두고 반사이익 기대감 커진다...2차전지, 조선, 음식료, 항공주 |  차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=FIsgRBKtD1s",
       "labels": [
         "투자종목",
@@ -975,7 +1134,7 @@
     {
       "video_id": "zMqrchuqO2w",
       "title": "눈치 빠른 큰 손들은 '이미' 샀다? 개별 종목 장세 전략 | 이재규 SK증권 경인지점 PB차장 [집중 오늘의 주식]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=zMqrchuqO2w",
       "labels": [
         "투자종목"
@@ -984,7 +1143,7 @@
     {
       "video_id": "lKlg3V8tinA",
       "title": "중국 손잡기는 싫고...에너지 패권은 가지고 싶은 트럼프. 전쟁이 알려주는 '핵심' 투자처 ㅣ 염승환 LS 증권 이사 [여의도 인사이트]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=lKlg3V8tinA",
       "labels": [
         "전문가인터뷰"
@@ -993,7 +1152,7 @@
     {
       "video_id": "-_CcfQrGFQE",
       "title": "[3월 13일 마감시황]  31조 던진 외국인 vs 버티는 개미...역대급 하방 압력에도 끄떡없는 턴어라운드 탑픽  ㅣ 홍선애, 김장열, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=-_CcfQrGFQE",
       "labels": [
         "시장리뷰",
@@ -1003,7 +1162,7 @@
     {
       "video_id": "xnYrVi8Yl0w",
       "title": "금융 전쟁 시작, 마스터카드 비트코인, 블록체인 기반 결제, 머스크 X 머니 출시임박 l 서동주,김동환 최윤영 한화투자증권 팀장[크립토PLUS]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=xnYrVi8Yl0w",
       "labels": [
         "기타"
@@ -1012,7 +1171,7 @@
     {
       "video_id": "ejA2suQMGIg",
       "title": "비트코인 휘청·이란 전쟁 리스크에도…기업가치 500억 달러 리플, 대규모 자사주 매입 속내는? | 서동주,김동환,박상혁 디지털애셋 편집장[크립토PLUS]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ejA2suQMGIg",
       "labels": [
         "기타"
@@ -1021,7 +1180,7 @@
     {
       "video_id": "ysP0-P_3EII",
       "title": "변동성과 불확실성 가득한 금융 시장, 자산 배분은 선택 아닌 필수! 채권과 주식 어떻게 투자?_26.03.13. | 구혜영, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ysP0-P_3EII",
       "labels": [
         "투자종목",
@@ -1032,7 +1191,7 @@
     {
       "video_id": "Dr52VSv1Hb0",
       "title": "피지컬 AI가 나타나면 통신 산업은?  | 김홍식 하나증권 리서치센터 상무 [더블 업]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Dr52VSv1Hb0",
       "labels": [
         "기타"
@@ -1041,7 +1200,7 @@
     {
       "video_id": "w8yaWAKFbBA",
       "title": "이제 돈은 이쪽으로 몰릴 것 | 권택중 더 센터필드W 과장 [더블 크루]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=w8yaWAKFbBA",
       "labels": [
         "기타"
@@ -1050,7 +1209,7 @@
     {
       "video_id": "fb77JIlKbBg",
       "title": "국장이 놀랍도록 단단해진 이유 | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=fb77JIlKbBg",
       "labels": [
         "기타"
@@ -1059,7 +1218,7 @@
     {
       "video_id": "qOVagyXsiOo",
       "title": "모즈타바 ”호르무즈 해협 봉쇄할 것“…유가 급등·달러 강세·국채수익률 상승 변동성은 언제까지? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-13",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=qOVagyXsiOo",
       "labels": [
         "전문가인터뷰"
@@ -1068,7 +1227,7 @@
     {
       "video_id": "BCgX71my0Ag",
       "title": "미국, 한중일 등 무역법 301조 조사 개시 | 이란 “호르무즈 봉쇄 지속”…유가 급등에 최고가격제 시행 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=BCgX71my0Ag",
       "labels": [
         "기타"
@@ -1077,7 +1236,7 @@
     {
       "video_id": "YUEaXXqev9o",
       "title": "\"호르무즈 봉쇄 계속해야\" 초강경 메시지...트럼프의 선택은? | 김덕일 고려대 아세아문제연구원 중동이슬람센터 연구위원 [글로벌 인터뷰]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=YUEaXXqev9o",
       "labels": [
         "전문가인터뷰"
@@ -1086,7 +1245,7 @@
     {
       "video_id": "bwRKoz1hPj4",
       "title": "[26.03.13.시황] 국제유가 급등에 증시 또 급락…트럼프 “FOMC 전에 금리 인하해야” [월가 뉴스레터]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=bwRKoz1hPj4",
       "labels": [
         "매크로"
@@ -1095,7 +1254,7 @@
     {
       "video_id": "kXsPU8gfJmg",
       "title": "광통신주 '들썩'... 지금 봐야할 이유 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=kXsPU8gfJmg",
       "labels": [
         "투자종목",
@@ -1105,7 +1264,7 @@
     {
       "video_id": "KeIsTZ5lAAQ",
       "title": "삼성전자 이익 300조 시대 열리나? | 김장열 유니스토리자산운용 본부장 [집중 오늘의 주식]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=KeIsTZ5lAAQ",
       "labels": [
         "투자종목"
@@ -1114,7 +1273,7 @@
     {
       "video_id": "wdbg1lqulKE",
       "title": "유가와 전쟁 리스크에도 버티는 국내증시...지금은 Buy & Hold (바이앤홀드) ㅣ 장우진 작가 [여의도 인사이트]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=wdbg1lqulKE",
       "labels": [
         "기타"
@@ -1123,7 +1282,7 @@
     {
       "video_id": "UETzVn_bYj4",
       "title": "[3월 12일 마감시황] 종목 장세 터졌다! 통신장비·조방원 모멘텀 폭발...3월 증시는?ㅣ 홍선애, 박근형, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=UETzVn_bYj4",
       "labels": [
         "투자종목",
@@ -1134,7 +1293,7 @@
     {
       "video_id": "b90gsj1IC4U",
       "title": "이더리움 만든 사람도 던졌다…코인시장에서 무슨 일이? ㅣ김준우 쟁글대표, 서동주,김동환 [크립토PLUS]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=b90gsj1IC4U",
       "labels": [
         "시장리뷰",
@@ -1144,7 +1303,7 @@
     {
       "video_id": "uU0dAjX0drA",
       "title": "비트코인 이제 ‘품귀’ 올까? 이제 100만개 남은 비트코인…현 시장 상황은?ㅣ김제이 블록미디어 편집장, 서동주,김동환 [크립토PLUS]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=uU0dAjX0drA",
       "labels": [
         "시장리뷰"
@@ -1153,7 +1312,7 @@
     {
       "video_id": "ArLJjCxFoAI",
       "title": "반도체 투자? 지금도 안 늦었어요. 좋은 기업만 골라 투자하는 방법은?_26.03.12. | 남은영, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ArLJjCxFoAI",
       "labels": [
         "산업분석",
@@ -1163,7 +1322,7 @@
     {
       "video_id": "D7eqPl_E8FA",
       "title": "삼성전자, SK하이닉스말고 뭐? 코스닥 소부장, 어떤 종목들에 투자해야할까?_26.03.12. | 박현지, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=D7eqPl_E8FA",
       "labels": [
         "투자종목",
@@ -1173,7 +1332,7 @@
     {
       "video_id": "h0ez6ZFhBpQ",
       "title": "코스닥 ETF 고민이신 분들 필수 시청 | 이경수 하나증권 리서치센터 수석연구원 [더블 업]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=h0ez6ZFhBpQ",
       "labels": [
         "기타"
@@ -1182,7 +1341,7 @@
     {
       "video_id": "aKcTUZUorTU",
       "title": "일단 따라가라! 그 다음은? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=aKcTUZUorTU",
       "labels": [
         "기타"
@@ -1191,7 +1350,7 @@
     {
       "video_id": "B-xi8IZxIiU",
       "title": "이제는 정리하고 들어가야 합니다 | 배재원 하나증권 인천지점 PB [더블 크루]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=B-xi8IZxIiU",
       "labels": [
         "기타"
@@ -1200,7 +1359,7 @@
     {
       "video_id": "lzjd-J3GAm0",
       "title": "미 증시 혼조 지속…유가 변수 공포는 언제까지? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-12",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=lzjd-J3GAm0",
       "labels": [
         "전문가인터뷰"
@@ -1209,7 +1368,7 @@
     {
       "video_id": "Omyeg1zanf4",
       "title": "IEA 비축유 4억 배럴 긴급 방출키로…트럼프 “전쟁 내가 끝내고 싶을 때 끝” | 첨단 사업 곳곳에 K-배터리 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Omyeg1zanf4",
       "labels": [
         "산업분석"
@@ -1218,7 +1377,7 @@
     {
       "video_id": "kcLaJpqvhrE",
       "title": "이란 전쟁에 \"내가 끝내고 싶을때 언제든 끝날 것\"...트럼프의 출구 전략은? | 성일광 서강대 유로메나연구소 교수 [글로벌 인터뷰]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=kcLaJpqvhrE",
       "labels": [
         "전문가인터뷰"
@@ -1227,7 +1386,7 @@
     {
       "video_id": "xYkoCwMpRmA",
       "title": "[26.03.12.시황] 국제유가 반등, WTI $90선 위협…이란이 제시한 협상 조건은? [월가 뉴스레터]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=xYkoCwMpRmA",
       "labels": [
         "기타"
@@ -1236,7 +1395,7 @@
     {
       "video_id": "Ssm-Hm_UN9U",
       "title": "풍부한 먹거리, 지속적인 성장에 주목 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Ssm-Hm_UN9U",
       "labels": [
         "투자종목",
@@ -1246,7 +1405,7 @@
     {
       "video_id": "rNJ1CSX65zw",
       "title": "국내 증시는 강력한 우상향 추세. 베팅은 '이 때' | 이재규 SK 증권 PB 차장 [집중 오늘의 주식]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=rNJ1CSX65zw",
       "labels": [
         "투자종목"
@@ -1255,7 +1414,7 @@
     {
       "video_id": "bvz7EluEtP8",
       "title": "대세 상승 속 갇힌 박스권 증시... 고평가 종목만 뜨는 이유? ㅣ 박병창 교보증권 자산관리전략부 이사 [여의도 인사이트]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=bvz7EluEtP8",
       "labels": [
         "투자종목",
@@ -1265,7 +1424,7 @@
     {
       "video_id": "CUvMnBqtF2k",
       "title": "[3월 11일 마감시황] 의도된 흔들기와 쏟아진 차익 매물...외국인들의 수급 장난ㅣ 홍선애, 김장열, 이권희 [클로징벨 라이브]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=CUvMnBqtF2k",
       "labels": [
         "시장리뷰",
@@ -1275,7 +1434,7 @@
     {
       "video_id": "nZ9zmLRxbMs",
       "title": "트럼프 “이란 전쟁 곧 끝난다” 기관들은 비트코인 매수중…상승세 올까? | 서동주,김동환, 백훈종 스매시파이 대표 [크립토 PLUS]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=nZ9zmLRxbMs",
       "labels": [
         "투자종목",
@@ -1285,7 +1444,7 @@
     {
       "video_id": "lCJ9gAC7Cgs",
       "title": "이란전쟁 종전 가능성으로 코인 시장 갑자기 살아났다…반등한 6가지 이유| 서동주,김동환, 박상혁 디지털애셋 편집장 [크립토 PLUS]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=lCJ9gAC7Cgs",
       "labels": [
         "시장리뷰"
@@ -1294,7 +1453,7 @@
     {
       "video_id": "5st5gQItJgU",
       "title": "중동이슈 소강?! 시장은 이렇게 변합니다!_26.03.11. | 박지훈, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=5st5gQItJgU",
       "labels": [
         "시장리뷰"
@@ -1303,7 +1462,7 @@
     {
       "video_id": "-LItCVmAsU0",
       "title": "이제 시작 된 낙수효과, 어디로 흘러요? | 한유건 하나증권 리서치센터 팀장 [더블 업]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=-LItCVmAsU0",
       "labels": [
         "기타"
@@ -1312,7 +1471,7 @@
     {
       "video_id": "iL5aYbidlrI",
       "title": "실제로, 돈이 끝도 없이 밀려들고 있다 | 이성원 하나증권 네이버그린팩토리점 PB [더블 크루]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=iL5aYbidlrI",
       "labels": [
         "기타"
@@ -1321,7 +1480,7 @@
     {
       "video_id": "8LkTl212Xc8",
       "title": "이번 코스닥에서 더 눈에 띄는 것 | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=8LkTl212Xc8",
       "labels": [
         "기타"
@@ -1330,7 +1489,7 @@
     {
       "video_id": "_WQbUxvjEGo",
       "title": "참지않는 이란, 트럼프에 경고! 유가 향방 달렸다…시장의 반응은? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-11",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=_WQbUxvjEGo",
       "labels": [
         "시장리뷰",
@@ -1340,7 +1499,7 @@
     {
       "video_id": "My3bpaWuRIg",
       "title": "트럼프 “기뢰선 10척 파괴”, 미국 국방장관 “가장 격렬한 공습 할 것” | 삼성전자 16조·SK 5.1조 자사주 소각 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=My3bpaWuRIg",
       "labels": [
         "기타"
@@ -1349,7 +1508,7 @@
     {
       "video_id": "xP4vIbjHDRY",
       "title": "\"목표 달성 시 전쟁 종료\"…이란 전쟁 언제쯤 끝날까요? |  백승훈 한국외대 중동연구소 전임연구위원 [글로벌 인터뷰]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=xP4vIbjHDRY",
       "labels": [
         "전문가인터뷰"
@@ -1358,7 +1517,7 @@
     {
       "video_id": "rEyjsfkBrsY",
       "title": "[26.03.11.시황] 오라클, 호실적에 시간외 급등…WTI, 장중 80달러선 하회 [월가 뉴스레터]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=rEyjsfkBrsY",
       "labels": [
         "기타"
@@ -1367,7 +1526,7 @@
     {
       "video_id": "7J6pG8bxW0Y",
       "title": "재무제표와 실적으로 증명한다 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=7J6pG8bxW0Y",
       "labels": [
         "투자종목",
@@ -1377,7 +1536,7 @@
     {
       "video_id": "MiYBuomcdos",
       "title": "AI 메모리 진짜 사이클은 '지금'부터...D램·낸드 폭등장 열린다 | 김장열 유니스토리자산운용 본부장 [집중 오늘의 주식]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=MiYBuomcdos",
       "labels": [
         "투자종목"
@@ -1386,7 +1545,7 @@
     {
       "video_id": "IWVoinq9Hds",
       "title": "\"코스피 7500 갑니다\"...역대급 장세 속 숨겨진 진짜 기회ㅣ 이경민 대신증권 FICC리서치 부장 [여의도 인사이트]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=IWVoinq9Hds",
       "labels": [
         "기타"
@@ -1395,7 +1554,7 @@
     {
       "video_id": "oclsflqSawM",
       "title": "[3월 10일 마감시황] 액티브 ETF 출시! 코스닥 살리는 마법? 변동성 이겨낼 새 주도주는? ㅣ 홍선애, 김장열, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=oclsflqSawM",
       "labels": [
         "시장리뷰",
@@ -1405,7 +1564,7 @@
     {
       "video_id": "8lp3YvF6gRw",
       "title": "사방팔방 미사일 날리는 이란, 이웃 국가들과의 관계는? | 박정욱 PD [2019년 콘텐츠 재업로드]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=8lp3YvF6gRw",
       "labels": [
         "기타"
@@ -1414,7 +1573,7 @@
     {
       "video_id": "mSJ2JPAjg8w",
       "title": "비트코인 상승장 끝났나? 중동전쟁 영향권에서 꼭 봐야 할 신호 | 서동주,김동환, 김제이 블록미디어 편집장 [크립토 PLUS]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=mSJ2JPAjg8w",
       "labels": [
         "기타"
@@ -1423,7 +1582,7 @@
     {
       "video_id": "VGlMuhY4CJQ",
       "title": "중국vs미국, 중동 전쟁 뒤에 숨은 달러 패권… 돈의 전쟁 시작됐다 | 서동주, 김동환, 김승주 고려대 교수[크립토PLUS]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=VGlMuhY4CJQ",
       "labels": [
         "전문가인터뷰"
@@ -1432,7 +1591,7 @@
     {
       "video_id": "b4sX2v-X7Rc",
       "title": "미국-이란 전쟁 끝나나? V자 반등 기대할까? 좀 더 지켜봐야할까? _26.03.10. | 노영래, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=b4sX2v-X7Rc",
       "labels": [
         "시장리뷰"
@@ -1441,7 +1600,7 @@
     {
       "video_id": "gau-X9t8UTk",
       "title": "포트폴리오에 반도체 다음 증권주를? | 고연수 하나증권 리서치센터 연구원 [더블 업]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=gau-X9t8UTk",
       "labels": [
         "산업분석"
@@ -1450,7 +1609,7 @@
     {
       "video_id": "ljzxyVtdqXg",
       "title": "야수의 심장은 따로 있는 게 아닙니다  | 백인재 하나증권 영업부금융센터 부센터장 [더블 크루]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ljzxyVtdqXg",
       "labels": [
         "기타"
@@ -1459,7 +1618,7 @@
     {
       "video_id": "46yeD8Gf1Ok",
       "title": "반도체 이 때다 싶어 팔지 마세요, 어디까지 갈 건가? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=46yeD8Gf1Ok",
       "labels": [
         "산업분석"
@@ -1468,7 +1627,7 @@
     {
       "video_id": "1ls-A0tIRvM",
       "title": "유가 안정·반도체주 급등에 미국증시 상승 반전…코스피도 오르나 | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-10",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=1ls-A0tIRvM",
       "labels": [
         "산업분석",
@@ -1479,7 +1638,7 @@
     {
       "video_id": "ngNwwyR--qo",
       "title": "G7 비축유 방출 논의 유가 80달러대로 급락…트럼프 “전쟁 마무리 수순” | K-바이오도 신뢰자산…로슈 이어 릴리도 \"5억 달러 투자\" | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ngNwwyR--qo",
       "labels": [
         "산업분석"
@@ -1488,7 +1647,7 @@
     {
       "video_id": "YViVlJUQk-U",
       "title": "“이란 전쟁 꽤 빨리 끝날 것, 호르무즈 장악도 생각”…트럼프의 속내는? |  봉영식 연세대 국제대학원 객원교수 [글로벌 인터뷰]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=YViVlJUQk-U",
       "labels": [
         "전문가인터뷰"
@@ -1497,7 +1656,7 @@
     {
       "video_id": "LIKItaLixc8",
       "title": "[26.03.10.시황] 트럼프, 전쟁은 사실상 끝났다 선언…WTI 급락, AI 반도체 급반등 [월가 뉴스레터]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=LIKItaLixc8",
       "labels": [
         "산업분석"
@@ -1506,7 +1665,7 @@
     {
       "video_id": "TeLtqupxoII",
       "title": "지정학적 리스크 고조...유가·방산·해운업·재생에너지·방위산업 체크 포인트 |  차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=TeLtqupxoII",
       "labels": [
         "투자종목",
@@ -1517,7 +1676,7 @@
     {
       "video_id": "VwE7l6isDUI",
       "title": "'기회'가 확인되었다면? 대형주 대신 코스닥과 '조·방·원'에 주목해야 하는 이유 | 이재규 SK증권 PB 차장 [집중 오늘의 주식]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=VwE7l6isDUI",
       "labels": [
         "투자종목"
@@ -1526,7 +1685,7 @@
     {
       "video_id": "6fkB_VqP60Y",
       "title": "유동성에 속지 마세요. 강세장 속 '분할 매수' 타이밍은? ㅣ 이은택 KB증권 자산배분전략 이사 [여의도 인사이트]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=6fkB_VqP60Y",
       "labels": [
         "투자종목",
@@ -1536,7 +1695,7 @@
     {
       "video_id": "wTxa6todafs",
       "title": "[3월 9일 마감시황] 장 막판 바닥에서 외국인 콜옵션 매수...상승 시그널? 지속적인 경계는 필요 ㅣ 홍선애, 김장열, 이권희 [클로징벨 라이브]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=wTxa6todafs",
       "labels": [
         "투자종목",
@@ -1547,7 +1706,7 @@
     {
       "video_id": "c20HyMONItU",
       "title": "'딱 6시간'이면 중동 전쟁의 끝을 내다 볼 수 있다 | 삼프로TV 레전드 중동학 개론 인남식 교수 [긴급인터뷰]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=c20HyMONItU",
       "labels": [
         "전문가인터뷰"
@@ -1556,7 +1715,7 @@
     {
       "video_id": "mnG-o-3bIyY",
       "title": "트럼프의 중동 전쟁 카드…전쟁이 터질수록 비트코인은 오른다 | 서동주,김동환, 장재창 인모스트투자자문 대표 [크립토 PLUS]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=mnG-o-3bIyY",
       "labels": [
         "전문가인터뷰"
@@ -1565,7 +1724,7 @@
     {
       "video_id": "jB-O8XMlJbk",
       "title": "국제유가 100달러 돌파. 코인과 한배 탄 트럼프, 정책으로 끌어올릴까? | 서동주,김동환, 박상혁 디지털애셋 편집장[크립토PLUS]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=jB-O8XMlJbk",
       "labels": [
         "기타"
@@ -1574,7 +1733,7 @@
     {
       "video_id": "DingC-t7SkM",
       "title": "코스피 또 폭락, 이번 주 증시 '저점 가능성'?! 저가매수 전략은 어떻게 짜야하나?_26.03.09. | 이혁진, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=DingC-t7SkM",
       "labels": [
         "투자종목",
@@ -1584,7 +1743,7 @@
     {
       "video_id": "p6WitEd4MgI",
       "title": "결국엔 살아남아서 다시 오를 것들은? | 하나증권 리서치센터 글로벌투자분석실 이재만 실장 [글로벌 인터뷰]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=p6WitEd4MgI",
       "labels": [
         "전문가인터뷰"
@@ -1593,7 +1752,7 @@
     {
       "video_id": "HDOBZUlPIBc",
       "title": "트럼프 \"몇 주 내에 유가 안정된다\", 이유 있는 자신감? | 김정환 하나증권 Club1WM센터 과장 [더블 크루]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=HDOBZUlPIBc",
       "labels": [
         "기타"
@@ -1602,7 +1761,7 @@
     {
       "video_id": "jKUIMmYSbhE",
       "title": "본전 왔다고 팔고, 겁 난다고 팔고 하지 마세요 | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=jKUIMmYSbhE",
       "labels": [
         "기타"
@@ -1611,7 +1770,7 @@
     {
       "video_id": "kQqAmEOgjYw",
       "title": "치솟는 유가, 브렌트유·WTI 배럴당 100달러 돌파 유가·고용 충격에 기 못 펴는 미국…이번주 예상 시나리오는? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-09",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=kQqAmEOgjYw",
       "labels": [
         "전문가인터뷰"
@@ -1620,7 +1779,7 @@
     {
       "video_id": "tBiM2Ob8q1A",
       "title": "국제유가 배럴당 100달러 돌파...치솟는 기름값 공포 | 엔비디아 차세대 AI 칩, 삼성·SK HBM4만 쓴다 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-08",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=tBiM2Ob8q1A",
       "labels": [
         "기타"
@@ -1629,7 +1788,7 @@
     {
       "video_id": "asKTFyfDDYQ",
       "title": "중동 전쟁 '예측불허'…이란 새 지도자는 모즈타바, 종전은 더 멀어지나 |  박현도 서강대학교 유로메나연구소 교수 [글로벌 인터뷰]",
-      "published_at": "2026-03-08",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=asKTFyfDDYQ",
       "labels": [
         "전문가인터뷰"
@@ -1638,7 +1797,7 @@
     {
       "video_id": "ZNA0_e8cD3A",
       "title": "[26.03.09.시황] 국제유가 급등에 주저 앉은 뉴욕증시...팔아야 할까? 버텨야 할까? [월가 뉴스레터]",
-      "published_at": "2026-03-08",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ZNA0_e8cD3A",
       "labels": [
         "기타"
@@ -1647,7 +1806,7 @@
     {
       "video_id": "sumHRlVguvo",
       "title": "[한국어] 지금 기술주 사면 위험하다? 40년 경력 월가 베테랑의 시장 진단 | 밀러타박 수석시장전략가 맷 말리 Matt Maley [Global Money Talk]",
-      "published_at": "2026-03-08",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=sumHRlVguvo",
       "labels": [
         "시장리뷰"
@@ -1656,7 +1815,7 @@
     {
       "video_id": "s-uGxM4gYLE",
       "title": "\"열심히 사는데 왜 소모되는 느낌이 들까?\" 김익한 교수가 말하는 '진짜 공부' | 위즈덤 칼리지 2026",
-      "published_at": "2026-03-08",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=s-uGxM4gYLE",
       "labels": [
         "전문가인터뷰"
@@ -1665,7 +1824,7 @@
     {
       "video_id": "t5sJ5YaohAQ",
       "title": "전쟁 위기 속 한국 증시… ‘주가 누르기 방지법’ 필요한 이유 | 이소영 더불어민주당 의원 [더 피플]",
-      "published_at": "2026-03-08",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=t5sJ5YaohAQ",
       "labels": [
         "기타"
@@ -1674,7 +1833,7 @@
     {
       "video_id": "6Re7yrTdzVI",
       "title": "반드시 기억하셔야 합니다, 왜냐구요?  | 이선엽 AFW파트너스 대표 [긴급인터뷰]",
-      "published_at": "2026-03-07",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=6Re7yrTdzVI",
       "labels": [
         "전문가인터뷰"
@@ -1683,7 +1842,7 @@
     {
       "video_id": "uarN86KPoUQ",
       "title": "트럼프 큰일났다...하메네이 2호 등장...? | 박현도 서강대학교 유로메나연구소 교수 [긴급인터뷰]",
-      "published_at": "2026-03-07",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=uarN86KPoUQ",
       "labels": [
         "전문가인터뷰"
@@ -1692,7 +1851,7 @@
     {
       "video_id": "xqjy-nWukxw",
       "title": "[한국어] 앞으로 암호화폐 시장의 방향을 결정할 3가지 포인트 | 솔라나 트레저리 기업 DFDV의 CIO 파커 화이트 Parker White [Global Money Talk]",
-      "published_at": "2026-03-07",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=xqjy-nWukxw",
       "labels": [
         "시장리뷰"
@@ -1701,7 +1860,7 @@
     {
       "video_id": "p4rlPwzCRlI",
       "title": "이란의 버티기 전략, 과연 통할까? | 삼프로TV 레전드 중동학 개론 인남식 교수 [긴급인터뷰]",
-      "published_at": "2026-03-07",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=p4rlPwzCRlI",
       "labels": [
         "전문가인터뷰"
@@ -1710,7 +1869,7 @@
     {
       "video_id": "70WOPXNl6-U",
       "title": "왜 그는 서울시장이 되려하는가? | 정원오 전 성동구청장 [더 피플]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=70WOPXNl6-U",
       "labels": [
         "시장리뷰"
@@ -1719,7 +1878,7 @@
     {
       "video_id": "Bgto2CPa1HE",
       "title": "왜 그는 서울시장이 되려하는가? | 오세훈 서울시장 [더 피플]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Bgto2CPa1HE",
       "labels": [
         "시장리뷰"
@@ -1728,7 +1887,7 @@
     {
       "video_id": "JEXcurXTkk4",
       "title": "신한투자증권·하나증권·KB증권·대신증권, 지금 주목하는 이유? | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=JEXcurXTkk4",
       "labels": [
         "투자종목",
@@ -1738,7 +1897,7 @@
     {
       "video_id": "WzGza2lHjUI",
       "title": "이번주 모두 고생하셨습니다🙂 확신보다 확률을 보고 시장에 참여하세요! ㅣ 이재규 SK증권 PB차장 [집중 오늘의 주식]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=WzGza2lHjUI",
       "labels": [
         "투자종목",
@@ -1748,7 +1907,7 @@
     {
       "video_id": "e_cDIuxfebw",
       "title": "마침내 코스닥을 덮친 예측 불가능한 '광기'의 초입...복잡계 시장 대응 전략 | 오종태 오투파트너스 대표 [여의도 인사이트]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=e_cDIuxfebw",
       "labels": [
         "시장리뷰",
@@ -1758,7 +1917,7 @@
     {
       "video_id": "fWgCgHhuwIs",
       "title": "[3월 6일 마감시황] 막연한 희망보다 리스크를 방어하는 냉철함이 필요한 시점 ㅣ 홍선에ㅣ 홍선애, 김장열, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=fWgCgHhuwIs",
       "labels": [
         "시장리뷰",
@@ -1768,7 +1927,7 @@
     {
       "video_id": "z_WgsrapbxM",
       "title": "비트코인, 이란 전쟁통에도 선방…지금 코인 상승, 우연이 아닌 이유 | 서동주,김동환, 최윤영 디지털자산 팀장 [크립토PLUS]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=z_WgsrapbxM",
       "labels": [
         "기타"
@@ -1777,7 +1936,7 @@
     {
       "video_id": "MC4tjRD-CUg",
       "title": "코스피 오르자 비트코인 급락? 국장 투자자 이동설의 진실 | 서동주,김동환,박상혁 디지털애셋 편집장 [크립토PLUS]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=MC4tjRD-CUg",
       "labels": [
         "기타"
@@ -1786,7 +1945,7 @@
     {
       "video_id": "w-sVkIwx58g",
       "title": "변동성 큰 시장, 과연 사야할까 기다려야 할까? 코스닥 랠리가 기대되는 이유_26.03.06. | 김동훈, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=w-sVkIwx58g",
       "labels": [
         "시장리뷰"
@@ -1795,7 +1954,7 @@
     {
       "video_id": "7EfNtAF9pF8",
       "title": "다시 시장을 장악하려 드는 중국, 투자해야 할까? | 김경환 하나증권 리서치센터 팀장 [더블 업]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=7EfNtAF9pF8",
       "labels": [
         "시장리뷰"
@@ -1804,7 +1963,7 @@
     {
       "video_id": "WE4sqUeug2I",
       "title": "우리는 언제나 답을 찾는다, 바로 여기서 | 권택중 더 센터필드W 과장 [더블 크루]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=WE4sqUeug2I",
       "labels": [
         "기타"
@@ -1813,7 +1972,7 @@
     {
       "video_id": "4UllW7nlwsw",
       "title": "코스닥, 코스닥, 또 코스닥이다 왜냐고? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=4UllW7nlwsw",
       "labels": [
         "기타"
@@ -1822,7 +1981,7 @@
     {
       "video_id": "ZPH9Wa8Usos",
       "title": "유가 급등·금리 부담에 흘러내린 뉴욕증시…냉온탕 오간 국내 증시 향방은? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ZPH9Wa8Usos",
       "labels": [
         "매크로",
@@ -1832,7 +1991,7 @@
     {
       "video_id": "4uUU-4gBUOI",
       "title": "하메네이 아들도 용납 불가…다음 키워드는 ‘쿠르드’ | 중국 올해 성장 목표 4%대 최저, 5개년 계획 ‘내수진작·기술자립’ 집중 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=4uUU-4gBUOI",
       "labels": [
         "기타"
@@ -1841,7 +2000,7 @@
     {
       "video_id": "x5YiUuAovzU",
       "title": "중국이 미국-이란 전쟁에 웃는 이유? H200 수입 안하는 이유는? |  전병서 중국경제금융연구소 소장 [글로벌 인터뷰]",
-      "published_at": "2026-03-06",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=x5YiUuAovzU",
       "labels": [
         "경제전망",
@@ -1851,7 +2010,7 @@
     {
       "video_id": "JdkOdlR01lQ",
       "title": "격화되는 미국-이란 전쟁...후계자는 누구? 3월 내 전쟁 끝날까? |  박현도 서강대 유로메나연구소 교수 [이슈 인터뷰]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=JdkOdlR01lQ",
       "labels": [
         "전문가인터뷰"
@@ -1860,7 +2019,7 @@
     {
       "video_id": "DQqS0SWiFt0",
       "title": "[26.03.06.시황] 이란 유조선 폭파에 국제유가 급등…엔비디아, 미국 정부 규제 강화에 약세 [월가 뉴스레터]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=DQqS0SWiFt0",
       "labels": [
         "산업분석"
@@ -1869,7 +2028,7 @@
     {
       "video_id": "7qd-46VSKAc",
       "title": "하나머티리얼즈·한국가스공사·엠플러스·한섬 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=7qd-46VSKAc",
       "labels": [
         "투자종목",
@@ -1879,7 +2038,7 @@
     {
       "video_id": "Fzb_rpu_IBY",
       "title": "빅테크의 과대 광고가 키운 경제 공포 | 김장열 유니스토리자산운용 본부장 [집중 오늘의 주식]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Fzb_rpu_IBY",
       "labels": [
         "투자종목",
@@ -1889,7 +2048,7 @@
     {
       "video_id": "I8lN6F5niSc",
       "title": "\"이거 모르면 사지마세요\" 폭락장에서 필요한 선택과 집중ㅣ 박병창 교보증권 자산관리전략부 이사 [여의도 인사이트]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=I8lN6F5niSc",
       "labels": [
         "전문가인터뷰"
@@ -1898,7 +2057,7 @@
     {
       "video_id": "vxvlalLpvus",
       "title": "[3월 5일 마감시황] V자 반등은 가능성은 아직...변동성만 남아있는 시장 ㅣ 홍선애, 박근형, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=vxvlalLpvus",
       "labels": [
         "시장리뷰",
@@ -1908,7 +2067,7 @@
     {
       "video_id": "aX6PlDo6WKc",
       "title": "“비트코인 반감기 약발 끝났습니다” 최근 하락장의 진짜 이유. 코인판의 바뀐 공식 알려드립니다  | 서동주, 김동환, 김준우 쟁글 대표 [크립토PLUS]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=aX6PlDo6WKc",
       "labels": [
         "전문가인터뷰"
@@ -1917,7 +2076,7 @@
     {
       "video_id": "CpgimVCD6kI",
       "title": "국장 100조 수혈할 때 코인은 7만불 뚫었다! 8만 달러 직행 코스 열린 이유 | 서동주,김동환,김제이 블록미디어 편집장 [크립토PLUS]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=CpgimVCD6kI",
       "labels": [
         "기타"
@@ -1926,7 +2085,7 @@
     {
       "video_id": "HnXdEpegIFk",
       "title": "전쟁 속 미국주식은 왜 올랐나? 지금부터 미국투자 확대해야하는 이유! | 박현지, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=HnXdEpegIFk",
       "labels": [
         "투자종목",
@@ -1936,7 +2095,7 @@
     {
       "video_id": "mKhOGyqpNgY",
       "title": "중동전쟁 길어지면, 재앙의 시작일 것 | 윤재성 하나증권 리서치센터 수석연구위원 [더블 업]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=mKhOGyqpNgY",
       "labels": [
         "전문가인터뷰"
@@ -1945,7 +2104,7 @@
     {
       "video_id": "-Trzqm_jmrI",
       "title": "반도체는 정말 '유가상승' 면역일까? | 배재원 하나증권 인천지점 PB [더블 크루]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=-Trzqm_jmrI",
       "labels": [
         "산업분석"
@@ -1954,7 +2113,7 @@
     {
       "video_id": "Xl0EgIUeYl0",
       "title": "다시 들어 올리는 코스피, 이번 장의 주인공은? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Xl0EgIUeYl0",
       "labels": [
         "기타"
@@ -1963,7 +2122,7 @@
     {
       "video_id": "Cm_4eAfbeo4",
       "title": "최악의 날 보낸 국내증시...급락 시장에서는 ‘이것’으로 대응하세요! | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-05",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Cm_4eAfbeo4",
       "labels": [
         "시장리뷰",
@@ -1973,7 +2132,7 @@
     {
       "video_id": "lEwKD1wfH5M",
       "title": "미국 “수일 내 이란 영공 완전 장악”…NYT “물밑 협상 요청”| 블랙스톤도 환매 공포…금감원 “해외 사모펀드 투자자 보호 강화” | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=lEwKD1wfH5M",
       "labels": [
         "기타"
@@ -1982,7 +2141,7 @@
     {
       "video_id": "A1jY-QuVtGY",
       "title": "전쟁 중인 미국증시는 왜 강할까? 비트코인 반등, 의미있을까? | 김호균 한국투자증권 명동지점 팀장 [글로벌 인터뷰]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=A1jY-QuVtGY",
       "labels": [
         "시장리뷰",
@@ -1992,7 +2151,7 @@
     {
       "video_id": "cSS4KHr9Rzo",
       "title": "[26.03.05.시황] 이란, CIA와 종전 조건 비밀 논의설…AI, 비트코인 등 투자심리 개선[월가 뉴스레터]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=cSS4KHr9Rzo",
       "labels": [
         "기타"
@@ -2001,7 +2160,7 @@
     {
       "video_id": "TnfmuHfTh10",
       "title": "이노와이어리스·올릭스·액트로·대한조선·롯데케미칼 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=TnfmuHfTh10",
       "labels": [
         "투자종목",
@@ -2012,7 +2171,7 @@
     {
       "video_id": "xvtcmeleU70",
       "title": "오늘 하락은 투심 악화로 인한 하락…지금 필요한 건 용기있는 포트폴리오 재구성ㅣ 이재규 SK증권 PB차장 [집중 오늘의 주식]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=xvtcmeleU70",
       "labels": [
         "투자종목"
@@ -2021,7 +2180,7 @@
     {
       "video_id": "O2agGzG2CQw",
       "title": "역대급 급락...시스템 리스크는 아직? 반등 기회는 열려있다 ㅣ 장우진 작가 [여의도 인사이트]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=O2agGzG2CQw",
       "labels": [
         "기타"
@@ -2030,7 +2189,7 @@
     {
       "video_id": "rIVxe6r-KOc",
       "title": "[3월 4일 마감시황] 반대 매매 쏟아지나 엇갈린 베팅 방향...아비규환 국내시장  | 홍선애, 김장열, 이권희 [클로징벨 라이브]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=rIVxe6r-KOc",
       "labels": [
         "시장리뷰",
@@ -2040,7 +2199,7 @@
     {
       "video_id": "LqvbGygtc2E",
       "title": "비트코인, 지금 던지면 100% 후회합니다. 기관, 고래들은 지금 ‘이것’ 합니다.ㅣ 오태민 비트코인화폐철학과 교수 [크립토PLUS]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=LqvbGygtc2E",
       "labels": [
         "전문가인터뷰"
@@ -2049,7 +2208,7 @@
     {
       "video_id": "9pyybPinJcQ",
       "title": "코인 시장, 트럼프가 '스트라이크존' 만든다… 코스피에서 뺀 자금 코인으로 가나 ㅣ 서동주,김동환,박상혁 [크립토PLUS]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=9pyybPinJcQ",
       "labels": [
         "시장리뷰"
@@ -2058,7 +2217,7 @@
     {
       "video_id": "IazY_3VFOHI",
       "title": "하락할 자리에서 전쟁? 전쟁때문인가? 급등때문인가? 지금 사도 될까? | 박지훈, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=IazY_3VFOHI",
       "labels": [
         "시장리뷰"
@@ -2067,7 +2226,7 @@
     {
       "video_id": "HModdXpSVLg",
       "title": "전쟁으로 인한 파란불...들어가도 돼요? | 김록호 하나증권 리서치센터 팀장 [더블 업]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=HModdXpSVLg",
       "labels": [
         "기타"
@@ -2076,7 +2235,7 @@
     {
       "video_id": "RgP1a_o11x0",
       "title": "패닉 셀 절대 하지마세요, 왜냐구요? | 이성원 하나증권 네이버그린팩토리점 소장 [더블 크루]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=RgP1a_o11x0",
       "labels": [
         "기타"
@@ -2085,7 +2244,7 @@
     {
       "video_id": "XgUjEkPWqIY",
       "title": "한국 미사일이 일냈다! 'UAE 실전 배치 효과' | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=XgUjEkPWqIY",
       "labels": [
         "기타"
@@ -2094,7 +2253,7 @@
     {
       "video_id": "Uc8A1QMa9-w",
       "title": "너무 빠른 상승이었나? 전쟁이슈에 흘러내린 코스피…중동 전쟁 파장은 어디까지? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Uc8A1QMa9-w",
       "labels": [
         "전문가인터뷰"
@@ -2103,7 +2262,7 @@
     {
       "video_id": "dMsatB9-5Go",
       "title": "미국 호르무즈 방어 의지 “유조선 호송”…탱커 전쟁 | 현대차 \"아틀라스, 산업 로봇시장 선공략\"…‘완벽한 품질’에 집중 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-04",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=dMsatB9-5Go",
       "labels": [
         "산업분석",
@@ -2113,7 +2272,7 @@
     {
       "video_id": "CVXzhmex-ls",
       "title": "중동분쟁, 이번에도 매수기회일까? 미국은 낙폭 줄이는데 한국은 폭락한 이유 | 송재경 디멘젼투자자문 대표 [글로벌 인터뷰]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=CVXzhmex-ls",
       "labels": [
         "투자종목",
@@ -2123,7 +2282,7 @@
     {
       "video_id": "jCOf4so8p6s",
       "title": "[26.03.04.시황] 트럼프 “미국은 영원히 싸울 수 있다”…마이크론, 샌디스크 동반 급락 [월가 뉴스레터]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=jCOf4so8p6s",
       "labels": [
         "기타"
@@ -2132,7 +2291,7 @@
     {
       "video_id": "ZTw8GqEZaX0",
       "title": "LIG넥스원·S-oil·NH투자증권·효성티앤씨 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ZTw8GqEZaX0",
       "labels": [
         "투자종목",
@@ -2142,7 +2301,7 @@
     {
       "video_id": "r43JkaDsJwo",
       "title": "매도와 하락 폭격에 낮아진 삼전닉스 밸류에이션, 바짝 다가온 AI 공포 ㅣ 김장열 유니스토리자산운용 본부장 [집중, 오늘의 주식]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=r43JkaDsJwo",
       "labels": [
         "투자종목"
@@ -2151,7 +2310,7 @@
     {
       "video_id": "1HbDRAuNhKs",
       "title": "공포만 남은 하루, 추가 매수는 아직! 오늘의 하락은 여러 측면에서 확인하세요  | 황유현 신한투자증권 PB팀 [여의도 인사이트]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=1HbDRAuNhKs",
       "labels": [
         "투자종목"
@@ -2160,7 +2319,7 @@
     {
       "video_id": "NoxNV9KG4ys",
       "title": "[3월 3일 마감시황] 무조건 버티는건 위험! 주식이 아예 없다면 분할 매수 관점으로?  | 홍선애, 김장열, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=NoxNV9KG4ys",
       "labels": [
         "투자종목",
@@ -2171,7 +2330,7 @@
     {
       "video_id": "9YjWouERrhQ",
       "title": "호르무즈 해협 봉쇄, 중동 대전을 보는 방산 전문가의 시각은?  | 최영진 한화자산운용 부사장 [긴급인터뷰]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=9YjWouERrhQ",
       "labels": [
         "산업분석",
@@ -2181,7 +2340,7 @@
     {
       "video_id": "RqIjCr3TYl8",
       "title": "이란 중동 전쟁보다 무서운 양자컴퓨터? \"올해 내년이 마지막 기회입니다\" 반감기에도 폭락하는 진짜 이유 ㅣ 안유화 교수 [크립토 플러스]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=RqIjCr3TYl8",
       "labels": [
         "전문가인터뷰"
@@ -2190,7 +2349,7 @@
     {
       "video_id": "s3uUMWfK0hg",
       "title": "이란 전쟁 터지기 전 '이곳'에 11억 달러가 몰렸다? 100% 적중한 소름 돋는 내부자들의 돈복사 ㅣ 김동환, 서동주, 김제이  [크립토 플러스]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=s3uUMWfK0hg",
       "labels": [
         "기타"
@@ -2199,7 +2358,7 @@
     {
       "video_id": "ewkfEs7Xaqk",
       "title": "미국증시 지금은 의도된 하락...2Q부터 본격 상승 기대되는 이유  | 정우창, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ewkfEs7Xaqk",
       "labels": [
         "시장리뷰"
@@ -2208,7 +2367,7 @@
     {
       "video_id": "uDBDS6mWMao",
       "title": "코스닥은 끄떡 없다, 이럴 때 봐야 하는 것은? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=uDBDS6mWMao",
       "labels": [
         "기타"
@@ -2217,7 +2376,7 @@
     {
       "video_id": "luW6PjgB39E",
       "title": "이란 vs 미국의 여파 속, 담으라고요? | 이재만 실장, 백인재 부센터장 [더블 크루]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=luW6PjgB39E",
       "labels": [
         "기타"
@@ -2226,7 +2385,7 @@
     {
       "video_id": "Wvu9XMhACnw",
       "title": "'하메네이 사망' 중동 사태에도 기술주로 방어한 뉴욕증시…국내증시, 충격 피해갈까? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Wvu9XMhACnw",
       "labels": [
         "전문가인터뷰"
@@ -2235,7 +2394,7 @@
     {
       "video_id": "csdRu8rI8ms",
       "title": "트럼프, 필요시 지상군 투입 가능 시사…미국 국민 10명중 6명 부정적 이란 “호르무즈 지나는 선박 불태우겠다” | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-03-03",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=csdRu8rI8ms",
       "labels": [
         "기타"
@@ -2244,7 +2403,7 @@
     {
       "video_id": "busNzSQ32FE",
       "title": "미국-이란 전쟁, 초토화된 이란...전쟁 언제 끝날까? | 박현도 서강대학교 유로메나연구소 교수 [글로벌 인터뷰]",
-      "published_at": "2026-03-02",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=busNzSQ32FE",
       "labels": [
         "전문가인터뷰"
@@ -2253,7 +2412,7 @@
     {
       "video_id": "pOd1FHejstI",
       "title": "[26.03.03.시황] 뉴욕증시, 이란 전쟁에도 잘 버텼다…악재의 클라이막스? [월가 뉴스레터]",
-      "published_at": "2026-03-02",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=pOd1FHejstI",
       "labels": [
         "기타"
@@ -2262,7 +2421,7 @@
     {
       "video_id": "-ulb14PYVdw",
       "title": "호르무즈 해협 막으면, 대한민국은 어떻게 돼요…? | 성일광 서강대학교 유로메나연구소 교수 [긴급인터뷰]",
-      "published_at": "2026-03-02",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=-ulb14PYVdw",
       "labels": [
         "전문가인터뷰"
@@ -2271,7 +2430,7 @@
     {
       "video_id": "9Lb_sQ1fpGo",
       "title": "가짜뉴스, 살인하는 무기가 될 수 있다 | 박지훈 법무법인 디딤돌 변호사 [주말인터뷰]",
-      "published_at": "2026-03-02",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=9Lb_sQ1fpGo",
       "labels": [
         "전문가인터뷰"
@@ -2280,7 +2439,7 @@
     {
       "video_id": "x2hCsK_dU8Q",
       "title": "[한국어] 비트코인 담보대출 시대, 큰손들이 암호화폐로 부동산 사는법 | Sid Powell 시드 파월, 메이플 파이낸스 CEO [Global Money Talk]",
-      "published_at": "2026-03-01",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=x2hCsK_dU8Q",
       "labels": [
         "매크로"
@@ -2289,7 +2448,7 @@
     {
       "video_id": "i3uxPA-xhFg",
       "title": "러우 전쟁 4년, 세계는 어떤 게 바뀌었을까? | 이문영 서울대학교 통일평화연구원 교수 [신과대화]",
-      "published_at": "2026-02-28",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=i3uxPA-xhFg",
       "labels": [
         "전문가인터뷰"
@@ -2298,7 +2457,7 @@
     {
       "video_id": "umMyfAzmqq4",
       "title": "관세 막히자… 트럼프, 이란 카드 꺼내나? | 김영준 국방대학교 안전보장대학원 교수 [신과대화]",
-      "published_at": "2026-02-28",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=umMyfAzmqq4",
       "labels": [
         "전문가인터뷰"
@@ -2307,7 +2466,7 @@
     {
       "video_id": "4t6v0v1dk1o",
       "title": "6000피 다음은 바로 여기입니다, 그 근거는요 | 빈센트 하나증권 애널리스트 [빈센트의 체크포인트]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=4t6v0v1dk1o",
       "labels": [
         "기타"
@@ -2316,7 +2475,7 @@
     {
       "video_id": "53r4qFWxitQ",
       "title": "현대차·한화비전·YG엔터테인먼트 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=53r4qFWxitQ",
       "labels": [
         "투자종목",
@@ -2326,7 +2485,7 @@
     {
       "video_id": "bN9RtQeN99s",
       "title": "장기적으로는 매력적인 시장! 투자의 자산과 매매의 자산을 구분하자ㅣ 이재규 SK증권 PB차장 [집중, 오늘의 주식]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=bN9RtQeN99s",
       "labels": [
         "투자종목",
@@ -2336,7 +2495,7 @@
     {
       "video_id": "ZTBJtna9sEM",
       "title": "구조적 위기? 이벤트 조정? 2026년 위험관리 대응 전략은 상반기 '이 시점' ㅣ 박세익 체슬리투자자문 대표 [여의도 인사이트]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ZTBJtna9sEM",
       "labels": [
         "전문가인터뷰"
@@ -2345,7 +2504,7 @@
     {
       "video_id": "29ZqAR84q6Q",
       "title": "[2월 27일 마감시황] 변동성 심한 시장,  유동성의 힘으로 올라 올 것! 외국인은 8일 연속 매도 폭탄  | 홍선애, 김장열, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=29ZqAR84q6Q",
       "labels": [
         "시장리뷰",
@@ -2355,7 +2514,7 @@
     {
       "video_id": "6ehDZnjHA0k",
       "title": "📢 대한민국 최고의 창업가 10인이 직접 강의합니다 ㅣ 앙트러프러너십 칼리지 2기 [삼프로 x 아웃스탠딩]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=6ehDZnjHA0k",
       "labels": [
         "기타"
@@ -2364,7 +2523,7 @@
     {
       "video_id": "3Suzw3kP--c",
       "title": "정부 정책에 꺾인 강남 3구 집값, 가격하락은 언제, 어디까지? | 정보현, 김지연, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=3Suzw3kP--c",
       "labels": [
         "시장리뷰"
@@ -2373,7 +2532,7 @@
     {
       "video_id": "OAKmpYn9Gis",
       "title": "조정 장에서, 걱정 뚝! 할 수 있는 방법 | 권택중 더 센터필드WB 과장 [더블 크루]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=OAKmpYn9Gis",
       "labels": [
         "기타"
@@ -2382,7 +2541,7 @@
     {
       "video_id": "LGXyBdawLIs",
       "title": "기다리던 조정장…! 이런 분들 조심하세요 | 장우진 작가 [더블 체크]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=LGXyBdawLIs",
       "labels": [
         "기타"
@@ -2391,7 +2550,7 @@
     {
       "video_id": "x0TKvrIdIwI",
       "title": "칠천피, 공포 vs 기대감? 엔비디아 실적 후 따라오는 반도체 쇼크, 미국 흔들렸다…우리 반도체 투톱은? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-02-27",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=x0TKvrIdIwI",
       "labels": [
         "산업분석",
@@ -2401,7 +2560,7 @@
     {
       "video_id": "Ll4MsyQCHUs",
       "title": "강남·용산 아파트값 2년만에 하락… 호가 매주 1억씩 ‘뚝뚝’ 한국은행 비둘기형 동결, 6개월간 인상 없음…환율 수급도 개선 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=Ll4MsyQCHUs",
       "labels": [
         "매크로"
@@ -2410,7 +2569,7 @@
     {
       "video_id": "3BLhG-e7cJ4",
       "title": "엔비디아 5% 하락...엔비디아만의 문제? 오픈AI 투자 축소 우려 커지나? | 김장열 유니스토리자산운용 본부장 [글로벌 인터뷰]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=3BLhG-e7cJ4",
       "labels": [
         "전문가인터뷰"
@@ -2419,7 +2578,7 @@
     {
       "video_id": "brSsrpX92LM",
       "title": "[26.02.27.시황] 엔비디아, 호실적에도 급락한 이유…그 많던 미국의 유동성은 다 어디로 갔을까? [월가 뉴스레터]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=brSsrpX92LM",
       "labels": [
         "기타"
@@ -2428,7 +2587,7 @@
     {
       "video_id": "GVibO0T0zWI",
       "title": "LG이노텍·LG화학·에코프로머티·이수페타시스·원익IPS | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=GVibO0T0zWI",
       "labels": [
         "투자종목",
@@ -2438,7 +2597,7 @@
     {
       "video_id": "irK0YCnox78",
       "title": "삼성·하이닉스 부담 구간? 장비주가 대안일까? ㅣ 김장열 유니스토리자산운용 본부장 [집중, 오늘의 주식]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=irK0YCnox78",
       "labels": [
         "투자종목"
@@ -2447,7 +2606,7 @@
     {
       "video_id": "KcajU321FKg",
       "title": "시장 이익의 90%는 '반도체'...대형주 비중 유지 위한 포트폴리오 전략  | 박병창 교보증권 자산관리전략부 이사 [여의도 인사이트]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=KcajU321FKg",
       "labels": [
         "산업분석",
@@ -2458,7 +2617,7 @@
     {
       "video_id": "I4Tt3tevuTU",
       "title": "[2월 26일 마감시황] 반도체, 숨 고르기 오나? 이제는 전략을 바꿔볼 타이밍 | 홍선애, 박명석, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=I4Tt3tevuTU",
       "labels": [
         "산업분석",
@@ -2469,7 +2628,7 @@
     {
       "video_id": "p226UYVkPnA",
       "title": "컵 손잡이 차트라고 들어보셨어요? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=p226UYVkPnA",
       "labels": [
         "기타"
@@ -2478,7 +2637,7 @@
     {
       "video_id": "hxpOT8n_ICw",
       "title": "'불장엔 증권사 주식!' 뭐가 베스트일까 | 고연수 하나증권 리서치센터 연구원 [더블 업]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=hxpOT8n_ICw",
       "labels": [
         "투자종목"
@@ -2487,7 +2646,7 @@
     {
       "video_id": "wc0D8aIZdWg",
       "title": "유산상속 그냥 하지 마세요! 똑똑하게 상속하는 방법이 있다! | 어요경, 민지선, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=wc0D8aIZdWg",
       "labels": [
         "시장리뷰"
@@ -2496,7 +2655,7 @@
     {
       "video_id": "R6w3T3eUVIs",
       "title": "떨어질 거 걱정하지 말고 제발 사세요 |  배재원 하나증권 인천지점 PB [더블 크루]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=R6w3T3eUVIs",
       "labels": [
         "투자종목"
@@ -2505,7 +2664,7 @@
     {
       "video_id": "WWtau8xFUU4",
       "title": "AI전력 수요 급증 여전, 그런데 왜 '우주'에 투자해야 하나? | 박현지, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=WWtau8xFUU4",
       "labels": [
         "시장리뷰"
@@ -2514,7 +2673,7 @@
     {
       "video_id": "zdMneplXBvQ",
       "title": "엔비디아 실적 ‘예상 상회’…달리던 국내 ‘반도체 투톱’ 오늘의 움직임은? | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-02-26",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=zdMneplXBvQ",
       "labels": [
         "산업분석",
@@ -2524,7 +2683,7 @@
     {
       "video_id": "9EfiCavnI_s",
       "title": "코스피 6천 압도적 세계 1위, 자사주 소각 의무화에 ETF 열풍까지 삼성전자 갤럭시S26 출시·SK하닉 용인에 21.6조 추가 투자 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=9EfiCavnI_s",
       "labels": [
         "기타"
@@ -2533,7 +2692,7 @@
     {
       "video_id": "-US4r1E1kOQ",
       "title": "엔비디아 실적발표, 서프라이즈는 아닌데...삼성전자, SK하이닉스 매수 기회주나? | 김장열 유니스토리자산운용 본부장 [글로벌 인터뷰]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=-US4r1E1kOQ",
       "labels": [
         "투자종목",
@@ -2543,7 +2702,7 @@
     {
       "video_id": "lXxz7WJj76Y",
       "title": "[26.02.26.시황] 엔비디아 실적 ‘예상 상회’…써클, 호실적에 폭등 [월가 뉴스레터]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=lXxz7WJj76Y",
       "labels": [
         "기타"
@@ -2552,7 +2711,7 @@
     {
       "video_id": "6R1HiMUAQkM",
       "title": "심텍·기아·SK스퀘어·쿼드메디슨·한국전력 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=6R1HiMUAQkM",
       "labels": [
         "투자종목",
@@ -2562,7 +2721,7 @@
     {
       "video_id": "RdAzQQJUvRU",
       "title": "랠리는 아직 끝나지 않았다. 지금 필요한 포트폴리오 전략은? ㅣ 이재규 SK증권 PB차장 [집중 오늘의 주식]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=RdAzQQJUvRU",
       "labels": [
         "투자종목"
@@ -2571,7 +2730,7 @@
     {
       "video_id": "8-hYd-8eojE",
       "title": "자금 흐름이 바뀌고 있다. 상승 싸이클 준비하는 코스닥 | 장우진 작가 [여의도 인사이트]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=8-hYd-8eojE",
       "labels": [
         "기타"
@@ -2580,7 +2739,7 @@
     {
       "video_id": "qYAiv0Kljas",
       "title": "[2월 25일 마감시황] 쌓여있던 재료가 많았던 현대그룹주…잠자던 외국인이 쐈다 | 홍선애, 김장열, 이권희 [클로징벨 라이브]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=qYAiv0Kljas",
       "labels": [
         "시장리뷰",
@@ -2590,7 +2749,7 @@
     {
       "video_id": "XFHD_1M3Mxg",
       "title": "외국인 관광객 더 들어온다! 일본 이세탄 백화점 주가급등, 신세계도 따라갑니다 | 김동훈, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=XFHD_1M3Mxg",
       "labels": [
         "시장리뷰"
@@ -2599,7 +2758,7 @@
     {
       "video_id": "ldT75QwBB6g",
       "title": "드디어 6천피 시대! 뭘 사야 지금부터 돈 벌까? 반도체 다음 주자는 화학? | 박지훈, 여도은, 허재무 [아침N투자]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=ldT75QwBB6g",
       "labels": [
         "산업분석",
@@ -2609,7 +2768,7 @@
     {
       "video_id": "2CzYVdrGvQY",
       "title": "반도체 버닝 타임은 언제까지 지속될까? | 김록호 하나증권 리서치센터 팀장 [더블 업]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=2CzYVdrGvQY",
       "labels": [
         "산업분석"
@@ -2618,7 +2777,7 @@
     {
       "video_id": "jeKHk6Gq0-o",
       "title": "6000 왔다, 더 갈까? 쉴까? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=jeKHk6Gq0-o",
       "labels": [
         "기타"
@@ -2627,7 +2786,7 @@
     {
       "video_id": "76oCPrzmte0",
       "title": "비싸서 못 사겠다...! 정답은 이것 | 이성원 하나증권 네이버그린팩토리점 PB [더블 크루]",
-      "published_at": "2026-02-25",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=76oCPrzmte0",
       "labels": [
         "기타"
@@ -2636,182 +2795,21 @@
     {
       "video_id": "R3FlzBl22tY",
       "title": "기술주 회복에 안정세 찾은 뉴욕증시…월가 흔든 ‘시트리니 AI 보고서’ 공포는 끝났나 | 염승환 LS증권 이사 [마켓 인사이드]",
-      "published_at": "2026-02-24",
+      "published_at": null,
       "url": "https://www.youtube.com/watch?v=R3FlzBl22tY",
       "labels": [
         "경제전망",
         "전문가인터뷰"
       ]
-    },
-    {
-      "video_id": "m7OMfVZ1CiM",
-      "title": "'20만전자' '100만닉스' 퇴직연금 지원군이 민다…일본 기업 무더기 블랙리스트 지정한 중국, 한국에는 ‘반덤핑 합의 환영’ | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=m7OMfVZ1CiM",
-      "labels": [
-        "기타"
-      ]
-    },
-    {
-      "video_id": "KwobLWtW67Q",
-      "title": "월가는 왜 구글을 투자할까? 엔비디아 실적발표, 시장 분위기 달라지나? | 송재경 디멘젼투자자문 대표 [글로벌 인터뷰]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=KwobLWtW67Q",
-      "labels": [
-        "시장리뷰",
-        "전문가인터뷰"
-      ]
-    },
-    {
-      "video_id": "ZcdqNh7MlPo",
-      "title": "[26.02.25.시황] 트럼프, 추가 관세 10% 발효…샌디스크, 공매도 리포트에 급락 [월가 뉴스레터]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=ZcdqNh7MlPo",
-      "labels": [
-        "기타"
-      ]
-    },
-    {
-      "video_id": "locx0oJhtck",
-      "title": "삼성전자·SK하이닉스·삼성SDI·씨에스베어링·한미글로벌 | 차영주 와이즈경제연구소 소장 [집중 오늘의 주식]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=locx0oJhtck",
-      "labels": [
-        "투자종목",
-        "경제전망"
-      ]
-    },
-    {
-      "video_id": "4L3uw-wPhEs",
-      "title": "AI 특수에 미소 짓는 반도체,  유령 GPD를 기억하세요  | 김장열 유니스토리자산운용 본부장 [집중 오늘의 주식]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=4L3uw-wPhEs",
-      "labels": [
-        "투자종목",
-        "산업분석"
-      ]
-    },
-    {
-      "video_id": "66kOYPD3QsA",
-      "title": "국내 주식시장에선 ‘처음’ 있는 일. 이렇게 골고루 좋았던 적이 없다.  | 이건규 르네상스자산운용 대표 [여의도 인사이트]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=66kOYPD3QsA",
-      "labels": [
-        "투자종목",
-        "시장리뷰",
-        "전문가인터뷰"
-      ]
-    },
-    {
-      "video_id": "2MMVpirX0RM",
-      "title": "[2월 24일 마감시황] 20만전자 100만닉스 달성…코스피 엿새째 상승, 기록은 아직 멀었다. | 홍선애, 김장열, 이재규 [클로징벨 라이브]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=2MMVpirX0RM",
-      "labels": [
-        "시장리뷰",
-        "전문가인터뷰"
-      ]
-    },
-    {
-      "video_id": "C6zFJZtoHqQ",
-      "title": "삼성전자·SK하이닉스 주가 급등...더 오를 수밖에 없는 이유 | 김종문,여도은, 허재무 [아침N투자]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=C6zFJZtoHqQ",
-      "labels": [
-        "시장리뷰"
-      ]
-    },
-    {
-      "video_id": "DopCnNZaBDA",
-      "title": "5월까지 바이오가 기회의 땅인 이유 | 김선아 하나증권 리서치센터 수석연구위원 [더블 업]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=DopCnNZaBDA",
-      "labels": [
-        "산업분석",
-        "전문가인터뷰"
-      ]
-    },
-    {
-      "video_id": "3sw5B1TvQYs",
-      "title": "외국인 몰려온다, 코스피 6000 가나?  | 백인재 하나증권 영업부금융센터 부센터장 [더블 크루]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=3sw5B1TvQYs",
-      "labels": [
-        "기타"
-      ]
-    },
-    {
-      "video_id": "eChepmMH4Q4",
-      "title": "트럼프 기어코 전쟁…? 대비해야 할 것은? | 장우진 작가 [더블 체크]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=eChepmMH4Q4",
-      "labels": [
-        "기타"
-      ]
-    },
-    {
-      "video_id": "0HD76ux8ZzA",
-      "title": "관세 불확실성·무디스 신용등급 재평가 예고에 감정기복 커진 뉴욕증시…시장 우울증 언제 해소되나 | 박병창 교보증권 이사 [마켓 인사이드]",
-      "published_at": "2026-02-24",
-      "url": "https://www.youtube.com/watch?v=0HD76ux8ZzA",
-      "labels": [
-        "시장리뷰",
-        "전문가인터뷰"
-      ]
-    },
-    {
-      "video_id": "hw5UyhA2HyM",
-      "title": "트럼프 “대법원 결정, 더 높은 관세” 동맹은 울고 중국은 웃고… 집값 상승 기대 꺾여, 3년새 최대폭 하락…세제 개편 시동 | 권순우 삼프로TV 취재팀장 [뉴스3]",
-      "published_at": "2026-02-23",
-      "url": "https://www.youtube.com/watch?v=hw5UyhA2HyM",
-      "labels": [
-        "기타"
-      ]
-    },
-    {
-      "video_id": "9ApkYBl15yk",
-      "title": "미국 증시 발목잡는 요인, 3월 해소될까? AI소프트웨어 우려, 부진한 유동성 해소는 언제? | 김승혁 키움증권 연구위원 [글로벌 인터뷰]",
-      "published_at": "2026-02-23",
-      "url": "https://www.youtube.com/watch?v=9ApkYBl15yk",
-      "labels": [
-        "전문가인터뷰"
-      ]
-    },
-    {
-      "video_id": "raEwE8lKwN4",
-      "title": "[26.02.24.시황] 트럼프 관세 상향에 뉴욕증시 급락...AI, 이제는 파괴론에서 종말론으로? [월가 뉴스레터]",
-      "published_at": "2026-02-23",
-      "url": "https://www.youtube.com/watch?v=raEwE8lKwN4",
-      "labels": [
-        "기타"
-      ]
-    },
-    {
-      "video_id": "ejBwV788UuE",
-      "title": "앞으로 코스피의 향방, “양갈비 가위”를 알아야 한다 | 장우진 작가 [집중 오늘의 주식]",
-      "published_at": "2026-02-23",
-      "url": "https://www.youtube.com/watch?v=ejBwV788UuE",
-      "labels": [
-        "투자종목"
-      ]
-    },
-    {
-      "video_id": "XG_jMEYXwRo",
-      "title": "지난주 외국인이 코스닥을 샀다! 돈의 힘을 믿어보세요 | 이재규 SK증권 PB차장 [집중 오늘의 주식]",
-      "published_at": "2026-02-23",
-      "url": "https://www.youtube.com/watch?v=XG_jMEYXwRo",
-      "labels": [
-        "투자종목"
-      ]
     }
   ],
   "summary": {
-    "전문가인터뷰": 103,
-    "매크로": 10,
-    "시장리뷰": 74,
+    "투자종목": 59,
+    "경제전망": 28,
+    "산업분석": 35,
+    "시장리뷰": 73,
+    "전문가인터뷰": 102,
     "기타": 92,
-    "산업분석": 36,
-    "경제전망": 27,
-    "투자종목": 60
+    "매크로": 11
   }
 }
