@@ -9,6 +9,7 @@ import pytest
 from dashboard.data_loader import (
     _latest_file,
     _load_json,
+    extract_actionable_signals,
     extract_cross_video_ranking,
     extract_expert_insights,
     extract_macro_signals,
@@ -17,6 +18,9 @@ from dashboard.data_loader import (
     extract_type_distribution,
     extract_videos,
     get_available_channels,
+    get_last_update_time,
+    get_pipeline_activity,
+    get_recent_videos,
     load_30d_results,
     load_channel_comparison,
     load_integration_report,
@@ -296,3 +300,68 @@ class TestGetAvailableChannels:
     def test_sorted(self, tmp_output: Path):
         channels = get_available_channels(tmp_output)
         assert channels == sorted(channels)
+
+
+# ── get_last_update_time (US-002) ───────────────────────────────────────────
+
+class TestGetLastUpdateTime:
+    def test_returns_datetime(self, tmp_output: Path):
+        result = get_last_update_time(tmp_output)
+        assert result is not None
+        assert hasattr(result, "tzinfo")
+        assert result.tzinfo is not None
+
+    def test_returns_none_for_empty_dir(self, tmp_path: Path):
+        assert get_last_update_time(tmp_path) is None
+
+
+# ── get_recent_videos (US-003) ──────────────────────────────────────────────
+
+class TestGetRecentVideos:
+    def test_returns_videos_from_recent_files(self, tmp_output: Path):
+        # Files just created → mtime is now → within 24h
+        videos = get_recent_videos(tmp_output, hours=24)
+        assert len(videos) >= 2  # sampro has 2 videos
+        assert all("_channel" in v for v in videos)
+
+    def test_returns_empty_for_zero_hours(self, tmp_output: Path):
+        videos = get_recent_videos(tmp_output, hours=0)
+        assert videos == []
+
+    def test_returns_empty_for_empty_dir(self, tmp_path: Path):
+        assert get_recent_videos(tmp_path) == []
+
+
+# ── extract_actionable_signals (US-006) ─────────────────────────────────────
+
+class TestExtractActionableSignals:
+    def test_finds_actionable(self, tmp_output: Path):
+        signals = extract_actionable_signals(tmp_output)
+        assert len(signals) >= 1
+        assert all(s.get("title") for s in signals)
+        assert all(s.get("channel") for s in signals)
+
+    def test_sorted_by_score(self, tmp_output: Path):
+        signals = extract_actionable_signals(tmp_output)
+        if len(signals) >= 2:
+            assert signals[0]["signal_score"] >= signals[1]["signal_score"]
+
+    def test_empty_dir(self, tmp_path: Path):
+        assert extract_actionable_signals(tmp_path) == []
+
+
+# ── get_pipeline_activity (US-004) ──────────────────────────────────────────
+
+class TestGetPipelineActivity:
+    def test_returns_entries(self, tmp_output: Path):
+        entries = get_pipeline_activity(tmp_output)
+        assert len(entries) >= 1
+        assert "channel" in entries[0]
+        assert "timestamp" in entries[0]
+
+    def test_respects_limit(self, tmp_output: Path):
+        entries = get_pipeline_activity(tmp_output, limit=1)
+        assert len(entries) == 1
+
+    def test_empty_dir(self, tmp_path: Path):
+        assert get_pipeline_activity(tmp_path) == []

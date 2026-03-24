@@ -2,46 +2,76 @@
   "stories": [
     {
       "id": "US-001",
-      "title": "Run 30-day pipeline for all 6 channels",
-      "description": "Run scripts/run_channel_30d_single.py for sampro, itgod, kimjakgatv, hsacademy, sosumonkey, syuka with window_days=30",
+      "title": "Auto-refresh dashboard with polling",
+      "description": "Add streamlit-autorefresh to poll for new data every 60 seconds.",
       "acceptanceCriteria": [
-        "config.toml window_days set to 30",
-        "output/{slug}_30d_*.json exists with today's timestamp for all 6 channels",
-        "Each output JSON contains 'videos' array and 'cross_video_ranking'",
-        "Dashboard HTML/md generated for each channel"
+        "streamlit-autorefresh installed",
+        "st_autorefresh(interval=60000) call exists in app.py",
+        "Dashboard auto-reruns without manual browser refresh"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-002",
-      "title": "Generate cross-channel comparison report",
-      "description": "Run comparison across all 6 channels to produce unified comparison artifact",
+      "title": "Last-update timestamp and new-data badge",
+      "description": "Show mtime of most recent output JSON as timestamp with NEW badge when < 5 min old.",
       "acceptanceCriteria": [
-        "channel_comparison_30d_*.json exists in output/ with today's date",
-        "Comparison covers all 6 channels"
+        "get_last_update_time() exists in data_loader.py",
+        "Header displays Last Updated timestamp",
+        "Green NEW badge appears when data < 5 min old",
+        "Tests for get_last_update_time() pass"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-003",
-      "title": "Regenerate DASHBOARD.md",
-      "description": "Run scripts/generate_dashboard.py to update DASHBOARD.md with all 6 channels' latest data",
+      "title": "New video highlights — recent 24h cards",
+      "description": "Show videos analyzed within last 24 hours as highlighted cards at top of Overview.",
       "acceptanceCriteria": [
-        "DASHBOARD.md updated with data from all 6 channels",
-        "Script runs without error"
+        "get_recent_videos(hours=24) exists in data_loader.py",
+        "Overview tab shows New Analysis section with card layout",
+        "ACTIONABLE videos have green border, NOISE muted",
+        "Tests for get_recent_videos() pass"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-004",
-      "title": "Test, commit, and push",
-      "description": "Run pytest --no-cov, commit all changes, push to remote",
+      "title": "Real-time status tab",
+      "description": "Status tab with scheduler info, pipeline activity log, next run estimate.",
       "acceptanceCriteria": [
-        "pytest --no-cov passes (all tests green)",
-        "All output files and changes committed",
-        "git push succeeds"
+        "Status tab appears in tab_labels",
+        "Shows pipeline activity from output file timestamps",
+        "Shows last run age and channel count",
+        "get_pipeline_activity() tests pass"
       ],
-      "passes": false
+      "passes": true
+    },
+    {
+      "id": "US-005",
+      "title": "Mobile UX + full UI redesign",
+      "description": "Dark finance theme, card-based layout, large KPIs, signal badges, scroll indicators.",
+      "acceptanceCriteria": [
+        "Signal badges rendered as colored pills",
+        "Cards have proper spacing and borders",
+        "Tab bar has scroll fade indicators on mobile",
+        "Metric cards 2rem+ values with dark card backgrounds",
+        "No horizontal overflow on 375px viewport"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Channel signal alerts — ACTIONABLE highlight",
+      "description": "Prominent ACTIONABLE signal alerts with ticker chips on Overview and dedicated Signals tab.",
+      "acceptanceCriteria": [
+        "extract_actionable_signals() exists in data_loader.py",
+        "Overview shows alert banner with ticker chips",
+        "Dedicated Signals tab with scored cards",
+        "Channel tabs show ACTIONABLE count badge",
+        "Tests for extract_actionable_signals() pass"
+      ],
+      "passes": true
     }
   ]
 }

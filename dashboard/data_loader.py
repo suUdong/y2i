@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -116,3 +117,83 @@ def get_available_channels(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[str]:
         if parts[0] not in ("channel_comparison",):
             slugs.add(parts[0])
     return sorted(slugs)
+
+
+# ── Last-update timestamp (US-002) ──────────────────────────────────────────
+
+def get_last_update_time(output_dir: Path = DEFAULT_OUTPUT_DIR) -> datetime | None:
+    """Return the mtime of the most recently modified JSON in output_dir."""
+    jsons = list(output_dir.glob("*.json"))
+    if not jsons:
+        return None
+    latest = max(jsons, key=lambda p: p.stat().st_mtime)
+    return datetime.fromtimestamp(latest.stat().st_mtime, tz=timezone.utc)
+
+
+# ── Recent videos across all channels (US-003) ─────────────────────────────
+
+def get_recent_videos(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    hours: int = 24,
+) -> list[dict[str, Any]]:
+    """Collect videos from all channels whose 30d file was updated within *hours*."""
+    cutoff = datetime.now(tz=timezone.utc).timestamp() - hours * 3600
+    recent: list[dict[str, Any]] = []
+    for p in output_dir.glob("*_30d_*.json"):
+        if p.stem.startswith("channel_comparison"):
+            continue
+        if p.stat().st_mtime < cutoff:
+            continue
+        data = _load_json(p)
+        slug = data.get("channel_slug", p.stem.split("_30d_")[0])
+        for v in data.get("videos", []):
+            v["_channel"] = slug
+            recent.append(v)
+    return recent
+
+
+# ── Actionable signal extraction (US-006) ───────────────────────────────────
+
+def extract_actionable_signals(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+) -> list[dict[str, Any]]:
+    """Return ACTIONABLE videos with their ticker mentions across all channels."""
+    signals: list[dict[str, Any]] = []
+    for slug in get_available_channels(output_dir):
+        data = load_30d_results(slug, output_dir)
+        for v in data.get("videos", []):
+            if v.get("video_signal_class") != "ACTIONABLE":
+                continue
+            tickers: list[str] = []
+            for s in v.get("stocks", []):
+                t = s.get("ticker", "")
+                if t:
+                    tickers.append(t)
+            signals.append({
+                "channel": slug,
+                "title": v.get("title", ""),
+                "signal_score": v.get("signal_score", 0),
+                "tickers": tickers,
+                "published_at": v.get("published_at", ""),
+            })
+    signals.sort(key=lambda s: s.get("signal_score", 0), reverse=True)
+    return signals
+
+
+# ── Pipeline activity log (US-004) ──────────────────────────────────────────
+
+def get_pipeline_activity(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    limit: int = 15,
+) -> list[dict[str, Any]]:
+    """Return recent output file activity as a log of pipeline runs."""
+    entries: list[dict[str, Any]] = []
+    for p in sorted(output_dir.glob("*_30d_*.json"), key=lambda x: x.stat().st_mtime, reverse=True):
+        if p.stem.startswith("channel_comparison"):
+            continue
+        mtime = datetime.fromtimestamp(p.stat().st_mtime, tz=timezone.utc)
+        slug = p.stem.split("_30d_")[0]
+        entries.append({"channel": slug, "file": p.name, "timestamp": mtime})
+        if len(entries) >= limit:
+            break
+    return entries
