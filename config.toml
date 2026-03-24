@@ -41,7 +41,7 @@ url = "https://www.youtube.com/@sosumonkey/videos"
 enabled = true
 
 [strategy]
-window_days = 180
+window_days = 30
 max_scan = 300
 top_n = 5
 paper_trade_capital = 10000.0

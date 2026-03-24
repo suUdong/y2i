@@ -146,6 +146,13 @@ def sample_30d():
                 "currency": "KRW",
             },
         ],
+        "quality_scorecard": {
+            "overall": 45.0,
+            "transcript_coverage": 60.0,
+            "actionable_density": 46.2,
+            "ranking_predictive_power": 30.0,
+            "horizon_adequacy": 40.0,
+        },
     }
 
 
@@ -268,19 +275,64 @@ class TestRenderHelpers:
         assert gd._pct(37, 80) == "46.2%"
 
 
-class TestRenderPipelineSummary:
-    def test_with_data(self, sample_integration_report):
-        md = gd.render_pipeline_summary(sample_integration_report)
-        assert "## Pipeline Summary (30 Days)" in md
-        assert "**80**" in md
-        assert "**37**" in md
-        assert "46.2%" in md
-        assert "ACTIONABLE" in md
-        assert "NOISE" in md
+class TestRenderChannelOverview:
+    def test_with_data(self, sample_30d):
+        channel_data = {"sampro": sample_30d}
+        md = gd.render_channel_overview(channel_data)
+        assert "Channel Overview" in md
+        assert "삼프로TV" in md
 
     def test_no_data(self):
-        md = gd.render_pipeline_summary(None)
-        assert "No integration report data" in md
+        channel_data = {"sampro": None}
+        md = gd.render_channel_overview(channel_data)
+        assert "삼프로TV" in md
+        assert "- |" in md
+
+
+class TestRenderChannelStockRanking:
+    def test_with_data(self, sample_30d):
+        md = gd.render_channel_stock_ranking("sampro", sample_30d)
+        assert "Stock Ranking" in md
+        assert "005930.KS" in md
+        assert "Samsung" in md
+        assert "61.9" in md
+        assert "WATCH" in md
+
+    def test_sorted_descending(self, sample_30d):
+        md = gd.render_channel_stock_ranking("sampro", sample_30d)
+        lines = md.split("\n")
+        data_lines = [l for l in lines if l.startswith("| 1.") or l.startswith("| 2.")]
+        assert len(data_lines) == 2
+        assert "61.9" in data_lines[0]
+        assert "50.0" in data_lines[1]
+
+    def test_no_data(self):
+        md = gd.render_channel_stock_ranking("sampro", None)
+        assert "No data available" in md
+
+    def test_empty_ranking(self):
+        md = gd.render_channel_stock_ranking("sampro", {"cross_video_ranking": []})
+        assert "No stock ranking data" in md
+
+
+class TestRenderMacroSignals:
+    def test_with_data(self, sample_30d):
+        channel_data = {"sampro": sample_30d}
+        md = gd.render_macro_signals(channel_data)
+        assert "Macro Signals" in md
+        assert "geopolitics" in md
+        assert "semiconductor" in md
+
+    def test_no_data(self):
+        channel_data = {"sampro": None}
+        md = gd.render_macro_signals(channel_data)
+        assert "No macro signals detected" in md
+
+    def test_no_macros(self):
+        data = {"videos": [{"title": "boring video", "video_signal_class": "NOISE"}]}
+        channel_data = {"sampro": data}
+        md = gd.render_macro_signals(channel_data)
+        assert "No macro signals detected" in md
 
 
 class TestRenderContentTypeDistribution:
@@ -298,49 +350,6 @@ class TestRenderContentTypeDistribution:
     def test_empty_distribution(self):
         md = gd.render_content_type_distribution({"type_distribution": {}})
         assert "No type distribution data" in md
-
-
-class TestRenderStockRanking:
-    def test_with_data(self, sample_30d):
-        md = gd.render_stock_ranking(sample_30d)
-        assert "## Stock Ranking" in md
-        assert "005930.KS" in md
-        assert "Samsung" in md
-        assert "61.9" in md
-        assert "WATCH" in md
-
-    def test_sorted_descending(self, sample_30d):
-        md = gd.render_stock_ranking(sample_30d)
-        lines = md.split("\n")
-        data_lines = [l for l in lines if l.startswith("| 1.") or l.startswith("| 2.")]
-        assert len(data_lines) == 2
-        assert "61.9" in data_lines[0]
-        assert "50.0" in data_lines[1]
-
-    def test_no_data(self):
-        md = gd.render_stock_ranking(None)
-        assert "No 30-day analysis data" in md
-
-    def test_empty_ranking(self):
-        md = gd.render_stock_ranking({"cross_video_ranking": []})
-        assert "No stock ranking data" in md
-
-
-class TestRenderMacroSignals:
-    def test_with_data(self, sample_30d):
-        md = gd.render_macro_signals(sample_30d)
-        assert "## Macro Signals" in md
-        assert "geopolitics" in md
-        assert "semiconductor" in md
-
-    def test_no_data(self):
-        md = gd.render_macro_signals(None)
-        assert "No 30-day analysis data" in md
-
-    def test_no_macros(self):
-        data = {"videos": [{"title": "boring video", "signal_metrics": {"macro_signal_count": 0}}]}
-        md = gd.render_macro_signals(data)
-        assert "No macro signals detected" in md
 
 
 class TestRenderExpertInsights:
@@ -367,21 +376,17 @@ class TestRenderExpertInsights:
         assert "No expert data extracted" in md
 
 
-class TestRenderChannelComparison:
-    def test_with_data(self, sample_comparison):
-        md = gd.render_channel_comparison(sample_comparison)
-        assert "## Channel Comparison" in md
-        assert "삼프로TV" in md
-        assert "IT의 신" in md
+class TestRenderQualityComparison:
+    def test_with_data(self, sample_30d):
+        channel_data = {"sampro": sample_30d}
+        md = gd.render_quality_comparison(channel_data)
         assert "Quality Scorecard" in md
+        assert "삼프로TV" in md
 
     def test_no_data(self):
-        md = gd.render_channel_comparison(None)
-        assert "No channel comparison data" in md
-
-    def test_empty_channels(self):
-        md = gd.render_channel_comparison({"channels": {}})
-        assert "No channel data" in md
+        channel_data = {"sampro": None}
+        md = gd.render_quality_comparison(channel_data)
+        assert "No channel data available" in md
 
 
 # ---------------------------------------------------------------------------
@@ -404,12 +409,12 @@ class TestGenerateDashboard:
         assert Path(result).exists()
         content = Path(result).read_text(encoding="utf-8")
         assert "# OMX Pipeline Dashboard" in content
-        assert "## Pipeline Summary" in content
+        assert "## Channel Overview" in content
         assert "## Content Type Distribution" in content
-        assert "## Stock Ranking" in content
+        assert "Per-Channel Stock Rankings" in content
         assert "## Macro Signals" in content
         assert "## Expert Insights" in content
-        assert "## Channel Comparison" in content
+        assert "Quality Scorecard" in content
 
     def test_empty_output_dir(self, tmp_output):
         dest = tmp_output.parent / "DASHBOARD.md"

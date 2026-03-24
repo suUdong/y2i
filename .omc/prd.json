@@ -1,50 +1,47 @@
 {
   "stories": [
     {
-      "id": "US-005",
-      "title": "Render structured claims in dashboard expert insights section",
+      "id": "US-001",
+      "title": "Run 30-day pipeline for all 6 channels",
+      "description": "Run scripts/run_channel_30d_single.py for sampro, itgod, kimjakgatv, hsacademy, sosumonkey, syuka with window_days=30",
       "acceptanceCriteria": [
-        "render_combined_dashboard() shows structured_claims with direction and confidence when present",
-        "Gracefully handles ExpertInsight with empty structured_claims (existing behavior preserved)",
-        "Test verifies structured claims appear in dashboard markdown output",
-        "All existing reporting tests still pass"
+        "config.toml window_days set to 30",
+        "output/{slug}_30d_*.json exists with today's timestamp for all 6 channels",
+        "Each output JSON contains 'videos' array and 'cross_video_ranking'",
+        "Dashboard HTML/md generated for each channel"
       ],
-      "passes": true
+      "passes": false
     },
     {
-      "id": "US-006",
-      "title": "Boost backtest_automation.py coverage to 95%+",
+      "id": "US-002",
+      "title": "Generate cross-channel comparison report",
+      "description": "Run comparison across all 6 channels to produce unified comparison artifact",
       "acceptanceCriteria": [
-        "Test covers empty ranking path (returns status=no_ranking)",
-        "Test covers missing signal dates path (returns status=missing_signal_dates)",
-        "Test covers successful backtest execution path",
-        "backtest_automation.py coverage >= 95%"
+        "channel_comparison_30d_*.json exists in output/ with today's date",
+        "Comparison covers all 6 channels"
       ],
-      "passes": true
+      "passes": false
     },
     {
-      "id": "US-007",
-      "title": "Boost research.py coverage to 95%+",
+      "id": "US-003",
+      "title": "Regenerate DASHBOARD.md",
+      "description": "Run scripts/generate_dashboard.py to update DASHBOARD.md with all 6 channels' latest data",
       "acceptanceCriteria": [
-        "_normalize_signal_date() tested for 8-digit, ISO, and None inputs",
-        "_is_newer_timestamp() and _is_earlier_timestamp() tested for None and comparison cases",
-        "_signal_strength() tested with and without signal_strength_score",
-        "render_cross_video_ranking_text() tested for empty and populated rankings",
-        "research.py coverage >= 95%"
+        "DASHBOARD.md updated with data from all 6 channels",
+        "Script runs without error"
       ],
-      "passes": true
+      "passes": false
     },
     {
-      "id": "US-008",
-      "title": "Boost heuristic_pipeline error branch coverage to 98%+",
+      "id": "US-004",
+      "title": "Test, commit, and push",
+      "description": "Run pytest --no-cov, commit all changes, push to remote",
       "acceptanceCriteria": [
-        "Test covers extract_mentions with no matches returning empty list",
-        "Test covers extract_mentions low-confidence indirect mention skip",
-        "Test covers basic_assessment BUY, WATCH, REJECT verdicts",
-        "Test covers final_verdict all branches",
-        "heuristic_pipeline.py coverage >= 98%"
+        "pytest --no-cov passes (all tests green)",
+        "All output files and changes committed",
+        "git push succeeds"
       ],
-      "passes": true
+      "passes": false
     }
   ]
 }

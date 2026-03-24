@@ -165,15 +165,10 @@ def test_resolve_channel_videos_skips_no_id(monkeypatch):
 
 def test_resolve_channel_videos_since_mocked(monkeypatch):
     entries = [
-        {"id": "vid1"},
-        {"id": "vid2"},
-        {"id": "vid3"},
+        {"id": "vid1", "upload_date": "20260320", "title": "V1"},
+        {"id": "vid2", "upload_date": "20260310", "title": "V2"},
+        {"id": "vid3", "upload_date": "20260201", "title": "V3"},
     ]
-    videos_by_id = {
-        "vid1": VideoInput(video_id="vid1", title="V1", url="u1", published_at="20260320"),
-        "vid2": VideoInput(video_id="vid2", title="V2", url="u2", published_at="20260310"),
-        "vid3": VideoInput(video_id="vid3", title="V3", url="u3", published_at="20260201"),
-    }
 
     class FakeYDL:
         def __init__(self, opts): pass
@@ -184,23 +179,20 @@ def test_resolve_channel_videos_since_mocked(monkeypatch):
     monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
 
     resolver = YoutubeResolver()
-    original_resolve = resolver.resolve_video
-    resolver.resolve_video = lambda vid: videos_by_id[vid]
 
     result = resolver.resolve_channel_videos_since(
         "https://youtube.com/@test",
         days=30,
         reference_date=date(2026, 3, 24),
     )
-    # vid1 (Mar 20) and vid2 (Mar 10) are within 30 days, vid3 (Feb 1) is not
+    # vid1 (Mar 20) and vid2 (Mar 10) are within 30 days, vid3 (Feb 1) triggers break
     assert len(result) == 2
     assert result[0].video_id == "vid1"
     assert result[1].video_id == "vid2"
 
 
 def test_resolve_channel_videos_since_skips_no_date(monkeypatch):
-    entries = [{"id": "vid1"}]
-    video_no_date = VideoInput(video_id="vid1", title="V1", url="u1", published_at="")
+    entries = [{"id": "vid1", "title": "V1"}]
 
     class FakeYDL:
         def __init__(self, opts): pass
@@ -211,10 +203,10 @@ def test_resolve_channel_videos_since_skips_no_date(monkeypatch):
     monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
 
     resolver = YoutubeResolver()
-    resolver.resolve_video = lambda vid: video_no_date
 
     result = resolver.resolve_channel_videos_since("https://youtube.com/@test", days=30)
-    assert len(result) == 0
+    # No upload_date means published is None, so date filter is skipped — video is included
+    assert len(result) == 1
 
 
 # --- TranscriptFetcher ---

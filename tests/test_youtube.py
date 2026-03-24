@@ -20,24 +20,21 @@ def test_channel_registry_deduplicates(tmp_path: Path):
 
 
 class FakeResolver(YoutubeResolver):
-    def __init__(self, videos):
+    def __init__(self, entries):
         super().__init__()
-        self.videos = videos
+        self._entries = entries
 
     def _fetch_channel_entries(self, channel_url: str, max_entries: int = 80):
-        return [{"id": key} for key in self.videos]
-
-    def resolve_video(self, url_or_id: str) -> VideoInput:
-        return self.videos[url_or_id]
+        return self._entries
 
 
 def test_resolve_channel_videos_since_filters_by_date():
-    videos = {
-        "new1": VideoInput(video_id="new1", title="새 영상", url="https://youtube.com/watch?v=new1", published_at="20260320"),
-        "new2": VideoInput(video_id="new2", title="조금 전 영상", url="https://youtube.com/watch?v=new2", published_at="20260305"),
-        "old1": VideoInput(video_id="old1", title="오래된 영상", url="https://youtube.com/watch?v=old1", published_at="20260201"),
-    }
-    resolver = FakeResolver(videos)
+    entries = [
+        {"id": "new1", "title": "새 영상", "upload_date": "20260320"},
+        {"id": "new2", "title": "조금 전 영상", "upload_date": "20260305"},
+        {"id": "old1", "title": "오래된 영상", "upload_date": "20260201"},
+    ]
+    resolver = FakeResolver(entries)
 
     recent = resolver.resolve_channel_videos_since("https://youtube.com/@test", days=30, reference_date=date(2026, 3, 22))
 
