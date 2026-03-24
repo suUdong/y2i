@@ -22,10 +22,28 @@ display_name = "삼프로TV"
 url = "https://www.youtube.com/@3protv/videos"
 enabled = true
 
+[[channels]]
+slug = "syuka"
+display_name = "슈카월드"
+url = "https://www.youtube.com/@syukaworld/videos"
+enabled = true
+
+[[channels]]
+slug = "hsacademy"
+display_name = "이효석아카데미"
+url = "https://www.youtube.com/@hs_academy/videos"
+enabled = true
+
+[[channels]]
+slug = "sosumonkey"
+display_name = "소수몽키"
+url = "https://www.youtube.com/@sosumonkey/videos"
+enabled = true
+
 [strategy]
-window_days = 30
-max_scan = 80
-top_n = 3
+window_days = 180
+max_scan = 300
+top_n = 5
 paper_trade_capital = 10000.0
 
 [notifications]

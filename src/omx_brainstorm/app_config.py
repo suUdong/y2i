@@ -66,6 +66,9 @@ DEFAULT_CHANNELS = [
     ChannelConfig(slug="itgod", display_name="IT의 신 이형수", url="https://www.youtube.com/channel/UCQW05vzztAlwV54WL3pjGBQ/videos"),
     ChannelConfig(slug="kimjakgatv", display_name="김작가TV", url="https://www.youtube.com/@lucky_tv/videos"),
     ChannelConfig(slug="sampro", display_name="삼프로TV", url="https://www.youtube.com/@3protv/videos"),
+    ChannelConfig(slug="syuka", display_name="슈카월드", url="https://www.youtube.com/@syukaworld/videos"),
+    ChannelConfig(slug="hsacademy", display_name="이효석아카데미", url="https://www.youtube.com/@hs_academy/videos"),
+    ChannelConfig(slug="sosumonkey", display_name="소수몽키", url="https://www.youtube.com/@sosumonkey/videos"),
 ]
 
 

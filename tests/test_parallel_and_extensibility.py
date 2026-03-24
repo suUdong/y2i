@@ -176,7 +176,7 @@ provider = "mock"
 """, encoding="utf-8")
 
     config = load_app_config(str(config_path))
-    assert len(config.channels) == 3  # DEFAULT_CHANNELS
+    assert len(config.channels) == 6  # DEFAULT_CHANNELS
     slugs = {ch.slug for ch in config.channels}
     assert "itgod" in slugs
     assert "sampro" in slugs
