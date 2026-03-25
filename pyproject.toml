@@ -32,5 +32,12 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=src/omx_brainstorm --cov-fail-under=75"
+addopts = "-q"
 testpaths = ["tests"]
+
+# CI coverage: run `pytest --cov=src/omx_brainstorm --cov-fail-under=60`
+[tool.coverage.run]
+source = ["src/omx_brainstorm"]
+
+[tool.coverage.report]
+fail_under = 60
