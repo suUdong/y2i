@@ -593,6 +593,7 @@ SIGNAL_CLASS_KR = {
     "UNKNOWN": "미분류",
 }
 EMPTY_TEXT = "미제공"
+REFERENCE_KIND_KR = {"published_at": "게시", "generated_at": "스냅샷", "unknown": "미분류"}
 
 VERDICT_KR = {"BUY": "매수", "SELL": "매도", "HOLD": "보유", "WATCH": "관망", "REJECT": "제외"}
 VERDICT_CSS = {"BUY": "buy", "SELL": "sell", "HOLD": "hold", "WATCH": "watch", "REJECT": "reject"}
@@ -722,6 +723,14 @@ def first_non_empty(*values: str | None) -> str:
         if value:
             return value
     return ""
+
+
+def format_reference_display(value: str | None, kind: str | None) -> str:
+    formatted = format_signal_datetime(value or "")
+    if formatted == EMPTY_TEXT:
+        return formatted
+    label = REFERENCE_KIND_KR.get(kind or "unknown", kind or "미분류")
+    return f"{formatted} ({label})"
 
 
 def format_reference_timing(
@@ -1725,7 +1734,10 @@ with tabs[-2]:
             row["스킵"] = info.get("skipped_videos", 0)
             row["가능 비율"] = f"{actionable_ratio:.0%}"
             row["메타 fallback"] = info.get("metadata_fallback_videos", 0)
-            row["최신 기준 시각"] = format_signal_datetime(info.get("latest_reference_at", ""))
+            row["최신 기준 시각"] = format_reference_display(
+                info.get("latest_reference_at", ""),
+                info.get("latest_reference_kind", "unknown"),
+            )
             row["순위상관"] = (
                 f"{info.get('ranking_spearman', 0.0):.2f}"
                 if info.get("ranking_spearman") is not None
@@ -1896,7 +1908,13 @@ with tabs[-1]:
             ("엄격 액션", str(pipeline_summary.get("strict_actionable_videos", 0))),
             ("실자막 기반", str(pipeline_summary.get("transcript_backed_videos", 0))),
             ("메타 fallback", str(pipeline_summary.get("metadata_fallback_videos", 0))),
-            ("최신 기준", format_signal_datetime(pipeline_summary.get("latest_reference_at", ""))),
+            (
+                "최신 기준",
+                format_reference_display(
+                    pipeline_summary.get("latest_reference_at", ""),
+                    pipeline_summary.get("latest_reference_kind", "unknown"),
+                ),
+            ),
         ], cols_desktop=5)
 
         top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])

@@ -149,6 +149,7 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
     latest_reference = ""
     latest_published_ts: datetime | None = None
     latest_reference_ts: datetime | None = None
+    latest_reference_kind = "unknown"
 
     for data in channel_data.values():
         if not data:
@@ -159,6 +160,7 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
         if generated_ts is not None and (latest_reference_ts is None or generated_ts > latest_reference_ts):
             latest_reference_ts = generated_ts
             latest_reference = generated_at
+            latest_reference_kind = "generated_at"
         for video in data.get("videos", []):
             summary["total_videos"] += 1
             signal_class = video.get("video_signal_class", "UNKNOWN")
@@ -187,10 +189,11 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
             if published_ts is not None and (latest_reference_ts is None or published_ts > latest_reference_ts):
                 latest_reference_ts = published_ts
                 latest_reference = published_at
+                latest_reference_kind = "published_at"
 
     summary["latest_published_at"] = latest_published
     summary["latest_reference_at"] = latest_reference
-    summary["latest_reference_kind"] = "published_at" if latest_published else ("generated_at" if latest_reference else "unknown")
+    summary["latest_reference_kind"] = latest_reference_kind if latest_reference else "unknown"
     summary["analyzable_videos"] = summary["actionable_videos"]
     summary["signal_breakdown"] = dict(signal_breakdown)
     summary["top_skip_reasons"] = [
@@ -560,7 +563,8 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
     lines.append(f"| Skipped | {summary.get('skipped_videos', 0)} |")
     lines.append(f"| Transcript-backed | {summary.get('transcript_backed_videos', 0)} |")
     lines.append(f"| Metadata fallback | {summary.get('metadata_fallback_videos', 0)} |")
-    lines.append(f"| Latest reference | {_format_date(summary.get('latest_reference_at'))} |")
+    reference_kind = summary.get("latest_reference_kind", "unknown")
+    lines.append(f"| Latest reference | {_format_date(summary.get('latest_reference_at'))} ({reference_kind}) |")
     lines.append("")
 
     top_skip_reasons = summary.get("top_skip_reasons", [])
@@ -607,7 +611,7 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
                 top_reason = info["top_skip_reasons"][0].get("reason", "")
             lines.append(
                 f"| {label} | {info.get('skipped_videos', 0)} | {info.get('metadata_fallback_videos', 0)} | "
-                f"{_format_date(info.get('latest_reference_at'))} | {top_reason or 'N/A'} |"
+                f"{_format_date(info.get('latest_reference_at'))} ({info.get('latest_reference_kind', 'unknown')}) | {top_reason or 'N/A'} |"
             )
         lines.append("")
 

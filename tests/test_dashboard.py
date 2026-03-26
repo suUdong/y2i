@@ -219,9 +219,11 @@ class TestLoadChannelComparison:
         assert comp["channels"]["sampro"]["strict_actionable_videos"] == 1
         assert comp["channels"]["sampro"]["latest_published_at"] == "20260321"
         assert comp["channels"]["sampro"]["latest_reference_at"] == "20260321"
+        assert comp["channels"]["sampro"]["latest_reference_kind"] == "published_at"
         assert comp["pipeline_summary"]["skipped_videos"] == 1
         assert comp["pipeline_summary"]["strict_actionable_videos"] == 1
         assert comp["pipeline_summary"]["latest_reference_at"] == "20260323T053248Z"
+        assert comp["pipeline_summary"]["latest_reference_kind"] == "generated_at"
 
     def test_prefers_channel_artifacts_aligned_to_comparison_run(self, tmp_output: Path):
         aligned = {

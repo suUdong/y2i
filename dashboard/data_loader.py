@@ -142,6 +142,7 @@ def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -
     skip_reason_counts: dict[str, int] = {}
     latest_published_at = ""
     latest_reference_at = ""
+    latest_reference_kind = "unknown"
     total_videos = 0
     actionable_videos = 0
     strict_actionable_videos = 0
@@ -162,6 +163,7 @@ def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -
         latest_reference_value = info.get("latest_reference_at", "") or latest_value
         if _is_newer_timestamp(latest_reference_value, latest_reference_at):
             latest_reference_at = latest_reference_value
+            latest_reference_kind = info.get("latest_reference_kind", "unknown")
 
         for klass, count in info.get("signal_breakdown", {}).items():
             signal_distribution[klass] = signal_distribution.get(klass, 0) + count
@@ -185,7 +187,7 @@ def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -
         "metadata_fallback_videos": metadata_fallback_videos,
         "latest_published_at": latest_published_at,
         "latest_reference_at": latest_reference_at,
-        "latest_reference_kind": "published_at" if latest_published_at else ("generated_at" if latest_reference_at else "unknown"),
+        "latest_reference_kind": latest_reference_kind if latest_reference_at else "unknown",
         "signal_breakdown": signal_distribution,
         "top_skip_reasons": top_skip_reasons,
     }

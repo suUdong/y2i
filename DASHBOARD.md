@@ -1,6 +1,6 @@
 # OMX Pipeline Dashboard (6-Month / 180-Day Analysis)
 
-> Auto-generated: 2026-03-26 10:41 UTC
+> Auto-generated: 2026-03-26 10:45 UTC
 > Channels analyzed: 6/6
 > Data source: `output/` directory pipeline results
 
@@ -28,7 +28,7 @@
 | Skipped | 56 |
 | Transcript-backed | 65 |
 | Metadata fallback | 21 |
-| Latest reference | 2026-03-26 |
+| Latest reference | 2026-03-26 (generated_at) |
 
 ### Top Skip Reasons
 
@@ -41,12 +41,12 @@
 
 | Channel | Skipped | Metadata Fallback | Latest Reference | Top Skip Reason |
 |---------|--------:|------------------:|------------------|-----------------|
-| 이효석아카데미 | 8 | 2 | 2026-03-26 | 종목 분석에 활용할 실질 신호가 부족함 |
-| IT의 신 이형수 | 4 | 2 | 2026-03-26 | 종목 분석에 활용할 실질 신호가 부족함 |
-| 김작가TV | 12 | 3 | 2026-03-26 | 종목 분석에 활용할 실질 신호가 부족함 |
-| 삼프로TV | 13 | 12 | 2026-03-26 | 종목 분석에 활용할 실질 신호가 부족함 |
-| 소수몽키 | 8 | 1 | 2026-03-26 | 종목 분석에 활용할 실질 신호가 부족함 |
-| 슈카월드 | 11 | 1 | 2026-03-26 | 종목 분석에 활용할 실질 신호가 부족함 |
+| 이효석아카데미 | 8 | 2 | 2026-03-26 (published_at) | 종목 분석에 활용할 실질 신호가 부족함 |
+| IT의 신 이형수 | 4 | 2 | 2026-03-26 (published_at) | 종목 분석에 활용할 실질 신호가 부족함 |
+| 김작가TV | 12 | 3 | 2026-03-26 (published_at) | 종목 분석에 활용할 실질 신호가 부족함 |
+| 삼프로TV | 13 | 12 | 2026-03-26 (published_at) | 종목 분석에 활용할 실질 신호가 부족함 |
+| 소수몽키 | 8 | 1 | 2026-03-26 (published_at) | 종목 분석에 활용할 실질 신호가 부족함 |
+| 슈카월드 | 11 | 1 | 2026-03-26 (published_at) | 종목 분석에 활용할 실질 신호가 부족함 |
 
 ## Quality Scorecard Comparison
 

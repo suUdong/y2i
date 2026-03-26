@@ -455,6 +455,7 @@ class TestRenderPipelineHealth:
         assert "Metadata fallback" in md
         assert "Strict ACTIONABLE" in md
         assert "Latest Reference" in md
+        assert "(generated_at)" in md
         assert "Top Skip Reasons" in md
         assert "Channel Gate Health" in md
         assert "종목 분석에 활용할 실질 신호가 부족함" in md
@@ -504,6 +505,23 @@ class TestRenderPipelineHealth:
         assert summary["skipped_videos"] == 0
         assert summary["latest_published_at"] == "20260323"
         assert summary["latest_reference_at"] == "20260323T094413Z"
+
+    def test_generated_at_can_remain_latest_reference(self, sample_30d):
+        data = dict(sample_30d)
+        data["generated_at"] = "20260324T000000Z"
+        data["videos"] = [
+            {
+                "video_id": "v1",
+                "title": "Older published",
+                "video_signal_class": "ACTIONABLE",
+                "should_analyze_stocks": True,
+                "published_at": "20260323",
+            }
+        ]
+        summary = gd.build_pipeline_summary_from_channels({"sampro": data})
+        assert summary["latest_published_at"] == "20260323"
+        assert summary["latest_reference_at"] == "20260324T000000Z"
+        assert summary["latest_reference_kind"] == "generated_at"
 
 
 # ---------------------------------------------------------------------------
