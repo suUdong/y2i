@@ -1415,20 +1415,24 @@ with tabs[-2]:
         returns_rows = []
         for slug, info in channels_info.items():
             channel_label = info.get("display_name", slug)
+            sc = info.get("quality_scorecard", {})
+            overall_score = sc.get("overall", 0.0)
+            actionable_ratio = info.get("actionable_ratio", 0.0)
             row = {"채널": channel_label}
             row["영상 수"] = info.get("total_videos", 0)
             row["분석 대상"] = info.get("actionable_videos", 0)
-            row["대상 비율"] = f"{info.get('actionable_ratio', 0.0):.0%}"
+            row["대상 비율"] = f"{actionable_ratio:.0%}"
             row["순위상관"] = (
                 f"{info.get('ranking_spearman', 0.0):.2f}"
                 if info.get("ranking_spearman") is not None
                 else "미제공"
             )
             row["평가 표본"] = info.get("ranking_eval_positions", 0)
-            sc = info.get("quality_scorecard", {})
-            row["종합 점수"] = f"{sc.get('overall', 0.0):.1f}"
+            row["종합 점수"] = f"{overall_score:.1f}"
             row["상위 1개 수익률"] = f"{info.get('ranking_top_1_return_pct', 0.0):.1f}%"
             row["상위 3개 수익률"] = f"{info.get('ranking_top_3_return_pct', 0.0):.1f}%"
+            row["_sort_overall"] = overall_score
+            row["_sort_actionable_ratio"] = actionable_ratio
             rows.append(row)
 
             metric_kr = {
@@ -1461,7 +1465,13 @@ with tabs[-2]:
             ])
 
         df_comp = pd.DataFrame(rows)
-        st.dataframe(df_comp, use_container_width=True, hide_index=True)
+        df_comp = df_comp.sort_values(["_sort_overall", "_sort_actionable_ratio"], ascending=[False, False])
+        channel_order = df_comp["채널"].tolist()
+        st.dataframe(
+            df_comp.drop(columns=["_sort_overall", "_sort_actionable_ratio"], errors="ignore"),
+            use_container_width=True,
+            hide_index=True,
+        )
 
         if len(rows) >= 2 and scorecard_rows:
             chart_col_a, chart_col_b = st.columns(2)
@@ -1475,6 +1485,7 @@ with tabs[-2]:
                     barmode="group",
                     title="채널 품질 지표 비교",
                     text="점수",
+                    category_orders={"채널": channel_order},
                 )
                 fig_comp.update_traces(texttemplate="%{text:.1f}", textposition="outside")
                 fig_comp.update_yaxes(title="점수", range=[0, 100])
@@ -1495,6 +1506,7 @@ with tabs[-2]:
                     title="랭킹 수익률 비교",
                     text="값",
                     color_discrete_map=color_map_returns,
+                    category_orders={"채널": channel_order},
                 )
                 fig_returns.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
                 fig_returns.update_yaxes(title="수익률 (%)", zeroline=True, zerolinecolor="rgba(255,255,255,0.18)")
@@ -1504,7 +1516,9 @@ with tabs[-2]:
             with st.expander("품질 지표 히트맵", expanded=False):
                 df_chart = pd.DataFrame(scorecard_rows)
                 fig_heatmap = px.imshow(
-                    df_chart.pivot(index="채널", columns="지표", values="점수"),
+                    df_chart.assign(채널=pd.Categorical(df_chart["채널"], categories=channel_order, ordered=True))
+                    .sort_values("채널")
+                    .pivot(index="채널", columns="지표", values="점수"),
                     text_auto=".1f",
                     aspect="auto",
                     color_continuous_scale=["#0F172A", "#1D4ED8", "#22C55E"],
