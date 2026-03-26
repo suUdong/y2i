@@ -3,6 +3,9 @@ config.toml
 .env.*
 output/
 .omx/
+.omc/*
+!.omc/prd.json
+dashboard/.omc/
 __pycache__/
 *.pyc
 .venv/
