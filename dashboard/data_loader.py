@@ -10,6 +10,31 @@ from typing import Any
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
 
 
+def _parse_timestamp(value: str) -> datetime | None:
+    """Parse compact or ISO-like timestamps to aware UTC datetimes."""
+    if not value:
+        return None
+
+    normalized = value.strip()
+    if not normalized:
+        return None
+
+    for fmt in ("%Y%m%dT%H%M%SZ", "%Y%m%d", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(normalized, fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+
+    try:
+        parsed = datetime.fromisoformat(normalized.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
 def _latest_file(output_dir: Path, pattern: str) -> Path | None:
     """Return the most recently modified file matching *pattern*, or None."""
     matches = sorted(output_dir.glob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
@@ -181,7 +206,7 @@ def get_recent_videos(
             recent.append(v)
     recent.sort(
         key=lambda item: (
-            item.get("published_at", ""),
+            _parse_timestamp(item.get("published_at", "") or "") or datetime.min.replace(tzinfo=timezone.utc),
             item.get("signal_score", 0),
             item.get("title", ""),
         ),
@@ -287,7 +312,10 @@ def build_overview_report(
             })
 
     per_video.sort(
-        key=lambda item: (item.get("published_at", ""), item.get("signal_score", 0)),
+        key=lambda item: (
+            _parse_timestamp(item.get("published_at", "") or "") or datetime.min.replace(tzinfo=timezone.utc),
+            item.get("signal_score", 0),
+        ),
         reverse=True,
     )
 
