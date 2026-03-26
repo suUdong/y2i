@@ -1221,22 +1221,26 @@ with tabs[-2]:
         channels_info = comp_data["channels"]
 
         rows = []
+        scorecard_rows = []
+        returns_rows = []
         for slug, info in channels_info.items():
-            row = {"채널": info.get("display_name", slug)}
+            channel_label = info.get("display_name", slug)
+            row = {"채널": channel_label}
             row["영상 수"] = info.get("total_videos", 0)
             row["분석 대상"] = info.get("actionable_videos", 0)
             row["대상 비율"] = f"{info.get('actionable_ratio', 0.0):.0%}"
+            row["순위상관"] = (
+                f"{info.get('ranking_spearman', 0.0):.2f}"
+                if info.get("ranking_spearman") is not None
+                else "미제공"
+            )
+            row["평가 표본"] = info.get("ranking_eval_positions", 0)
             sc = info.get("quality_scorecard", {})
             row["종합 점수"] = f"{sc.get('overall', 0.0):.1f}"
             row["상위 1개 수익률"] = f"{info.get('ranking_top_1_return_pct', 0.0):.1f}%"
             row["상위 3개 수익률"] = f"{info.get('ranking_top_3_return_pct', 0.0):.1f}%"
             rows.append(row)
 
-        df_comp = pd.DataFrame(rows)
-        st.dataframe(df_comp, use_container_width=True, hide_index=True)
-
-        if len(rows) >= 2:
-            chart_rows = []
             metric_kr = {
                 "overall": "종합",
                 "transcript_coverage": "트랜스크립트",
@@ -1244,28 +1248,80 @@ with tabs[-2]:
                 "actionable_density": "액션 밀도",
                 "horizon_adequacy": "투자 기간 적합성",
             }
-            for slug, info in channels_info.items():
-                sc = info.get("quality_scorecard", {})
-                name = info.get("display_name", slug)
-                for metric_key, metric_label in metric_kr.items():
-                    val = sc.get(metric_key)
-                    if val is not None:
-                        chart_rows.append({
-                            "채널": name,
-                            "지표": metric_label,
-                            "점수": val,
-                        })
-            if chart_rows:
-                df_chart = pd.DataFrame(chart_rows)
-                fig_comp = px.imshow(
+            for metric_key, metric_label in metric_kr.items():
+                val = sc.get(metric_key)
+                if val is not None:
+                    scorecard_rows.append({
+                        "채널": channel_label,
+                        "지표": metric_label,
+                        "점수": val,
+                    })
+
+            returns_rows.extend([
+                {
+                    "채널": channel_label,
+                    "항목": "상위 1개 수익률",
+                    "값": info.get("ranking_top_1_return_pct", 0.0),
+                },
+                {
+                    "채널": channel_label,
+                    "항목": "상위 3개 수익률",
+                    "값": info.get("ranking_top_3_return_pct", 0.0),
+                },
+            ])
+
+        df_comp = pd.DataFrame(rows)
+        st.dataframe(df_comp, use_container_width=True, hide_index=True)
+
+        if len(rows) >= 2 and scorecard_rows:
+            chart_col_a, chart_col_b = st.columns(2)
+            with chart_col_a:
+                df_scorecard = pd.DataFrame(scorecard_rows)
+                fig_comp = px.bar(
+                    df_scorecard,
+                    x="지표",
+                    y="점수",
+                    color="채널",
+                    barmode="group",
+                    title="채널 품질 지표 비교",
+                    text="점수",
+                )
+                fig_comp.update_traces(texttemplate="%{text:.1f}", textposition="outside")
+                fig_comp.update_yaxes(title="점수", range=[0, 100])
+                render_chart(fig_comp, key="compare_scorecard", height=500)
+
+            with chart_col_b:
+                df_returns = pd.DataFrame(returns_rows)
+                color_map_returns = {
+                    "상위 1개 수익률": "#3B82F6",
+                    "상위 3개 수익률": "#22C55E",
+                }
+                fig_returns = px.bar(
+                    df_returns,
+                    x="채널",
+                    y="값",
+                    color="항목",
+                    barmode="group",
+                    title="랭킹 수익률 비교",
+                    text="값",
+                    color_discrete_map=color_map_returns,
+                )
+                fig_returns.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+                fig_returns.update_yaxes(title="수익률 (%)", zeroline=True, zerolinecolor="rgba(255,255,255,0.18)")
+                render_chart(fig_returns, key="compare_returns", height=500)
+
+        if scorecard_rows:
+            with st.expander("품질 지표 히트맵", expanded=False):
+                df_chart = pd.DataFrame(scorecard_rows)
+                fig_heatmap = px.imshow(
                     df_chart.pivot(index="채널", columns="지표", values="점수"),
                     text_auto=".1f",
                     aspect="auto",
                     color_continuous_scale=["#0F172A", "#1D4ED8", "#22C55E"],
                     title="채널 품질 지표 히트맵",
                 )
-                fig_comp.update_xaxes(side="top")
-                render_chart(fig_comp, key="compare_chart", height=480)
+                fig_heatmap.update_xaxes(side="top")
+                render_chart(fig_heatmap, key="compare_heatmap", height=460)
 
         more_act = comp_data.get("more_actionable_channel", EMPTY_TEXT)
         better_rank = comp_data.get("better_ranking_channel", EMPTY_TEXT)
@@ -1312,6 +1368,25 @@ with tabs[-1]:
                 f'</div>'
             )
         st.markdown(f'<div class="omx-card">{rows_html}</div>', unsafe_allow_html=True)
+
+        df_activity = pd.DataFrame(
+            [{"채널": channel_names.get(entry["channel"], entry["channel"])} for entry in activity]
+        )
+        if not df_activity.empty:
+            activity_counts = df_activity.value_counts().reset_index(name="건수").sort_values("건수", ascending=True)
+            fig_activity = px.bar(
+                activity_counts,
+                x="건수",
+                y="채널",
+                orientation="h",
+                title="최근 활동 채널 분포",
+                text="건수",
+                color="건수",
+                color_continuous_scale=["#1D4ED8", "#22C55E"],
+            )
+            fig_activity.update_traces(textposition="outside", hovertemplate="%{y}: %{x}회<extra></extra>")
+            fig_activity.update_layout(coloraxis_showscale=False)
+            render_chart(fig_activity, key="status_activity", height=360)
     else:
         st.info("파이프라인 활동 기록이 없습니다.")
 
