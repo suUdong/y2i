@@ -1447,6 +1447,9 @@ with tabs[-2]:
             sc = info.get("quality_scorecard", {})
             overall_score = sc.get("overall", 0.0)
             actionable_ratio = info.get("actionable_ratio", 0.0)
+            top1_return = info.get("ranking_top_1_return_pct", 0.0)
+            top3_return = info.get("ranking_top_3_return_pct", 0.0)
+            predictive_power = sc.get("ranking_predictive_power", 0.0)
             row = {"채널": channel_label}
             row["영상 수"] = info.get("total_videos", 0)
             row["분석 대상"] = info.get("actionable_videos", 0)
@@ -1458,10 +1461,13 @@ with tabs[-2]:
             )
             row["평가 표본"] = info.get("ranking_eval_positions", 0)
             row["종합 점수"] = f"{overall_score:.1f}"
-            row["상위 1개 수익률"] = f"{info.get('ranking_top_1_return_pct', 0.0):.1f}%"
-            row["상위 3개 수익률"] = f"{info.get('ranking_top_3_return_pct', 0.0):.1f}%"
+            row["상위 1개 수익률"] = f"{top1_return:.1f}%"
+            row["상위 3개 수익률"] = f"{top3_return:.1f}%"
             row["_sort_overall"] = overall_score
             row["_sort_actionable_ratio"] = actionable_ratio
+            row["_sort_top1_return"] = top1_return
+            row["_sort_top3_return"] = top3_return
+            row["_sort_predictive_power"] = predictive_power
             rows.append(row)
 
             metric_kr = {
@@ -1484,20 +1490,38 @@ with tabs[-2]:
                 {
                     "채널": channel_label,
                     "항목": "상위 1개 수익률",
-                    "값": info.get("ranking_top_1_return_pct", 0.0),
+                    "값": top1_return,
                 },
                 {
                     "채널": channel_label,
                     "항목": "상위 3개 수익률",
-                    "값": info.get("ranking_top_3_return_pct", 0.0),
+                    "값": top3_return,
                 },
             ])
 
         df_comp = pd.DataFrame(rows)
-        df_comp = df_comp.sort_values(["_sort_overall", "_sort_actionable_ratio"], ascending=[False, False])
+        sort_options = {
+            "종합 점수": "_sort_overall",
+            "대상 비율": "_sort_actionable_ratio",
+            "상위 3개 수익률": "_sort_top3_return",
+            "상위 1개 수익률": "_sort_top1_return",
+            "랭킹 예측력": "_sort_predictive_power",
+        }
+        compare_sort_label = st.selectbox("정렬 기준", list(sort_options.keys()), key="compare_sort")
+        sort_column = sort_options[compare_sort_label]
+        df_comp = df_comp.sort_values([sort_column, "_sort_overall"], ascending=[False, False])
         channel_order = df_comp["채널"].tolist()
         st.dataframe(
-            df_comp.drop(columns=["_sort_overall", "_sort_actionable_ratio"], errors="ignore"),
+            df_comp.drop(
+                columns=[
+                    "_sort_overall",
+                    "_sort_actionable_ratio",
+                    "_sort_top1_return",
+                    "_sort_top3_return",
+                    "_sort_predictive_power",
+                ],
+                errors="ignore",
+            ),
             use_container_width=True,
             hide_index=True,
         )
