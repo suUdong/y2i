@@ -366,6 +366,17 @@ KOREAN_STOCK_NAMES: dict[str, str] = {
     "039030.KQ": "이오테크닉스",
     "095340.KQ": "ISC",
     "241560.KQ": "두산퓨얼셀",
+    # Pipeline output tickers
+    "240810.KQ": "원익IPS",
+    "012450.KS": "한화에어로스페이스",
+    "047810.KS": "한국항공우주",
+    "007660.KS": "이수페타시스",
+    "131970.KQ": "두산테스나",
+    "222800.KQ": "심텍",
+    "399720.KQ": "가온칩스",
+    "253590.KQ": "네오셈",
+    "036010.KQ": "에이비코전자",
+    "005830.KS": "DB손해보험",
 }
 
 
@@ -408,17 +419,71 @@ def get_channel_display_names(
 def get_all_rankings(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
 ) -> list[dict[str, Any]]:
-    """Aggregate cross_video_ranking across all channels, best entry per ticker."""
-    best: dict[str, dict[str, Any]] = {}
+    """Aggregate cross_video_ranking across all channels with proper multi-channel aggregation."""
+    agg: dict[str, dict[str, Any]] = {}
+    channel_names = get_channel_display_names(output_dir)
+
     for slug in get_available_channels(output_dir):
         data = load_30d_results(slug, output_dir)
         for item in data.get("cross_video_ranking", []):
             ticker = item.get("ticker", "")
             if not ticker:
                 continue
-            entry = dict(item)
-            entry["_source_channel"] = slug
-            existing = best.get(ticker)
-            if existing is None or entry.get("aggregate_score", 0) > existing.get("aggregate_score", 0):
-                best[ticker] = entry
-    return sorted(best.values(), key=lambda x: x.get("aggregate_score", 0), reverse=True)
+            score = item.get("aggregate_score", 0)
+            appearances = item.get("appearances", 0)
+
+            if ticker not in agg:
+                agg[ticker] = {
+                    "ticker": ticker,
+                    "company_name": item.get("company_name", ""),
+                    "aggregate_score": score,
+                    "aggregate_verdict": item.get("aggregate_verdict", "WATCH"),
+                    "appearances": appearances,
+                    "total_mentions": item.get("total_mentions", 0),
+                    "latest_price": item.get("latest_price"),
+                    "currency": item.get("currency", "KRW"),
+                    "last_signal_at": item.get("last_signal_at", ""),
+                    "first_signal_at": item.get("first_signal_at", ""),
+                    "latest_checked_at": item.get("latest_checked_at", ""),
+                    "source_video_titles": list(item.get("source_video_titles", [])),
+                    "_source_channels": [slug],
+                    "_channel_scores": [score],
+                    "_source_channel": slug,
+                }
+            else:
+                existing = agg[ticker]
+                existing["_source_channels"].append(slug)
+                existing["_channel_scores"].append(score)
+                existing["appearances"] += appearances
+                existing["total_mentions"] = existing.get("total_mentions", 0) + item.get("total_mentions", 0)
+                existing["source_video_titles"].extend(item.get("source_video_titles", []))
+                # Keep best price/date info
+                if score > max(existing["_channel_scores"][:-1]):
+                    existing["latest_price"] = item.get("latest_price") or existing["latest_price"]
+                    existing["currency"] = item.get("currency", existing["currency"])
+                    existing["latest_checked_at"] = item.get("latest_checked_at") or existing["latest_checked_at"]
+                item_last = item.get("last_signal_at") or ""
+                existing_last = existing.get("last_signal_at") or ""
+                if item_last > existing_last:
+                    existing["last_signal_at"] = item_last
+
+    # Compute weighted average score and best verdict
+    for entry in agg.values():
+        scores = entry.pop("_channel_scores")
+        entry["aggregate_score"] = sum(scores) / len(scores) if scores else 0
+        entry["channel_count"] = len(entry["_source_channels"])
+        # Boost score by channel breadth: +5 per additional channel
+        entry["aggregate_score"] += (entry["channel_count"] - 1) * 5
+        # Pick best verdict from score
+        s = entry["aggregate_score"]
+        if s >= 65:
+            entry["aggregate_verdict"] = "BUY"
+        elif s >= 50:
+            entry["aggregate_verdict"] = "WATCH"
+        else:
+            entry["aggregate_verdict"] = "REJECT"
+        # Display name for source channel (use first one)
+        entry["_source_channel"] = entry["_source_channels"][0]
+        entry["_source_channels_display"] = [channel_names.get(ch, ch) for ch in entry["_source_channels"]]
+
+    return sorted(agg.values(), key=lambda x: x.get("aggregate_score", 0), reverse=True)

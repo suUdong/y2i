@@ -576,13 +576,11 @@ with tabs[0]:
             score_color = "#22C55E" if score >= 65 else "#F59E0B" if score >= 50 else "#EF4444"
             signal_date = format_signal_date(stock.get("last_signal_at", ""))
             appearances = stock.get("appearances", 0)
-            source_ch = channel_names.get(stock.get("_source_channel", ""), "")
-
-            # Try to get one-liner from source
-            one_liner = ""
-            source_titles = stock.get("source_video_titles", [])
-            if source_titles:
-                one_liner = str(source_titles[0])[:80] if source_titles[0] else ""
+            source_channels_display = stock.get("_source_channels_display", [])
+            channel_count = stock.get("channel_count", 1)
+            source_label = ", ".join(source_channels_display[:3]) if source_channels_display else channel_names.get(stock.get("_source_channel", ""), "")
+            if channel_count > 3:
+                source_label += f" 외 {channel_count - 3}개"
 
             with hero_cols[i % len(hero_cols)]:
                 # Get Korean name part only
@@ -596,8 +594,9 @@ with tabs[0]:
                     f'<div class="hero-price">{price_str}</div>'
                     f'<div class="hero-score" style="color:{score_color};">{score:.0f}</div>'
                     f'<div class="hero-meta">'
-                    f'{source_ch} &middot; {appearances}회 출현 &middot; {signal_date}'
+                    f'{channel_count}개 채널 &middot; {appearances}회 출현 &middot; {signal_date}'
                     f'</div>'
+                    f'<div style="font-size:0.7rem;color:#64748B;margin-top:2px;">{source_label}</div>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -840,14 +839,24 @@ with tabs[1]:
 
 with tabs[2]:
     st.markdown("#### 매크로 시그널")
-    macro_ch_options = [channel_names.get(ch, ch) for ch in available_channels]
+    macro_ch_options = ["전체 (통합)"] + [channel_names.get(ch, ch) for ch in available_channels]
     macro_ch_display = st.selectbox("채널 선택", macro_ch_options, key="macro_ch")
     macro_slug_map = {channel_names.get(ch, ch): ch for ch in available_channels}
-    macro_slug = macro_slug_map.get(macro_ch_display, "")
 
-    macro_30d = load_30d_results(macro_slug, OUTPUT_DIR)
-    videos = extract_videos(macro_30d)
-    macro_signals = extract_macro_signals(videos)
+    if macro_ch_display == "전체 (통합)":
+        # Aggregate macro signals from all channels
+        macro_signals = []
+        for _slug in available_channels:
+            _data = load_30d_results(_slug, OUTPUT_DIR)
+            _videos = extract_videos(_data)
+            for sig in extract_macro_signals(_videos):
+                sig["_channel"] = channel_names.get(_slug, _slug)
+                macro_signals.append(sig)
+    else:
+        macro_slug = macro_slug_map.get(macro_ch_display, "")
+        macro_30d = load_30d_results(macro_slug, OUTPUT_DIR)
+        videos = extract_videos(macro_30d)
+        macro_signals = extract_macro_signals(videos)
 
     if macro_signals:
         df_macro = pd.DataFrame(macro_signals)
@@ -924,14 +933,23 @@ with tabs[2]:
 
 with tabs[3]:
     st.markdown("#### 전문가 인사이트")
-    expert_ch_options = [channel_names.get(ch, ch) for ch in available_channels]
+    expert_ch_options = ["전체 (통합)"] + [channel_names.get(ch, ch) for ch in available_channels]
     expert_ch_display = st.selectbox("채널 선택", expert_ch_options, key="expert_ch")
     expert_slug_map = {channel_names.get(ch, ch): ch for ch in available_channels}
-    expert_slug = expert_slug_map.get(expert_ch_display, "")
 
-    expert_30d = load_30d_results(expert_slug, OUTPUT_DIR)
-    expert_videos = extract_videos(expert_30d)
-    insights = extract_expert_insights(expert_videos)
+    if expert_ch_display == "전체 (통합)":
+        insights = []
+        for _slug in available_channels:
+            _data = load_30d_results(_slug, OUTPUT_DIR)
+            _videos = extract_videos(_data)
+            for ins in extract_expert_insights(_videos):
+                ins["_channel"] = channel_names.get(_slug, _slug)
+                insights.append(ins)
+    else:
+        expert_slug = expert_slug_map.get(expert_ch_display, "")
+        expert_30d = load_30d_results(expert_slug, OUTPUT_DIR)
+        expert_videos = extract_videos(expert_30d)
+        insights = extract_expert_insights(expert_videos)
 
     if insights:
         for i, insight in enumerate(insights):

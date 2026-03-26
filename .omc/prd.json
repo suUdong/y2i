@@ -1,77 +1,53 @@
 {
   "stories": [
     {
-      "id": "US-001",
-      "title": "Auto-refresh dashboard with polling",
-      "description": "Add streamlit-autorefresh to poll for new data every 60 seconds.",
+      "id": "US-010",
+      "title": "Add missing Korean stock names to data_loader.py",
       "acceptanceCriteria": [
-        "streamlit-autorefresh installed",
-        "st_autorefresh(interval=60000) call exists in app.py",
-        "Dashboard auto-reruns without manual browser refresh"
+        "KOREAN_STOCK_NAMES contains entries for 240810.KQ, 012450.KS, 047810.KS, 007660.KS, 131970.KQ, 222800.KQ, 399720.KQ, 253590.KQ, 036010.KQ, 005830.KS",
+        "format_ticker_display('240810.KQ') returns '240810 원익IPS'",
+        "format_ticker_display('047810.KS') returns '047810 한국항공우주'"
       ],
-      "passes": true
+      "passes": false
     },
     {
-      "id": "US-002",
-      "title": "Last-update timestamp and new-data badge",
-      "description": "Show mtime of most recent output JSON as timestamp with NEW badge when < 5 min old.",
+      "id": "US-011",
+      "title": "Fix get_all_rankings to aggregate cross-channel data",
       "acceptanceCriteria": [
-        "get_last_update_time() exists in data_loader.py",
-        "Header displays Last Updated timestamp",
-        "Green NEW badge appears when data < 5 min old",
-        "Tests for get_last_update_time() pass"
+        "get_all_rankings sums appearances across all channels for each ticker",
+        "get_all_rankings tracks list of source channels per ticker",
+        "get_all_rankings computes weighted average score (not just max)",
+        "Dashboard summary tab shows multi-channel stock entries with correct aggregated data"
       ],
-      "passes": true
+      "passes": false
     },
     {
-      "id": "US-003",
-      "title": "New video highlights — recent 24h cards",
-      "description": "Show videos analyzed within last 24 hours as highlighted cards at top of Overview.",
+      "id": "US-012",
+      "title": "Add all-channel macro aggregate to macro tab",
       "acceptanceCriteria": [
-        "get_recent_videos(hours=24) exists in data_loader.py",
-        "Overview tab shows New Analysis section with card layout",
-        "ACTIONABLE videos have green border, NOISE muted",
-        "Tests for get_recent_videos() pass"
+        "Macro tab has '전체 (통합)' as first option in channel selector",
+        "Selecting '전체 (통합)' aggregates macro signals from all channels",
+        "Aggregated macro data shows de-duplicated indicators with summed frequencies"
       ],
-      "passes": true
+      "passes": false
     },
     {
-      "id": "US-004",
-      "title": "Real-time status tab",
-      "description": "Status tab with scheduler info, pipeline activity log, next run estimate.",
+      "id": "US-013",
+      "title": "Re-generate DASHBOARD.md with fresh pipeline data",
       "acceptanceCriteria": [
-        "Status tab appears in tab_labels",
-        "Shows pipeline activity from output file timestamps",
-        "Shows last run age and channel count",
-        "get_pipeline_activity() tests pass"
+        "DASHBOARD.md reflects latest output data",
+        "Cross-channel top stocks section uses aggregated multi-channel data"
       ],
-      "passes": true
+      "passes": false
     },
     {
-      "id": "US-005",
-      "title": "Mobile UX + full UI redesign",
-      "description": "Dark finance theme, card-based layout, large KPIs, signal badges, scroll indicators.",
+      "id": "US-014",
+      "title": "Commit and push all changes",
       "acceptanceCriteria": [
-        "Signal badges rendered as colored pills",
-        "Cards have proper spacing and borders",
-        "Tab bar has scroll fade indicators on mobile",
-        "Metric cards 2rem+ values with dark card backgrounds",
-        "No horizontal overflow on 375px viewport"
+        "All changes committed with descriptive message",
+        "Pushed to remote master successfully"
       ],
-      "passes": true
-    },
-    {
-      "id": "US-006",
-      "title": "Channel signal alerts — ACTIONABLE highlight",
-      "description": "Prominent ACTIONABLE signal alerts with ticker chips on Overview and dedicated Signals tab.",
-      "acceptanceCriteria": [
-        "extract_actionable_signals() exists in data_loader.py",
-        "Overview shows alert banner with ticker chips",
-        "Dedicated Signals tab with scored cards",
-        "Channel tabs show ACTIONABLE count badge",
-        "Tests for extract_actionable_signals() pass"
-      ],
-      "passes": true
+      "passes": false
     }
   ]
 }
