@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -117,6 +118,122 @@ def build_summary_report(channel_data: dict[str, dict | None]) -> dict:
     }
 
 
+def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -> dict:
+    summary = {
+        "total_channels": 0,
+        "total_videos": 0,
+        "actionable_videos": 0,
+        "skipped_videos": 0,
+        "transcript_backed_videos": 0,
+        "metadata_fallback_videos": 0,
+        "latest_published_at": "",
+        "signal_breakdown": {},
+        "top_skip_reasons": [],
+    }
+    signal_breakdown: Counter[str] = Counter()
+    skip_reasons: Counter[str] = Counter()
+    latest_published = ""
+    latest_published_ts: datetime | None = None
+
+    for data in channel_data.values():
+        if not data:
+            continue
+        summary["total_channels"] += 1
+        for video in data.get("videos", []):
+            summary["total_videos"] += 1
+            signal_class = video.get("video_signal_class", "UNKNOWN")
+            signal_breakdown[signal_class] += 1
+            if video.get("should_analyze_stocks"):
+                summary["actionable_videos"] += 1
+            else:
+                summary["skipped_videos"] += 1
+                reason = (video.get("skip_reason") or video.get("reason") or "").strip()
+                if reason:
+                    skip_reasons[reason] += 1
+
+            transcript_language = video.get("transcript_language")
+            if transcript_language == "metadata_fallback":
+                summary["metadata_fallback_videos"] += 1
+            elif transcript_language:
+                summary["transcript_backed_videos"] += 1
+
+            published_at = video.get("published_at")
+            if published_at:
+                published_ts = None
+                for fmt in ("%Y%m%dT%H%M%SZ", "%Y%m%d", "%Y-%m-%d"):
+                    try:
+                        published_ts = datetime.strptime(published_at, fmt).replace(tzinfo=timezone.utc)
+                        break
+                    except ValueError:
+                        continue
+                if published_ts is None:
+                    try:
+                        published_ts = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+                    except ValueError:
+                        published_ts = None
+                    if published_ts is not None and published_ts.tzinfo is None:
+                        published_ts = published_ts.replace(tzinfo=timezone.utc)
+                if published_ts is not None and (latest_published_ts is None or published_ts > latest_published_ts):
+                    latest_published_ts = published_ts
+                    latest_published = published_at
+
+    summary["latest_published_at"] = latest_published
+    summary["signal_breakdown"] = dict(signal_breakdown)
+    summary["top_skip_reasons"] = [
+        {"reason": reason, "count": count}
+        for reason, count in skip_reasons.most_common(5)
+    ]
+    return summary
+
+
+def build_channel_gate_health(channel_data: dict[str, dict | None]) -> dict[str, dict]:
+    channel_health: dict[str, dict] = {}
+    for slug, data in channel_data.items():
+        if data is None:
+            continue
+        videos = data.get("videos", [])
+        latest_published = ""
+        latest_published_ts: datetime | None = None
+        skip_counts: Counter[str] = Counter(
+            (video.get("skip_reason") or video.get("reason") or "").strip()
+            for video in videos
+            if not video.get("should_analyze_stocks") and (video.get("skip_reason") or video.get("reason"))
+        )
+        for video in videos:
+            published_at = video.get("published_at")
+            if not published_at:
+                continue
+            published_ts = None
+            for fmt in ("%Y%m%dT%H%M%SZ", "%Y%m%d", "%Y-%m-%d"):
+                try:
+                    published_ts = datetime.strptime(published_at, fmt).replace(tzinfo=timezone.utc)
+                    break
+                except ValueError:
+                    continue
+            if published_ts is None:
+                try:
+                    published_ts = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+                except ValueError:
+                    published_ts = None
+                if published_ts is not None and published_ts.tzinfo is None:
+                    published_ts = published_ts.replace(tzinfo=timezone.utc)
+            if published_ts is not None and (latest_published_ts is None or published_ts > latest_published_ts):
+                latest_published_ts = published_ts
+                latest_published = published_at
+
+        channel_health[slug] = {
+            "display_name": channel_label(slug, data),
+            "skipped_videos": sum(1 for video in videos if not video.get("should_analyze_stocks")),
+            "metadata_fallback_videos": sum(1 for video in videos if video.get("transcript_language") == "metadata_fallback"),
+            "latest_published_at": latest_published,
+            "top_skip_reasons": [
+                {"reason": reason, "count": count}
+                for reason, count in skip_counts.most_common(1)
+            ],
+        }
+    return channel_health
+
+
 # ---------------------------------------------------------------------------
 # Render helpers
 # ---------------------------------------------------------------------------
@@ -132,6 +249,25 @@ def _pct(value: int, total: int) -> str:
     if total == 0:
         return "0.0%"
     return f"{value / total * 100:.1f}%"
+
+
+def _format_date(value: str | None) -> str:
+    if not value:
+        return "N/A"
+    normalized = value.strip()
+    if not normalized:
+        return "N/A"
+    for fmt in ("%Y%m%dT%H%M%SZ", "%Y%m%d", "%Y-%m-%d"):
+        try:
+            parsed = datetime.strptime(normalized, fmt).replace(tzinfo=timezone.utc)
+            return parsed.strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    try:
+        parsed = datetime.fromisoformat(normalized.replace("Z", "+00:00"))
+    except ValueError:
+        return normalized
+    return parsed.astimezone(timezone.utc).strftime("%Y-%m-%d")
 
 
 # ---------------------------------------------------------------------------
@@ -375,6 +511,75 @@ def render_quality_comparison(channel_data: dict[str, dict | None]) -> str:
     return "\n".join(lines)
 
 
+def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict | None]) -> str:
+    lines = ["## Pipeline Health", ""]
+    summary = {}
+    if comparison:
+        summary = comparison.get("pipeline_summary", {})
+    if not summary:
+        summary = build_pipeline_summary_from_channels(channel_data)
+    if not summary:
+        lines.append("_No pipeline summary available._")
+        return "\n".join(lines)
+
+    lines.append("| Metric | Value |")
+    lines.append("|--------|------:|")
+    lines.append(f"| Channels | {summary.get('total_channels', 0)} |")
+    lines.append(f"| Videos | {summary.get('total_videos', 0)} |")
+    lines.append(f"| Actionable | {summary.get('actionable_videos', 0)} |")
+    lines.append(f"| Skipped | {summary.get('skipped_videos', 0)} |")
+    lines.append(f"| Transcript-backed | {summary.get('transcript_backed_videos', 0)} |")
+    lines.append(f"| Metadata fallback | {summary.get('metadata_fallback_videos', 0)} |")
+    lines.append(f"| Latest published | {_format_date(summary.get('latest_published_at'))} |")
+    lines.append("")
+
+    top_skip_reasons = summary.get("top_skip_reasons", [])
+    if top_skip_reasons:
+        lines.append("### Top Skip Reasons")
+        lines.append("")
+        lines.append("| Reason | Count |")
+        lines.append("|--------|------:|")
+        for item in top_skip_reasons:
+            lines.append(f"| {item.get('reason', 'N/A')} | {item.get('count', 0)} |")
+        lines.append("")
+
+    fallback_channels = build_channel_gate_health(channel_data)
+    channels = comparison.get("channels", {}) if comparison else {}
+    merged_channels: dict[str, dict] = {}
+    for slug in sorted(set(fallback_channels) | set(channels)):
+        info = dict(fallback_channels.get(slug, {}))
+        info.update(channels.get(slug, {}))
+        if not info.get("display_name"):
+            info["display_name"] = slug
+        if "skipped_videos" not in info:
+            info["skipped_videos"] = fallback_channels.get(slug, {}).get("skipped_videos", 0)
+        if "metadata_fallback_videos" not in info:
+            info["metadata_fallback_videos"] = fallback_channels.get(slug, {}).get("metadata_fallback_videos", 0)
+        if not info.get("latest_published_at"):
+            info["latest_published_at"] = fallback_channels.get(slug, {}).get("latest_published_at", "")
+        if not info.get("top_skip_reasons"):
+            info["top_skip_reasons"] = fallback_channels.get(slug, {}).get("top_skip_reasons", [])
+        merged_channels[slug] = info
+    channels = merged_channels
+    if channels:
+        lines.append("### Channel Gate Health")
+        lines.append("")
+        lines.append("| Channel | Skipped | Metadata Fallback | Latest Published | Top Skip Reason |")
+        lines.append("|---------|--------:|------------------:|------------------|-----------------|")
+        for slug, info in channels.items():
+            label = info.get("display_name", slug)
+            top_reason = ""
+            if info.get("top_skip_reasons"):
+                top_reason = info["top_skip_reasons"][0].get("reason", "")
+            lines.append(
+                f"| {label} | {info.get('skipped_videos', 0)} | {info.get('metadata_fallback_videos', 0)} | "
+                f"{_format_date(info.get('latest_published_at'))} | {top_reason or 'N/A'} |"
+            )
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 def render_content_type_distribution(report: dict | None) -> str:
     lines = ["## Content Type Distribution (삼프로TV)", ""]
     if not report:
@@ -449,10 +654,12 @@ def generate_dashboard(output_dir: Path | None = None, dest: Path | None = None)
     d = output_dir or OUTPUT_DIR
     channel_data = load_all_channels(d)
     report = build_summary_report(channel_data)
+    comparison = load_latest_comparison(d)
 
     sections = [
         render_header(channel_data),
         render_channel_overview(channel_data),
+        render_pipeline_health(comparison, channel_data),
         render_quality_comparison(channel_data),
         render_cross_channel_top_stocks(channel_data),
         render_all_stock_rankings(channel_data),

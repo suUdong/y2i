@@ -161,12 +161,32 @@ def sample_comparison():
     return {
         "generated_at": "20260323T053248Z",
         "window_days": 30,
+        "pipeline_summary": {
+            "total_channels": 2,
+            "total_videos": 80,
+            "actionable_videos": 37,
+            "skipped_videos": 43,
+            "transcript_backed_videos": 44,
+            "metadata_fallback_videos": 36,
+            "latest_published_at": "20260323T053248Z",
+            "signal_breakdown": {"ACTIONABLE": 37, "NOISE": 43},
+            "top_skip_reasons": [
+                {"reason": "종목 분석에 활용할 실질 신호가 부족함", "count": 30},
+                {"reason": "시황/섹터 일반론 위주로 종목 추출 근거가 약함", "count": 13},
+            ],
+        },
         "channels": {
             "sampro": {
                 "display_name": "삼프로TV",
                 "total_videos": 80,
                 "actionable_videos": 37,
                 "actionable_ratio": 0.4625,
+                "skipped_videos": 43,
+                "metadata_fallback_videos": 36,
+                "latest_published_at": "20260323T053248Z",
+                "top_skip_reasons": [
+                    {"reason": "종목 분석에 활용할 실질 신호가 부족함", "count": 30},
+                ],
                 "quality_scorecard": {
                     "overall": 45.0,
                     "transcript_coverage": 60.0,
@@ -180,6 +200,10 @@ def sample_comparison():
                 "total_videos": 0,
                 "actionable_videos": 0,
                 "actionable_ratio": 0.0,
+                "skipped_videos": 0,
+                "metadata_fallback_videos": 0,
+                "latest_published_at": "",
+                "top_skip_reasons": [],
                 "quality_scorecard": {
                     "overall": 0.0,
                     "transcript_coverage": 0.0,
@@ -395,6 +419,39 @@ class TestRenderQualityComparison:
         assert "No channel data available" in md
 
 
+class TestRenderPipelineHealth:
+    def test_with_data(self, sample_comparison, sample_30d):
+        md = gd.render_pipeline_health(sample_comparison, {"sampro": sample_30d})
+        assert "## Pipeline Health" in md
+        assert "Metadata fallback" in md
+        assert "Top Skip Reasons" in md
+        assert "Channel Gate Health" in md
+        assert "종목 분석에 활용할 실질 신호가 부족함" in md
+
+    def test_no_data(self):
+        md = gd.render_pipeline_health(None, {})
+        assert "## Pipeline Health" in md
+        assert "| Channels | 0 |" in md
+
+    def test_missing_summary_falls_back_to_channels(self, sample_30d):
+        data = dict(sample_30d)
+        data["videos"] = [
+            {
+                "video_id": "v1",
+                "title": "일반론 영상",
+                "video_signal_class": "NOISE",
+                "should_analyze_stocks": False,
+                "reason": "종목 분석에 활용할 실질 신호가 부족함",
+                "skip_reason": "종목 분석에 활용할 실질 신호가 부족함",
+                "transcript_language": "metadata_fallback",
+                "published_at": "20260323T053248Z",
+            }
+        ]
+        md = gd.render_pipeline_health({"channels": {}}, {"sampro": data})
+        assert "Top Skip Reasons" in md
+        assert "종목 분석에 활용할 실질 신호가 부족함" in md
+
+
 # ---------------------------------------------------------------------------
 # Integration test
 # ---------------------------------------------------------------------------
@@ -420,12 +477,14 @@ class TestGenerateDashboard:
         content = Path(result).read_text(encoding="utf-8")
         assert "# OMX Pipeline Dashboard" in content
         assert "## Channel Overview" in content
+        assert "## Pipeline Health" in content
         assert "## Content Type Distribution" in content
         assert "Per-Channel Stock Rankings" in content
         assert "## Macro Signals" in content
         assert "## Expert Insights" in content
         assert "Quality Scorecard" in content
         assert "새 채널" in content
+        assert "Top Skip Reasons" in content
 
     def test_empty_output_dir(self, tmp_output):
         dest = tmp_output.parent / "DASHBOARD.md"

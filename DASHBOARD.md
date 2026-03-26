@@ -1,6 +1,6 @@
 # OMX Pipeline Dashboard (6-Month / 180-Day Analysis)
 
-> Auto-generated: 2026-03-26 07:43 UTC
+> Auto-generated: 2026-03-26 10:19 UTC
 > Channels analyzed: 6/6
 > Data source: `output/` directory pipeline results
 
@@ -16,6 +16,36 @@
 | 삼프로TV | 80 | 35 | 43.8% | 13 | 36.2 |
 | 소수몽키 | 80 | 1 | 1.2% | 4 | 25.4 |
 | 슈카월드 | 80 | 6 | 7.5% | 8 | 27.2 |
+
+## Pipeline Health
+
+| Metric | Value |
+|--------|------:|
+| Channels | 6 |
+| Videos | 480 |
+| Actionable | 57 |
+| Skipped | 423 |
+| Transcript-backed | 472 |
+| Metadata fallback | 8 |
+| Latest published | N/A |
+
+### Top Skip Reasons
+
+| Reason | Count |
+|--------|------:|
+| 종목 분석에 활용할 실질 신호가 부족함 | 394 |
+| 시황/섹터 일반론 위주로 종목 추출 근거가 약함 | 29 |
+
+### Channel Gate Health
+
+| Channel | Skipped | Metadata Fallback | Latest Published | Top Skip Reason |
+|---------|--------:|------------------:|------------------|-----------------|
+| 이효석아카데미 | 76 | 2 | N/A | 종목 분석에 활용할 실질 신호가 부족함 |
+| IT의 신 이형수 | 72 | 0 | N/A | 종목 분석에 활용할 실질 신호가 부족함 |
+| 김작가TV | 77 | 0 | N/A | 종목 분석에 활용할 실질 신호가 부족함 |
+| 삼프로TV | 45 | 6 | N/A | 종목 분석에 활용할 실질 신호가 부족함 |
+| 소수몽키 | 79 | 0 | N/A | 종목 분석에 활용할 실질 신호가 부족함 |
+| 슈카월드 | 74 | 0 | N/A | 종목 분석에 활용할 실질 신호가 부족함 |
 
 ## Quality Scorecard Comparison
 
