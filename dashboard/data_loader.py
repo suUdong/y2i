@@ -545,4 +545,14 @@ def get_all_rankings(
         entry["_source_channel"] = entry["_source_channels"][0]
         entry["_source_channels_display"] = [channel_names.get(ch, ch) for ch in entry["_source_channels"]]
 
-    return sorted(agg.values(), key=lambda x: x.get("aggregate_score", 0), reverse=True)
+    return sorted(
+        agg.values(),
+        key=lambda x: (
+            x.get("aggregate_score", 0),
+            x.get("channel_count", 0),
+            x.get("appearances", 0),
+            _parse_timestamp(x.get("latest_checked_at", "") or "") or datetime.min.replace(tzinfo=timezone.utc),
+            x.get("ticker", ""),
+        ),
+        reverse=True,
+    )
