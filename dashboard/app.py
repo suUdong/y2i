@@ -890,30 +890,36 @@ with tabs[1]:
                 "현재가": format_price(price, currency),
                 "출현": appearances,
                 "가격확인": checked_at,
+                "_검색": " ".join(str(value) for value in [ticker, display, verdict, last_signal, checked_at]),
+                "_점수": round(score, 1),
+                "_판단_raw": verdict,
             })
 
         df_rank = pd.DataFrame(rows)
 
         if filter_text:
-            mask = df_rank.apply(lambda row: filter_text.upper() in str(row.values).upper(), axis=1)
+            mask = df_rank["_검색"].str.upper().str.contains(filter_text.upper(), regex=False, na=False)
             df_rank = df_rank[mask]
 
-        st.dataframe(df_rank, use_container_width=True, height=500, hide_index=True)
+        render_metrics_row([
+            ("전체 종목", str(len(rows))),
+            ("현재 표시", str(len(df_rank))),
+        ], cols_desktop=2)
+
+        display_rank = df_rank.drop(columns=["_검색", "_점수", "_판단_raw"], errors="ignore")
+        st.dataframe(display_rank, use_container_width=True, height=500, hide_index=True)
 
         # Confidence visualization below table
-        st.markdown("##### 상위 종목 점수 분포")
-        top_rank_rows = []
-        for item in ranking[:12]:
-            ticker = item.get("ticker", "")
-            verdict = item.get("aggregate_verdict", item.get("final_verdict", ""))
-            top_rank_rows.append({
-                "종목": format_ticker_display(ticker, item.get("company_name", ""))[:26],
-                "점수": round(item.get("aggregate_score", item.get("total_score", 0)), 1),
-                "판단": translate_verdict(verdict),
-                "판단_raw": verdict,
-            })
-        if top_rank_rows:
-            df_top_rank = pd.DataFrame(top_rank_rows).sort_values("점수", ascending=True)
+        if display_rank.empty:
+            st.info("검색 조건에 맞는 종목이 없습니다.")
+        else:
+            st.markdown("##### 상위 종목 점수 분포")
+            df_top_rank = pd.DataFrame({
+                "종목": df_rank["종목"].astype(str).str.slice(0, 26),
+                "점수": df_rank["_점수"],
+                "판단": df_rank["판단"],
+                "판단_raw": df_rank["_판단_raw"],
+            }).head(12).sort_values("점수", ascending=True)
             verdict_colors = {
                 translate_verdict("BUY"): "#22C55E",
                 translate_verdict("WATCH"): "#F59E0B",
@@ -1416,7 +1422,6 @@ with tabs[-1]:
         now_utc = datetime.now(tz=timezone.utc)
         age_min = (now_utc - last_update).total_seconds() / 60
         status_text = "활성" if age_min < 120 else "대기"
-        status_color = "#22C55E" if age_min < 120 else "#F59E0B"
 
         render_metrics_row([
             ("상태", status_text),
