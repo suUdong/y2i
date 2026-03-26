@@ -760,8 +760,38 @@ with tabs[0]:
     recent_videos = get_recent_videos(OUTPUT_DIR, hours=24)
     if recent_videos:
         st.markdown("#### 최근 분석 (24시간)")
-        rcols = st.columns(min(len(recent_videos), 3))
-        for i, rv in enumerate(recent_videos[:6]):
+        recent_sort = st.selectbox(
+            "정렬 기준",
+            ["최근 반영", "게시일", "점수"],
+            key="recent_sort",
+        )
+        if recent_sort == "게시일":
+            sorted_recent_videos = sorted(
+                recent_videos,
+                key=lambda rv: (
+                    parse_timestamp_string(rv.get("published_at", "") or "") or datetime.min.replace(tzinfo=timezone.utc),
+                    rv.get("_updated_at") or datetime.min.replace(tzinfo=timezone.utc),
+                    rv.get("signal_score", 0),
+                    rv.get("title", ""),
+                ),
+                reverse=True,
+            )
+        elif recent_sort == "점수":
+            sorted_recent_videos = sorted(
+                recent_videos,
+                key=lambda rv: (
+                    rv.get("signal_score", 0),
+                    rv.get("_updated_at") or datetime.min.replace(tzinfo=timezone.utc),
+                    parse_timestamp_string(rv.get("published_at", "") or "") or datetime.min.replace(tzinfo=timezone.utc),
+                    rv.get("title", ""),
+                ),
+                reverse=True,
+            )
+        else:
+            sorted_recent_videos = list(recent_videos)
+
+        rcols = st.columns(min(len(sorted_recent_videos), 3))
+        for i, rv in enumerate(sorted_recent_videos[:6]):
             sig_cls = rv.get("video_signal_class", "UNKNOWN")
             card_class = video_card_class(sig_cls)
             score = rv.get("signal_score", 0)
@@ -769,13 +799,16 @@ with tabs[0]:
             updated_at = format_timestamp_local(rv.get("_updated_at"), include_tz=False)
             ch_name = channel_names.get(rv.get("_channel", ""), rv.get("_channel", ""))
             reason = rv.get("reason", "")
+            title_full = rv.get("title", "제목 없음")
+            title_short = title_full[:60] + ("..." if len(title_full) > 60 else "")
             with rcols[i % len(rcols)]:
                 reason_html = ""
                 if reason:
-                    reason_html = f'<div style="font-size:0.75rem;color:#CBD5E1;margin-top:4px;">{reason[:100]}</div>'
+                    reason_preview = reason[:100] + ("..." if len(reason) > 100 else "")
+                    reason_html = f'<div style="font-size:0.75rem;color:#CBD5E1;margin-top:4px;" title="{reason}">{reason_preview}</div>'
                 st.markdown(
                     f'<div class="video-card {card_class}">'
-                    f'<div class="video-card-title">{rv.get("title", "제목 없음")[:60]}</div>'
+                    f'<div class="video-card-title" title="{title_full}">{title_short}</div>'
                     f'<div class="video-card-meta">'
                     f'{ch_name} &middot; 점수: {score:.0f} &middot; 게시 {pub_date} &middot; 반영 {updated_at} &middot; '
                     f'{signal_badge(sig_cls)}'
