@@ -328,20 +328,6 @@ header[data-testid="stHeader"] {
     padding-top: 8px;
 }
 
-/* -- Confidence Bar ---------------------------------------------------- */
-.conf-bar-bg {
-    background: #1E293B;
-    border-radius: 4px;
-    height: 6px;
-    width: 100%;
-    display: inline-block;
-}
-.conf-bar-fill {
-    border-radius: 4px;
-    height: 6px;
-    display: block;
-}
-
 /* -- Expanders --------------------------------------------------------- */
 .streamlit-expanderHeader {
     font-size: 1rem !important;
@@ -383,7 +369,11 @@ header[data-testid="stHeader"] {
     margin-bottom: 0.75rem;
 }
 .video-card-actionable { border-left: 3px solid #22C55E; }
-.video-card-noise { border-left: 3px solid #64748B; }
+.video-card-sector-only { border-left: 3px solid #60A5FA; }
+.video-card-low-signal { border-left: 3px solid #F59E0B; }
+.video-card-non-equity,
+.video-card-unknown { border-left: 3px solid #94A3B8; }
+.video-card-noise { border-left: 3px solid #EF4444; }
 .video-card-title {
     font-size: 0.95rem;
     font-weight: 700;
@@ -567,21 +557,14 @@ def verdict_badge(verdict: str) -> str:
     return f'<span class="verdict-{css}">{kr}</span>'
 
 
-def confidence_bar(score: float, max_score: float = 100.0) -> str:
-    """Return HTML for a confidence bar."""
-    pct = min(score / max_score * 100, 100) if max_score > 0 else 0
-    if pct >= 70:
-        color = "#22C55E"
-    elif pct >= 50:
-        color = "#F59E0B"
-    else:
-        color = "#EF4444"
-    return (
-        f'<div class="conf-bar-bg">'
-        f'<div class="conf-bar-fill" style="width:{pct:.0f}%;background:{color};"></div>'
-        f'</div>'
-        f'<span style="font-size:0.75rem;color:{color};font-weight:700;">{score:.0f}</span>'
-    )
+def video_card_class(signal_class: str) -> str:
+    return {
+        "ACTIONABLE": "video-card-actionable",
+        "SECTOR_ONLY": "video-card-sector-only",
+        "LOW_SIGNAL": "video-card-low-signal",
+        "NON_EQUITY": "video-card-non-equity",
+        "UNKNOWN": "video-card-unknown",
+    }.get(signal_class, "video-card-noise")
 
 
 def format_signal_date(date_str: str) -> str:
@@ -700,7 +683,7 @@ with tabs[0]:
         rcols = st.columns(min(len(recent_videos), 3))
         for i, rv in enumerate(recent_videos[:6]):
             sig_cls = rv.get("video_signal_class", "UNKNOWN")
-            card_class = "video-card-actionable" if sig_cls == "ACTIONABLE" else "video-card-noise"
+            card_class = video_card_class(sig_cls)
             score = rv.get("signal_score", 0)
             pub_date = format_signal_date(rv.get("published_at", ""))
             ch_name = channel_names.get(rv.get("_channel", ""), rv.get("_channel", ""))
@@ -1171,10 +1154,16 @@ for idx, ch_slug in enumerate(available_channels):
         # Videos
         ch_videos = extract_videos(ch_data)
         if ch_videos:
-            actionable_count = sum(1 for v in ch_videos if v.get("video_signal_class") == "ACTIONABLE")
+            signal_counts = pd.Series([v.get("video_signal_class", "UNKNOWN") for v in ch_videos]).value_counts()
+            summary_badges = []
+            for signal_key in ["ACTIONABLE", "SECTOR_ONLY", "LOW_SIGNAL", "NON_EQUITY", "NOISE"]:
+                count = int(signal_counts.get(signal_key, 0))
+                if count:
+                    summary_badges.append(f"{signal_badge(signal_key)} <span style='color:#CBD5E1;font-size:0.85rem;'>{count}</span>")
+            badges_html = " &middot; ".join(summary_badges)
             st.markdown(
-                f'영상: **{len(ch_videos)}**개 &middot; '
-                f'<span class="badge badge-actionable">분석 대상: {actionable_count}</span>',
+                f'영상: **{len(ch_videos)}**개'
+                f'{f" &middot; {badges_html}" if badges_html else ""}',
                 unsafe_allow_html=True,
             )
 
