@@ -48,6 +48,26 @@ def _load_json(path: Path | None) -> dict[str, Any] | list[Any]:
         return json.load(f)
 
 
+def _is_newer_timestamp(candidate: str, current: str) -> bool:
+    candidate_ts = _parse_timestamp(candidate)
+    current_ts = _parse_timestamp(current)
+    if candidate_ts is None:
+        return False
+    if current_ts is None:
+        return True
+    return candidate_ts > current_ts
+
+
+def _is_older_timestamp(candidate: str, current: str) -> bool:
+    candidate_ts = _parse_timestamp(candidate)
+    current_ts = _parse_timestamp(current)
+    if candidate_ts is None:
+        return False
+    if current_ts is None:
+        return True
+    return candidate_ts < current_ts
+
+
 # ── Integration report (sampro_integration_report.json) ──────────────────────
 
 def load_integration_report(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
@@ -149,8 +169,9 @@ def extract_expert_insights(videos: list[dict[str, Any]]) -> list[dict[str, Any]
     insights = []
     for v in videos:
         for expert in v.get("expert_insights", []):
-            expert["source_video"] = v.get("title", v.get("video_id", ""))
-            insights.append(expert)
+            row = dict(expert)
+            row["source_video"] = v.get("title", v.get("video_id", ""))
+            insights.append(row)
     return insights
 
 
@@ -159,8 +180,9 @@ def extract_macro_signals(videos: list[dict[str, Any]]) -> list[dict[str, Any]]:
     signals = []
     for v in videos:
         for macro in v.get("macro_insights", []):
-            macro["source_video"] = v.get("title", v.get("video_id", ""))
-            signals.append(macro)
+            row = dict(macro)
+            row["source_video"] = v.get("title", v.get("video_id", ""))
+            signals.append(row)
     return signals
 
 
@@ -490,15 +512,19 @@ def get_all_rankings(
                 existing["appearances"] += appearances
                 existing["total_mentions"] = existing.get("total_mentions", 0) + item.get("total_mentions", 0)
                 existing["source_video_titles"].extend(item.get("source_video_titles", []))
-                # Keep best price/date info
+                # Keep best price/company info from the strongest scoring channel.
                 if score > max(existing["_channel_scores"][:-1]):
+                    existing["company_name"] = item.get("company_name") or existing["company_name"]
                     existing["latest_price"] = item.get("latest_price") or existing["latest_price"]
                     existing["currency"] = item.get("currency", existing["currency"])
+                if _is_newer_timestamp(item.get("latest_checked_at", ""), existing.get("latest_checked_at", "")):
                     existing["latest_checked_at"] = item.get("latest_checked_at") or existing["latest_checked_at"]
-                item_last = item.get("last_signal_at") or ""
-                existing_last = existing.get("last_signal_at") or ""
-                if item_last > existing_last:
-                    existing["last_signal_at"] = item_last
+                    existing["latest_price"] = item.get("latest_price") or existing["latest_price"]
+                    existing["currency"] = item.get("currency", existing["currency"])
+                if _is_newer_timestamp(item.get("last_signal_at", ""), existing.get("last_signal_at", "")):
+                    existing["last_signal_at"] = item.get("last_signal_at") or existing["last_signal_at"]
+                if _is_older_timestamp(item.get("first_signal_at", ""), existing.get("first_signal_at", "")):
+                    existing["first_signal_at"] = item.get("first_signal_at") or existing["first_signal_at"]
 
     # Compute weighted average score and best verdict
     for entry in agg.values():
