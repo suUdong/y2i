@@ -453,7 +453,7 @@ class TestRenderPipelineHealth:
         md = gd.render_pipeline_health(sample_comparison, {"sampro": sample_30d})
         assert "## Pipeline Health" in md
         assert "Snapshot run" in md
-        assert "20260323T053248Z" in md
+        assert "2026-03-23 05:32 UTC" in md
         assert "Metadata fallback" in md
         assert "Strict ACTIONABLE" in md
         assert "Latest Reference" in md

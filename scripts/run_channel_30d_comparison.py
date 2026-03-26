@@ -98,6 +98,16 @@ def _fmt_dateish(value: object) -> str:
     return text
 
 
+def _fmt_run_id(value: object) -> str:
+    if value is None or value == "":
+        return "미제공"
+    text = str(value)
+    try:
+        return datetime.strptime(text, "%Y%m%dT%H%M%SZ").strftime("%Y-%m-%d %H:%M UTC")
+    except ValueError:
+        return text
+
+
 def _fmt_ratio(value: object) -> str:
     if isinstance(value, (int, float)):
         return f"{value:.1%}"
@@ -307,7 +317,7 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
     pipeline_summary = comparison.get("pipeline_summary", {})
     if pipeline_summary:
         lines.append("[파이프라인 요약]")
-        lines.append(f"- 스냅샷 run: {comparison.get('generated_at', context.run_id)}")
+        lines.append(f"- 스냅샷 run: {_fmt_run_id(comparison.get('generated_at', context.run_id))}")
         for key in (
             "total_channels",
             "total_videos",

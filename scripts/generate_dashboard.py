@@ -291,6 +291,13 @@ def _format_reference_kind(kind: str | None) -> str:
     return REFERENCE_KIND_LABELS.get(kind or "unknown", kind or "unknown")
 
 
+def _format_run_id(value: str | None) -> str:
+    parsed = _parse_time_like(value)
+    if parsed is None:
+        return value or "N/A"
+    return parsed.strftime("%Y-%m-%d %H:%M UTC")
+
+
 def _parse_time_like(value: str | None) -> datetime | None:
     if not value:
         return None
@@ -566,7 +573,7 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
 
     lines.append("| Metric | Value |")
     lines.append("|--------|------:|")
-    lines.append(f"| Snapshot run | {comparison.get('generated_at', 'N/A') if comparison else 'N/A'} |")
+    lines.append(f"| Snapshot run | {_format_run_id(comparison.get('generated_at') if comparison else None)} |")
     lines.append(f"| Channels | {summary.get('total_channels', 0)} |")
     lines.append(f"| Videos | {summary.get('total_videos', 0)} |")
     lines.append(f"| Analyzable | {summary.get('analyzable_videos', summary.get('actionable_videos', 0))} |")

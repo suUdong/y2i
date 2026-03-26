@@ -1,6 +1,6 @@
 # OMX Pipeline Dashboard (6-Month / 180-Day Analysis)
 
-> Auto-generated: 2026-03-26 10:59 UTC
+> Auto-generated: 2026-03-26 11:03 UTC
 > Channels analyzed: 6/6
 > Data source: `output/` directory pipeline results
 
@@ -21,7 +21,7 @@
 
 | Metric | Value |
 |--------|------:|
-| Snapshot run | 20260326T005737Z |
+| Snapshot run | 2026-03-26 00:57 UTC |
 | Channels | 6 |
 | Videos | 86 |
 | Analyzable | 30 |

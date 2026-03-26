@@ -733,6 +733,10 @@ def format_reference_display(value: str | None, kind: str | None) -> str:
     return f"{formatted} ({label})"
 
 
+def format_run_id_display(value: str | None) -> str:
+    return format_signal_datetime(value or "")
+
+
 def format_reference_timing(
     last_signal_at: str | None,
     first_signal_at: str | None,
@@ -1904,7 +1908,7 @@ with tabs[-1]:
     if pipeline_summary:
         st.markdown("#### 게이트 운영 요약")
         render_metrics_row([
-            ("스냅샷 run", (comp_status or {}).get("generated_at", EMPTY_TEXT)),
+            ("스냅샷 run", format_run_id_display((comp_status or {}).get("generated_at", ""))),
             ("스킵 영상", str(pipeline_summary.get("skipped_videos", 0))),
             ("엄격 액션", str(pipeline_summary.get("strict_actionable_videos", 0))),
             ("실자막 기반", str(pipeline_summary.get("transcript_backed_videos", 0))),
