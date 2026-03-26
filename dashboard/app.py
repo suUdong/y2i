@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import streamlit as st
 import plotly.express as px
@@ -442,6 +442,7 @@ if query_token != DASHBOARD_TOKEN:
 # -- Header with timestamp + NEW badge ----------------------------------------
 
 OUTPUT_DIR = DEFAULT_OUTPUT_DIR
+KST = timezone(timedelta(hours=9))
 
 last_update = get_last_update_time(OUTPUT_DIR)
 header_cols = st.columns([3, 1])
@@ -451,7 +452,7 @@ with header_cols[1]:
     if last_update:
         now_utc = datetime.now(tz=timezone.utc)
         age_min = (now_utc - last_update).total_seconds() / 60
-        ts_str = last_update.strftime("%Y-%m-%d %H:%M UTC")
+        ts_str = last_update.astimezone(KST).strftime("%Y-%m-%d %H:%M KST")
         badge_html = ""
         if age_min < 5:
             badge_html = ' <span class="badge badge-new">신규</span>'
@@ -592,6 +593,13 @@ def format_signal_date(date_str: str) -> str:
     if "T" in date_str and len(date_str) > 10:
         return date_str[:10]
     return date_str
+
+
+def format_timestamp_local(dt: datetime | None, include_tz: bool = True) -> str:
+    if dt is None:
+        return EMPTY_TEXT
+    fmt = "%Y-%m-%d %H:%M KST" if include_tz else "%Y-%m-%d %H:%M"
+    return dt.astimezone(KST).strftime(fmt)
 
 
 def translate_signal_class(signal_class: str) -> str:
@@ -943,6 +951,7 @@ with tabs[2]:
     if macro_signals:
         df_macro = pd.DataFrame(macro_signals)
         col_map = {
+            "_channel": "채널",
             "direction": "방향",
             "confidence": "신뢰도",
             "sentiment": "센티멘트",
@@ -952,7 +961,7 @@ with tabs[2]:
         if "label" not in df_macro.columns and "indicator" in df_macro.columns:
             df_macro["label"] = df_macro["indicator"]
         df_macro = df_macro.sort_values(["confidence", "label"], ascending=[False, True])
-        display_cols = [c for c in ["label", "direction", "confidence", "sentiment", "source_video"] if c in df_macro.columns]
+        display_cols = [c for c in ["_channel", "label", "direction", "confidence", "sentiment", "source_video"] if c in df_macro.columns]
         display_df = df_macro[display_cols].copy()
 
         # Translate direction and sentiment to Korean
@@ -1008,6 +1017,23 @@ with tabs[2]:
                     hovertemplate="%{y}: %{x}건 (%{text})<extra></extra>",
                 )
                 render_chart(fig_dir, key="macro_pie", height=420)
+
+        if "_channel" in df_macro.columns and macro_ch_display == "전체 (통합)":
+            source_counts = df_macro["_channel"].value_counts().reset_index()
+            source_counts.columns = ["채널", "건수"]
+            fig_sources = px.bar(
+                source_counts.sort_values("건수", ascending=True),
+                x="건수",
+                y="채널",
+                orientation="h",
+                title="매크로 인사이트 출처 채널",
+                text="건수",
+                color="건수",
+                color_continuous_scale=["#1D4ED8", "#06B6D4"],
+            )
+            fig_sources.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
+            fig_sources.update_layout(coloraxis_showscale=False)
+            render_chart(fig_sources, key="macro_sources", height=360)
     else:
         st.info(f"'{macro_ch_display}' 채널의 매크로 시그널이 없습니다.")
 
@@ -1036,10 +1062,37 @@ with tabs[3]:
         insights = extract_expert_insights(expert_videos)
 
     if insights:
+        if expert_ch_display == "전체 (통합)":
+            render_metrics_row([
+                ("전문가 인사이트", str(len(insights))),
+                ("출처 채널", str(len({item.get('_channel', '') for item in insights if item.get('_channel')}))),
+            ], cols_desktop=2)
+
+            df_expert_sources = pd.DataFrame(
+                [{"채널": item.get("_channel", EMPTY_TEXT)} for item in insights if item.get("_channel")]
+            )
+            if not df_expert_sources.empty:
+                source_counts = df_expert_sources.value_counts().reset_index(name="건수").sort_values("건수", ascending=True)
+                fig_expert_sources = px.bar(
+                    source_counts,
+                    x="건수",
+                    y="채널",
+                    orientation="h",
+                    title="전문가 인사이트 출처 채널",
+                    text="건수",
+                    color="건수",
+                    color_continuous_scale=["#1D4ED8", "#8B5CF6"],
+                )
+                fig_expert_sources.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
+                fig_expert_sources.update_layout(coloraxis_showscale=False)
+                render_chart(fig_expert_sources, key="expert_sources", height=320)
+
         for i, insight in enumerate(insights):
             expert_name = insight.get("expert_name", "미상")
             affiliation = insight.get("affiliation", "")
-            label = f"{expert_name} — {affiliation}" if affiliation else expert_name
+            source_channel = insight.get("_channel", "")
+            prefix = f"[{source_channel}] " if source_channel and expert_ch_display == "전체 (통합)" else ""
+            label = f"{prefix}{expert_name} — {affiliation}" if affiliation else f"{prefix}{expert_name}"
 
             with st.expander(label, expanded=(i < 2)):
                 cols = st.columns([2, 1])
@@ -1050,6 +1103,8 @@ with tabs[3]:
                     sentiment_color = {"BULLISH": "#22C55E", "BEARISH": "#EF4444"}.get(sentiment, "#94A3B8")
                     st.markdown(f"**센티멘트:** <span style='color:{sentiment_color};font-weight:700;'>{sentiment_kr}</span>", unsafe_allow_html=True)
                 with cols[1]:
+                    if source_channel and expert_ch_display == "전체 (통합)":
+                        st.markdown(f"**채널:** {source_channel}")
                     st.markdown(f"**출처:** {insight.get('source_video', '')[:40]}")
 
                 claims = insight.get("key_claims", [])
@@ -1347,7 +1402,7 @@ with tabs[-1]:
 
         render_metrics_row([
             ("상태", status_text),
-            ("마지막 실행", last_update.strftime("%Y-%m-%d %H:%M")),
+            ("마지막 실행", format_timestamp_local(last_update, include_tz=False)),
             ("경과 시간", f"{age_min:.0f}분 전"),
             ("채널 수", str(len(available_channels))),
         ], cols_desktop=4)
@@ -1358,7 +1413,7 @@ with tabs[-1]:
         st.markdown("#### 최근 파이프라인 활동")
         rows_html = ""
         for entry in activity:
-            ts = entry["timestamp"].strftime("%Y-%m-%d %H:%M")
+            ts = format_timestamp_local(entry["timestamp"], include_tz=False)
             ch_name = channel_names.get(entry["channel"], entry["channel"])
             rows_html += (
                 f'<div class="status-row">'
