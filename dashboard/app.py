@@ -1316,12 +1316,41 @@ for idx, ch_slug in enumerate(available_channels):
                         df_rank_rows["_검색"].str.upper().str.contains(rank_filter.upper(), regex=False, na=False)
                     ]
                 st.caption(f"표시 종목 {len(df_rank_rows)}개 / 전체 {len(rank_rows)}개")
-                st.dataframe(
-                    df_rank_rows.drop(columns=["_검색"], errors="ignore"),
-                    use_container_width=True,
-                    height=350,
-                    hide_index=True,
-                )
+                if df_rank_rows.empty:
+                    st.info("검색 조건에 맞는 종목이 없습니다.")
+                else:
+                    st.dataframe(
+                        df_rank_rows.drop(columns=["_검색"], errors="ignore"),
+                        use_container_width=True,
+                        height=350,
+                        hide_index=True,
+                    )
+                    verdict_colors = {
+                        translate_verdict("BUY"): "#22C55E",
+                        translate_verdict("WATCH"): "#F59E0B",
+                        translate_verdict("HOLD"): "#3B82F6",
+                        translate_verdict("SELL"): "#EF4444",
+                        translate_verdict("REJECT"): "#94A3B8",
+                    }
+                    df_rank_chart = (
+                        df_rank_rows[["종목", "점수", "판단"]]
+                        .copy()
+                        .head(8)
+                        .sort_values("점수", ascending=True)
+                    )
+                    df_rank_chart["종목"] = df_rank_chart["종목"].astype(str).str.slice(0, 26)
+                    fig_rank = px.bar(
+                        df_rank_chart,
+                        x="점수",
+                        y="종목",
+                        orientation="h",
+                        color="판단",
+                        title=f"{ch_display} 상위 종목 점수 비교",
+                        text="점수",
+                        color_discrete_map=verdict_colors,
+                    )
+                    fig_rank.update_traces(textposition="outside", hovertemplate="%{y}: %{x}점<extra>%{fullData.name}</extra>")
+                    render_chart(fig_rank, key=f"rank_chart_{ch_slug}", height=380)
 
 # =============================================================================
 # 채널 비교
