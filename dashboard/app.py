@@ -617,6 +617,13 @@ def format_timestamp_local(dt: datetime | None, include_tz: bool = True) -> str:
     return dt.astimezone(KST).strftime(fmt)
 
 
+def first_non_empty(*values: str | None) -> str:
+    for value in values:
+        if value:
+            return value
+    return ""
+
+
 def translate_signal_class(signal_class: str) -> str:
     return SIGNAL_CLASS_KR.get(signal_class, signal_class or EMPTY_TEXT)
 
@@ -660,7 +667,13 @@ with tabs[0]:
             verdict = stock.get("aggregate_verdict", "WATCH")
             verdict_css = VERDICT_CSS.get(verdict, "reject")
             score_color = "#22C55E" if score >= 65 else "#F59E0B" if score >= 50 else "#94A3B8" if verdict == "REJECT" else "#EF4444"
-            signal_date = format_signal_date(stock.get("last_signal_at", ""))
+            signal_date = format_signal_date(
+                first_non_empty(
+                    stock.get("last_signal_at"),
+                    stock.get("first_signal_at"),
+                    stock.get("latest_checked_at"),
+                )
+            )
             appearances = stock.get("appearances", 0)
             source_channels_display = stock.get("_source_channels_display", [])
             channel_count = stock.get("channel_count", 1)
@@ -890,7 +903,13 @@ with tabs[1]:
             verdict_label = translate_verdict(verdict)
             price = item.get("latest_price")
             currency = item.get("currency", "KRW")
-            last_signal = format_signal_date(item.get("last_signal_at", item.get("first_signal_at", "")))
+            last_signal = format_signal_date(
+                first_non_empty(
+                    item.get("last_signal_at"),
+                    item.get("first_signal_at"),
+                    item.get("latest_checked_at"),
+                )
+            )
             appearances = item.get("appearances", item.get("mention_count", 0))
             checked_at = format_signal_datetime(item.get("latest_checked_at", ""))
             price_label = format_price(price, currency)
@@ -1372,7 +1391,13 @@ for idx, ch_slug in enumerate(available_channels):
                     verdict = item.get("aggregate_verdict", item.get("final_verdict", ""))
                     verdict_label = translate_verdict(verdict)
                     price_label = format_price(item.get("latest_price"), item.get("currency", "KRW"))
-                    last_signal = format_signal_date(item.get("last_signal_at", item.get("first_signal_at", "")))
+                    last_signal = format_signal_date(
+                        first_non_empty(
+                            item.get("last_signal_at"),
+                            item.get("first_signal_at"),
+                            item.get("latest_checked_at"),
+                        )
+                    )
                     rank_rows.append({
                         "순위": ri + 1,
                         "종목": display,
