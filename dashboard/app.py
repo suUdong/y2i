@@ -1288,17 +1288,40 @@ for idx, ch_slug in enumerate(available_channels):
         ch_ranking = extract_cross_video_ranking(ch_data)
         if ch_ranking:
             with st.expander("종목 랭킹", expanded=False):
+                rank_filter = st.text_input("종목 검색 (코드 / 회사명)", "", key=f"rank_filter_{ch_slug}")
                 rank_rows = []
                 for ri, item in enumerate(ch_ranking):
                     ticker = item.get("ticker", "")
+                    display = format_ticker_display(ticker, item.get("company_name", ""))
+                    verdict = item.get("aggregate_verdict", item.get("final_verdict", ""))
+                    verdict_label = translate_verdict(verdict)
+                    price_label = format_price(item.get("latest_price"), item.get("currency", "KRW"))
+                    last_signal = format_signal_date(item.get("last_signal_at", item.get("first_signal_at", "")))
                     rank_rows.append({
                         "순위": ri + 1,
-                        "종목": format_ticker_display(ticker, item.get("company_name", "")),
+                        "종목": display,
                         "점수": round(item.get("aggregate_score", item.get("total_score", 0)), 1),
-                        "판단": translate_verdict(item.get("aggregate_verdict", item.get("final_verdict", ""))),
+                        "판단": verdict_label,
+                        "판단 시점": last_signal,
+                        "현재가": price_label,
                         "출현": item.get("appearances", item.get("mention_count", 0)),
+                        "_검색": " ".join(
+                            str(value)
+                            for value in [ticker, display, verdict, verdict_label, last_signal, price_label]
+                        ),
                     })
-                st.dataframe(pd.DataFrame(rank_rows), use_container_width=True, height=350, hide_index=True)
+                df_rank_rows = pd.DataFrame(rank_rows)
+                if rank_filter:
+                    df_rank_rows = df_rank_rows[
+                        df_rank_rows["_검색"].str.upper().str.contains(rank_filter.upper(), regex=False, na=False)
+                    ]
+                st.caption(f"표시 종목 {len(df_rank_rows)}개 / 전체 {len(rank_rows)}개")
+                st.dataframe(
+                    df_rank_rows.drop(columns=["_검색"], errors="ignore"),
+                    use_container_width=True,
+                    height=350,
+                    hide_index=True,
+                )
 
 # =============================================================================
 # 채널 비교
