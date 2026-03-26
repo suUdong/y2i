@@ -188,6 +188,20 @@ class TestLoad30dResults:
     def test_empty_for_unknown_channel(self, tmp_output: Path):
         assert load_30d_results("unknown_channel", tmp_output) == {}
 
+    def test_prefers_matching_run_id_when_available(self, tmp_output: Path):
+        newer = {
+            "channel_slug": "sampro",
+            "channel_name": "Test Channel Newer",
+            "generated_at": "20260324T000000Z",
+            "window_days": 30,
+            "videos": [],
+            "cross_video_ranking": [],
+            "quality_scorecard": {"overall": 0.0},
+        }
+        (tmp_output / "sampro_30d_20260324T000000Z.json").write_text(json.dumps(newer), encoding="utf-8")
+        data = load_30d_results("sampro", tmp_output, preferred_run_id="20260323T094413Z")
+        assert data["generated_at"] == "20260323T094413Z"
+
 
 # ── load_channel_comparison ──────────────────────────────────────────────────
 
@@ -202,6 +216,53 @@ class TestLoadChannelComparison:
         assert comp["channels"]["sampro"]["latest_published_at"] == "20260323T094413Z"
         assert comp["pipeline_summary"]["skipped_videos"] == 1
         assert comp["pipeline_summary"]["strict_actionable_videos"] == 1
+
+    def test_prefers_channel_artifacts_aligned_to_comparison_run(self, tmp_output: Path):
+        aligned = {
+            "channel_slug": "sampro",
+            "channel_name": "Test Channel",
+            "generated_at": "20260323T053248Z",
+            "window_days": 30,
+            "videos": [
+                {
+                    "video_id": "v1",
+                    "title": "Aligned Video",
+                    "video_signal_class": "NOISE",
+                    "should_analyze_stocks": False,
+                    "signal_score": 20.0,
+                    "published_at": "20260323",
+                    "skip_reason": "aligned",
+                    "stocks": [],
+                }
+            ],
+            "cross_video_ranking": [],
+            "quality_scorecard": {"overall": 1.0},
+        }
+        (tmp_output / "sampro_30d_20260323T053248Z.json").write_text(json.dumps(aligned), encoding="utf-8")
+        newer = {
+            "channel_slug": "sampro",
+            "channel_name": "Test Channel Newer",
+            "generated_at": "20260324T000000Z",
+            "window_days": 30,
+            "videos": [
+                {
+                    "video_id": "v3",
+                    "title": "Later Video",
+                    "video_signal_class": "ACTIONABLE",
+                    "should_analyze_stocks": True,
+                    "signal_score": 88.0,
+                    "published_at": "20260324",
+                    "stocks": [],
+                }
+            ],
+            "cross_video_ranking": [],
+            "quality_scorecard": {"overall": 99.0},
+        }
+        (tmp_output / "sampro_30d_20260324T000000Z.json").write_text(json.dumps(newer), encoding="utf-8")
+        comp = load_channel_comparison(tmp_output)
+        assert comp["channels"]["sampro"]["display_name"] == "Test Channel"
+        assert comp["channels"]["sampro"]["strict_actionable_videos"] == 0
+        assert comp["channels"]["sampro"]["latest_published_at"] == "20260323T053248Z"
 
     def test_empty_when_missing(self, tmp_path: Path):
         assert load_channel_comparison(tmp_path) == {}

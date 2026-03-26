@@ -41,6 +41,14 @@ def _latest_file(output_dir: Path, pattern: str) -> Path | None:
     return matches[0] if matches else None
 
 
+def _file_for_run(output_dir: Path, pattern: str, run_id: str | None) -> Path | None:
+    if run_id:
+        exact = output_dir / pattern.format(run_id=run_id)
+        if exact.exists():
+            return exact
+    return _latest_file(output_dir, pattern.format(run_id="*"))
+
+
 def _load_json(path: Path | None) -> dict[str, Any] | list[Any]:
     if path is None or not path.exists():
         return {}
@@ -182,8 +190,12 @@ def load_integration_report(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, 
 
 # ── 30-day channel results ───────────────────────────────────────────────────
 
-def load_30d_results(channel_slug: str, output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
-    path = _latest_file(output_dir, f"{channel_slug}_30d_*.json")
+def load_30d_results(
+    channel_slug: str,
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    preferred_run_id: str | None = None,
+) -> dict[str, Any]:
+    path = _file_for_run(output_dir, f"{channel_slug}_30d_{{run_id}}.json", preferred_run_id)
     return _load_json(path)
 
 
@@ -195,9 +207,10 @@ def load_channel_comparison(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, 
     if not isinstance(comparison, dict):
         return {}
 
+    comparison_run_id = comparison.get("generated_at") if isinstance(comparison, dict) else None
     enriched_channels: dict[str, dict[str, Any]] = {}
     for slug in get_available_channels(output_dir):
-        data_30d = load_30d_results(slug, output_dir)
+        data_30d = load_30d_results(slug, output_dir, preferred_run_id=comparison_run_id)
         if isinstance(data_30d, dict) and data_30d:
             enriched_channels[slug] = _derive_channel_health(data_30d, slug)
 

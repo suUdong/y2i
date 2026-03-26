@@ -270,6 +270,14 @@ class TestLoadFunctions:
         result = gd.load_latest_30d("sampro", tmp_output)
         assert result is None
 
+    def test_load_latest_30d_prefers_matching_run_id(self, tmp_output, sample_30d):
+        old = tmp_output / "sampro_30d_20260323T094413Z.json"
+        old.write_text(json.dumps(sample_30d), encoding="utf-8")
+        newer = dict(sample_30d, channel_name="삼프로TV 최신")
+        (tmp_output / "sampro_30d_20260324T000000Z.json").write_text(json.dumps(newer), encoding="utf-8")
+        result = gd.load_latest_30d("sampro", tmp_output, preferred_run_id="20260323T094413Z")
+        assert result["generated_at"] == "20260323T094413Z"
+
     def test_load_latest_comparison(self, tmp_output, sample_comparison):
         p = tmp_output / "channel_comparison_30d_20260323T053248Z.json"
         p.write_text(json.dumps(sample_comparison), encoding="utf-8")
@@ -285,6 +293,13 @@ class TestLoadFunctions:
         other = dict(sample_30d, channel_slug="newalpha", channel_name="새 채널")
         (tmp_output / "newalpha_30d_20260323T094500Z.json").write_text(json.dumps(other), encoding="utf-8")
         assert gd.get_available_channels(tmp_output) == ["newalpha", "sampro"]
+
+    def test_load_all_channels_prefers_comparison_run_id(self, tmp_output, sample_30d, sample_comparison):
+        (tmp_output / "sampro_30d_20260323T053248Z.json").write_text(json.dumps(dict(sample_30d, generated_at="20260323T053248Z")), encoding="utf-8")
+        (tmp_output / "sampro_30d_20260324T000000Z.json").write_text(json.dumps(dict(sample_30d, generated_at="20260324T000000Z", channel_name="삼프로TV 최신")), encoding="utf-8")
+        (tmp_output / "channel_comparison_30d_20260323T053248Z.json").write_text(json.dumps(sample_comparison), encoding="utf-8")
+        result = gd.load_all_channels(tmp_output, preferred_run_id="20260323T053248Z")
+        assert result["sampro"]["generated_at"] == "20260323T053248Z"
 
 
 # ---------------------------------------------------------------------------

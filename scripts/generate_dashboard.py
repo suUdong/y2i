@@ -33,6 +33,15 @@ def _latest_file(pattern: str, directory: Path | None = None) -> Path | None:
     return matches[0] if matches else None
 
 
+def _file_for_run(pattern_template: str, run_id: str | None, directory: Path | None = None) -> Path | None:
+    d = directory or OUTPUT_DIR
+    if run_id:
+        exact = d / pattern_template.format(run_id=run_id)
+        if exact.exists():
+            return exact
+    return _latest_file(pattern_template.format(run_id="*"), d)
+
+
 def load_json(path: Path | None) -> dict | list | None:
     if path is None or not path.exists():
         return None
@@ -45,9 +54,9 @@ def load_integration_report(directory: Path | None = None) -> dict | None:
     return load_json(p)
 
 
-def load_latest_30d(channel: str = "sampro", directory: Path | None = None) -> dict | None:
+def load_latest_30d(channel: str = "sampro", directory: Path | None = None, preferred_run_id: str | None = None) -> dict | None:
     d = directory or OUTPUT_DIR
-    return load_json(_latest_file(f"{channel}_30d_*.json", d))
+    return load_json(_file_for_run(f"{channel}_30d_{{run_id}}.json", preferred_run_id, d))
 
 
 def load_latest_comparison(directory: Path | None = None) -> dict | None:
@@ -71,10 +80,10 @@ def channel_label(slug: str, data: dict | None = None) -> str:
     return DEFAULT_CHANNELS.get(slug, slug)
 
 
-def load_all_channels(directory: Path | None = None) -> dict[str, dict | None]:
-    """Load latest 30d data for all detected channels."""
+def load_all_channels(directory: Path | None = None, preferred_run_id: str | None = None) -> dict[str, dict | None]:
+    """Load aligned 30d data for all detected channels, falling back to latest."""
     d = directory or OUTPUT_DIR
-    return {slug: load_latest_30d(slug, d) for slug in get_available_channels(d)}
+    return {slug: load_latest_30d(slug, d, preferred_run_id=preferred_run_id) for slug in get_available_channels(d)}
 
 
 def build_summary_report(channel_data: dict[str, dict | None]) -> dict:
@@ -660,9 +669,10 @@ def render_expert_insights(report: dict | None) -> str:
 
 def generate_dashboard(output_dir: Path | None = None, dest: Path | None = None) -> str:
     d = output_dir or OUTPUT_DIR
-    channel_data = load_all_channels(d)
-    report = build_summary_report(channel_data)
     comparison = load_latest_comparison(d)
+    preferred_run_id = comparison.get("generated_at") if comparison else None
+    channel_data = load_all_channels(d, preferred_run_id=preferred_run_id)
+    report = build_summary_report(channel_data)
 
     sections = [
         render_header(channel_data),
