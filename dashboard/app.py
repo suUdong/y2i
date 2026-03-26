@@ -718,17 +718,18 @@ with tabs[0]:
             card_class = video_card_class(sig_cls)
             score = rv.get("signal_score", 0)
             pub_date = format_signal_date(rv.get("published_at", ""))
+            updated_at = format_timestamp_local(rv.get("_updated_at"), include_tz=False)
             ch_name = channel_names.get(rv.get("_channel", ""), rv.get("_channel", ""))
             reason = rv.get("reason", "")
             with rcols[i % len(rcols)]:
                 reason_html = ""
-                if reason and sig_cls == "ACTIONABLE":
+                if reason:
                     reason_html = f'<div style="font-size:0.75rem;color:#CBD5E1;margin-top:4px;">{reason[:100]}</div>'
                 st.markdown(
                     f'<div class="video-card {card_class}">'
                     f'<div class="video-card-title">{rv.get("title", "제목 없음")[:60]}</div>'
                     f'<div class="video-card-meta">'
-                    f'{ch_name} &middot; 점수: {score:.0f} &middot; {pub_date} &middot; '
+                    f'{ch_name} &middot; 점수: {score:.0f} &middot; 게시 {pub_date} &middot; 반영 {updated_at} &middot; '
                     f'{signal_badge(sig_cls)}'
                     f'</div>'
                     f'{reason_html}'

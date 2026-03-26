@@ -197,16 +197,21 @@ def get_recent_videos(
     for p in output_dir.glob("*_30d_*.json"):
         if p.stem.startswith("channel_comparison"):
             continue
-        if p.stat().st_mtime < cutoff:
+        file_mtime = p.stat().st_mtime
+        if file_mtime < cutoff:
             continue
         data = _load_json(p)
         slug = data.get("channel_slug", p.stem.split("_30d_")[0])
+        updated_at = datetime.fromtimestamp(file_mtime, tz=timezone.utc)
         for v in data.get("videos", []):
-            v["_channel"] = slug
-            recent.append(v)
+            row = dict(v)
+            row["_channel"] = slug
+            row["_updated_at"] = updated_at
+            recent.append(row)
     recent.sort(
         key=lambda item: (
             _parse_timestamp(item.get("published_at", "") or "") or datetime.min.replace(tzinfo=timezone.utc),
+            item.get("_updated_at") or datetime.min.replace(tzinfo=timezone.utc),
             item.get("signal_score", 0),
             item.get("title", ""),
         ),
