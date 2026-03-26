@@ -208,4 +208,6 @@ def test_compare_channels_two_channels():
     assert result["better_ranking_channel"] is not None
     assert result["pipeline_summary"]["total_videos"] == 3
     assert result["pipeline_summary"]["skipped_videos"] == 1
+    assert result["pipeline_summary"]["analyzable_videos"] == 2
+    assert result["pipeline_summary"]["strict_actionable_videos"] == 3
     assert result["channels"]["chan_b"]["top_skip_reasons"][0]["reason"] == "test"

@@ -77,6 +77,7 @@ def _derive_channel_health(data_30d: dict[str, Any], slug: str) -> dict[str, Any
     signal_distribution: dict[str, int] = {}
     skip_reason_counts: dict[str, int] = {}
     actionable_videos = 0
+    strict_actionable_videos = 0
     transcript_backed_videos = 0
     metadata_fallback_videos = 0
     latest_published_at = data_30d.get("generated_at", "") or ""
@@ -86,6 +87,8 @@ def _derive_channel_health(data_30d: dict[str, Any], slug: str) -> dict[str, Any
         signal_distribution[signal_class] = signal_distribution.get(signal_class, 0) + 1
         if video.get("should_analyze_stocks"):
             actionable_videos += 1
+        if signal_class == "ACTIONABLE":
+            strict_actionable_videos += 1
         else:
             skip_reason = (video.get("skip_reason") or video.get("reason") or "").strip()
             if skip_reason:
@@ -109,6 +112,8 @@ def _derive_channel_health(data_30d: dict[str, Any], slug: str) -> dict[str, Any
         "display_name": data_30d.get("channel_name", slug),
         "total_videos": len(videos),
         "actionable_videos": actionable_videos,
+        "analyzable_videos": actionable_videos,
+        "strict_actionable_videos": strict_actionable_videos,
         "actionable_ratio": round(actionable_videos / len(videos), 3) if videos else 0.0,
         "skipped_videos": len(videos) - actionable_videos,
         "transcript_backed_videos": transcript_backed_videos,
@@ -126,6 +131,7 @@ def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -
     latest_published_at = ""
     total_videos = 0
     actionable_videos = 0
+    strict_actionable_videos = 0
     skipped_videos = 0
     transcript_backed_videos = 0
     metadata_fallback_videos = 0
@@ -133,6 +139,7 @@ def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -
     for info in channels.values():
         total_videos += info.get("total_videos", 0)
         actionable_videos += info.get("actionable_videos", 0)
+        strict_actionable_videos += info.get("strict_actionable_videos", 0)
         skipped_videos += info.get("skipped_videos", 0)
         transcript_backed_videos += info.get("transcript_backed_videos", 0)
         metadata_fallback_videos += info.get("metadata_fallback_videos", 0)
@@ -155,6 +162,8 @@ def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -
         "total_channels": len(channels),
         "total_videos": total_videos,
         "actionable_videos": actionable_videos,
+        "analyzable_videos": actionable_videos,
+        "strict_actionable_videos": strict_actionable_videos,
         "skipped_videos": skipped_videos,
         "transcript_backed_videos": transcript_backed_videos,
         "metadata_fallback_videos": metadata_fallback_videos,
@@ -202,6 +211,8 @@ def load_channel_comparison(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, 
                 "display_name",
                 "total_videos",
                 "actionable_videos",
+                "analyzable_videos",
+                "strict_actionable_videos",
                 "actionable_ratio",
                 "skipped_videos",
                 "transcript_backed_videos",

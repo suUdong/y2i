@@ -165,6 +165,8 @@ def sample_comparison():
             "total_channels": 2,
             "total_videos": 80,
             "actionable_videos": 37,
+            "analyzable_videos": 37,
+            "strict_actionable_videos": 31,
             "skipped_videos": 43,
             "transcript_backed_videos": 44,
             "metadata_fallback_videos": 36,
@@ -180,6 +182,8 @@ def sample_comparison():
                 "display_name": "삼프로TV",
                 "total_videos": 80,
                 "actionable_videos": 37,
+                "analyzable_videos": 37,
+                "strict_actionable_videos": 31,
                 "actionable_ratio": 0.4625,
                 "skipped_videos": 43,
                 "metadata_fallback_videos": 36,
@@ -199,6 +203,8 @@ def sample_comparison():
                 "display_name": "IT의 신",
                 "total_videos": 0,
                 "actionable_videos": 0,
+                "analyzable_videos": 0,
+                "strict_actionable_videos": 0,
                 "actionable_ratio": 0.0,
                 "skipped_videos": 0,
                 "metadata_fallback_videos": 0,
@@ -424,6 +430,7 @@ class TestRenderPipelineHealth:
         md = gd.render_pipeline_health(sample_comparison, {"sampro": sample_30d})
         assert "## Pipeline Health" in md
         assert "Metadata fallback" in md
+        assert "Strict ACTIONABLE" in md
         assert "Top Skip Reasons" in md
         assert "Channel Gate Health" in md
         assert "종목 분석에 활용할 실질 신호가 부족함" in md
@@ -452,6 +459,25 @@ class TestRenderPipelineHealth:
         assert "Top Skip Reasons" in md
         assert "종목 분석에 활용할 실질 신호가 부족함" in md
         assert "2026-03-23" in md
+
+    def test_sector_only_counts_as_analyzable_not_skipped(self, sample_30d):
+        data = dict(sample_30d)
+        data["videos"] = [
+            {
+                "video_id": "v1",
+                "title": "섹터 분석",
+                "video_signal_class": "SECTOR_ONLY",
+                "should_analyze_stocks": True,
+                "reason": "섹터 중심이지만 종목 단서가 충분해 분석 가치가 있음",
+                "skip_reason": "",
+                "transcript_language": "ko",
+                "published_at": "20260323",
+            }
+        ]
+        summary = gd.build_pipeline_summary_from_channels({"sampro": data})
+        assert summary["analyzable_videos"] == 1
+        assert summary["strict_actionable_videos"] == 0
+        assert summary["skipped_videos"] == 0
 
 
 # ---------------------------------------------------------------------------

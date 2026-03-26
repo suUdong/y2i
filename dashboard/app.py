@@ -1721,6 +1721,7 @@ with tabs[-2]:
             row = {"채널": channel_label}
             row["영상 수"] = info.get("total_videos", 0)
             row["분석 대상"] = info.get("actionable_videos", 0)
+            row["엄격 액션"] = info.get("strict_actionable_videos", 0)
             row["스킵"] = info.get("skipped_videos", 0)
             row["대상 비율"] = f"{actionable_ratio:.0%}"
             row["메타 fallback"] = info.get("metadata_fallback_videos", 0)
@@ -1892,10 +1893,11 @@ with tabs[-1]:
         st.markdown("#### 게이트 운영 요약")
         render_metrics_row([
             ("스킵 영상", str(pipeline_summary.get("skipped_videos", 0))),
+            ("엄격 액션", str(pipeline_summary.get("strict_actionable_videos", 0))),
             ("실자막 기반", str(pipeline_summary.get("transcript_backed_videos", 0))),
             ("메타 fallback", str(pipeline_summary.get("metadata_fallback_videos", 0))),
             ("최근 게시", format_signal_date(pipeline_summary.get("latest_published_at", ""))),
-        ], cols_desktop=4)
+        ], cols_desktop=5)
 
         top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])
         if top_skip_reasons:

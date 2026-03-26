@@ -123,6 +123,8 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
         "total_channels": 0,
         "total_videos": 0,
         "actionable_videos": 0,
+        "analyzable_videos": 0,
+        "strict_actionable_videos": 0,
         "skipped_videos": 0,
         "transcript_backed_videos": 0,
         "metadata_fallback_videos": 0,
@@ -151,6 +153,8 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
                 reason = (video.get("skip_reason") or video.get("reason") or "").strip()
                 if reason:
                     skip_reasons[reason] += 1
+            if signal_class == "ACTIONABLE":
+                summary["strict_actionable_videos"] += 1
 
             transcript_language = video.get("transcript_language")
             if transcript_language == "metadata_fallback":
@@ -179,6 +183,7 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
                     latest_published = published_at
 
     summary["latest_published_at"] = latest_published
+    summary["analyzable_videos"] = summary["actionable_videos"]
     summary["signal_breakdown"] = dict(signal_breakdown)
     summary["top_skip_reasons"] = [
         {"reason": reason, "count": count}
@@ -527,7 +532,8 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
     lines.append("|--------|------:|")
     lines.append(f"| Channels | {summary.get('total_channels', 0)} |")
     lines.append(f"| Videos | {summary.get('total_videos', 0)} |")
-    lines.append(f"| Actionable | {summary.get('actionable_videos', 0)} |")
+    lines.append(f"| Analyzable | {summary.get('analyzable_videos', summary.get('actionable_videos', 0))} |")
+    lines.append(f"| Strict ACTIONABLE | {summary.get('strict_actionable_videos', 0)} |")
     lines.append(f"| Skipped | {summary.get('skipped_videos', 0)} |")
     lines.append(f"| Transcript-backed | {summary.get('transcript_backed_videos', 0)} |")
     lines.append(f"| Metadata fallback | {summary.get('metadata_fallback_videos', 0)} |")

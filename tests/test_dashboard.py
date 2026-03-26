@@ -105,8 +105,8 @@ def tmp_output(tmp_path: Path) -> Path:
         "generated_at": "20260323T053248Z",
         "window_days": 30,
         "channels": {
-            "sampro": {"display_name": "Test Channel", "total_videos": 10, "actionable_videos": 4, "actionable_ratio": 0.4, "quality_scorecard": {"overall": 0.6}},
-            "itgod": {"display_name": "IT God", "total_videos": 0, "actionable_videos": 0, "actionable_ratio": 0.0, "quality_scorecard": {"overall": 0.0}},
+            "sampro": {"display_name": "Test Channel", "total_videos": 10, "actionable_videos": 4, "strict_actionable_videos": 3, "actionable_ratio": 0.4, "quality_scorecard": {"overall": 0.6}},
+            "itgod": {"display_name": "IT God", "total_videos": 0, "actionable_videos": 0, "strict_actionable_videos": 0, "actionable_ratio": 0.0, "quality_scorecard": {"overall": 0.0}},
         },
         "more_actionable_channel": "sampro",
         "better_ranking_channel": "sampro",
@@ -198,8 +198,10 @@ class TestLoadChannelComparison:
         assert "sampro" in comp["channels"]
         assert "pipeline_summary" in comp
         assert comp["channels"]["sampro"]["skipped_videos"] == 1
+        assert comp["channels"]["sampro"]["strict_actionable_videos"] == 1
         assert comp["channels"]["sampro"]["latest_published_at"] == "20260323T094413Z"
         assert comp["pipeline_summary"]["skipped_videos"] == 1
+        assert comp["pipeline_summary"]["strict_actionable_videos"] == 1
 
     def test_empty_when_missing(self, tmp_path: Path):
         assert load_channel_comparison(tmp_path) == {}

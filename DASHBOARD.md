@@ -1,6 +1,6 @@
 # OMX Pipeline Dashboard (6-Month / 180-Day Analysis)
 
-> Auto-generated: 2026-03-26 10:23 UTC
+> Auto-generated: 2026-03-26 10:26 UTC
 > Channels analyzed: 6/6
 > Data source: `output/` directory pipeline results
 
@@ -23,7 +23,8 @@
 |--------|------:|
 | Channels | 6 |
 | Videos | 480 |
-| Actionable | 57 |
+| Analyzable | 57 |
+| Strict ACTIONABLE | 50 |
 | Skipped | 423 |
 | Transcript-backed | 472 |
 | Metadata fallback | 8 |

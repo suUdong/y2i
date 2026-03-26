@@ -80,10 +80,13 @@ def summarize_channel_run(rows: list[dict[str, Any]]) -> dict[str, Any]:
             latest_published_ts = published_ts
             latest_published_at = published_at
 
-    actionable_videos = sum(1 for row in rows if row.get("should_analyze_stocks"))
-    skipped_videos = len(rows) - actionable_videos
+    analyzable_videos = sum(1 for row in rows if row.get("should_analyze_stocks"))
+    strict_actionable_videos = sum(1 for row in rows if row.get("video_signal_class") == "ACTIONABLE")
+    skipped_videos = len(rows) - analyzable_videos
     return {
-        "actionable_videos": actionable_videos,
+        "actionable_videos": analyzable_videos,
+        "analyzable_videos": analyzable_videos,
+        "strict_actionable_videos": strict_actionable_videos,
         "skipped_videos": skipped_videos,
         "transcript_backed_videos": transcript_backed_videos,
         "metadata_fallback_videos": metadata_fallback_videos,
@@ -210,6 +213,8 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
             "total_channels": 0,
             "total_videos": 0,
             "actionable_videos": 0,
+            "analyzable_videos": 0,
+            "strict_actionable_videos": 0,
             "skipped_videos": 0,
             "transcript_backed_videos": 0,
             "metadata_fallback_videos": 0,
@@ -224,7 +229,8 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
     latest_published_at = ""
     latest_published_ts: datetime | None = None
     total_videos = 0
-    actionable_videos = 0
+    analyzable_videos = 0
+    strict_actionable_videos = 0
     skipped_videos = 0
     transcript_backed_videos = 0
     metadata_fallback_videos = 0
@@ -233,9 +239,10 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
         ranking = payload["ranking"]
         validation = payload["validation"]
         channel_run = summarize_channel_run(rows)
-        actionable_count = channel_run["actionable_videos"]
+        analyzable_count = channel_run["analyzable_videos"]
         total_videos += len(rows)
-        actionable_videos += channel_run["actionable_videos"]
+        analyzable_videos += channel_run["analyzable_videos"]
+        strict_actionable_videos += channel_run["strict_actionable_videos"]
         skipped_videos += channel_run["skipped_videos"]
         transcript_backed_videos += channel_run["transcript_backed_videos"]
         metadata_fallback_videos += channel_run["metadata_fallback_videos"]
@@ -250,8 +257,10 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
         comparison["channels"][slug] = {
             "display_name": payload["display_name"],
             "total_videos": len(rows),
-            "actionable_videos": actionable_count,
-            "actionable_ratio": round(actionable_count / len(rows), 3) if rows else 0.0,
+            "actionable_videos": analyzable_count,
+            "analyzable_videos": analyzable_count,
+            "strict_actionable_videos": channel_run["strict_actionable_videos"],
+            "actionable_ratio": round(analyzable_count / len(rows), 3) if rows else 0.0,
             "ranking_top_1_return_pct": validation.get("top_1", {}).get("portfolio_return_pct", 0.0),
             "ranking_top_3_return_pct": validation.get("top_3", {}).get("portfolio_return_pct", 0.0),
             "ranking_spearman": ranking_spearman(ranking, validation),
@@ -279,7 +288,9 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
     comparison["pipeline_summary"] = {
         "total_channels": len(channel_payloads),
         "total_videos": total_videos,
-        "actionable_videos": actionable_videos,
+        "actionable_videos": analyzable_videos,
+        "analyzable_videos": analyzable_videos,
+        "strict_actionable_videos": strict_actionable_videos,
         "skipped_videos": skipped_videos,
         "transcript_backed_videos": transcript_backed_videos,
         "metadata_fallback_videos": metadata_fallback_videos,
