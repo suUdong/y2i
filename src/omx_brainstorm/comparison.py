@@ -91,6 +91,8 @@ def summarize_channel_run(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "transcript_backed_videos": transcript_backed_videos,
         "metadata_fallback_videos": metadata_fallback_videos,
         "latest_published_at": latest_published_at,
+        "latest_reference_at": latest_published_at,
+        "latest_reference_kind": "published_at" if latest_published_at else "unknown",
         "signal_breakdown": dict(signal_breakdown),
         "top_skip_reasons": [
             {"reason": reason, "count": count}
@@ -219,6 +221,8 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
             "transcript_backed_videos": 0,
             "metadata_fallback_videos": 0,
             "latest_published_at": "",
+            "latest_reference_at": "",
+            "latest_reference_kind": "unknown",
             "signal_breakdown": {},
             "top_skip_reasons": [],
         }
@@ -228,6 +232,8 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
     aggregate_skip_reasons: Counter[str] = Counter()
     latest_published_at = ""
     latest_published_ts: datetime | None = None
+    latest_reference_at = ""
+    latest_reference_ts: datetime | None = None
     total_videos = 0
     analyzable_videos = 0
     strict_actionable_videos = 0
@@ -254,6 +260,12 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
         if channel_latest_ts is not None and (latest_published_ts is None or channel_latest_ts > latest_published_ts):
             latest_published_ts = channel_latest_ts
             latest_published_at = channel_run["latest_published_at"]
+        channel_reference_at = channel_run["latest_published_at"] or context.run_id
+        channel_reference_kind = "published_at" if channel_run["latest_published_at"] else "generated_at"
+        channel_reference_ts = _parse_timestamp(channel_reference_at)
+        if channel_reference_ts is not None and (latest_reference_ts is None or channel_reference_ts > latest_reference_ts):
+            latest_reference_ts = channel_reference_ts
+            latest_reference_at = channel_reference_at
         comparison["channels"][slug] = {
             "display_name": payload["display_name"],
             "total_videos": len(rows),
@@ -270,6 +282,8 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
             "transcript_backed_videos": channel_run["transcript_backed_videos"],
             "metadata_fallback_videos": channel_run["metadata_fallback_videos"],
             "latest_published_at": channel_run["latest_published_at"],
+            "latest_reference_at": channel_reference_at,
+            "latest_reference_kind": channel_reference_kind,
             "signal_breakdown": channel_run["signal_breakdown"],
             "top_skip_reasons": channel_run["top_skip_reasons"],
         }
@@ -295,6 +309,8 @@ def compare_channels(channel_payloads: dict[str, dict], context: RunContext) -> 
         "transcript_backed_videos": transcript_backed_videos,
         "metadata_fallback_videos": metadata_fallback_videos,
         "latest_published_at": latest_published_at,
+        "latest_reference_at": latest_reference_at,
+        "latest_reference_kind": "published_at" if latest_published_at else "generated_at",
         "signal_breakdown": dict(aggregate_signal_breakdown),
         "top_skip_reasons": [
             {"reason": reason, "count": count}

@@ -104,9 +104,13 @@ def tmp_output(tmp_path: Path) -> Path:
     comparison = {
         "generated_at": "20260323T053248Z",
         "window_days": 30,
+        "pipeline_summary": {
+            "latest_reference_at": "20260323T053248Z",
+            "latest_reference_kind": "generated_at",
+        },
         "channels": {
-            "sampro": {"display_name": "Test Channel", "total_videos": 10, "actionable_videos": 4, "strict_actionable_videos": 3, "actionable_ratio": 0.4, "quality_scorecard": {"overall": 0.6}},
-            "itgod": {"display_name": "IT God", "total_videos": 0, "actionable_videos": 0, "strict_actionable_videos": 0, "actionable_ratio": 0.0, "quality_scorecard": {"overall": 0.0}},
+            "sampro": {"display_name": "Test Channel", "total_videos": 10, "actionable_videos": 4, "strict_actionable_videos": 3, "actionable_ratio": 0.4, "latest_reference_at": "20260323T053248Z", "latest_reference_kind": "generated_at", "quality_scorecard": {"overall": 0.6}},
+            "itgod": {"display_name": "IT God", "total_videos": 0, "actionable_videos": 0, "strict_actionable_videos": 0, "actionable_ratio": 0.0, "latest_reference_at": "", "latest_reference_kind": "unknown", "quality_scorecard": {"overall": 0.0}},
         },
         "more_actionable_channel": "sampro",
         "better_ranking_channel": "sampro",
@@ -213,9 +217,11 @@ class TestLoadChannelComparison:
         assert "pipeline_summary" in comp
         assert comp["channels"]["sampro"]["skipped_videos"] == 1
         assert comp["channels"]["sampro"]["strict_actionable_videos"] == 1
-        assert comp["channels"]["sampro"]["latest_published_at"] == "20260323T094413Z"
+        assert comp["channels"]["sampro"]["latest_published_at"] == "20260321"
+        assert comp["channels"]["sampro"]["latest_reference_at"] == "20260321"
         assert comp["pipeline_summary"]["skipped_videos"] == 1
         assert comp["pipeline_summary"]["strict_actionable_videos"] == 1
+        assert comp["pipeline_summary"]["latest_reference_at"] == "20260323T053248Z"
 
     def test_prefers_channel_artifacts_aligned_to_comparison_run(self, tmp_output: Path):
         aligned = {
@@ -262,7 +268,8 @@ class TestLoadChannelComparison:
         comp = load_channel_comparison(tmp_output)
         assert comp["channels"]["sampro"]["display_name"] == "Test Channel"
         assert comp["channels"]["sampro"]["strict_actionable_videos"] == 0
-        assert comp["channels"]["sampro"]["latest_published_at"] == "20260323T053248Z"
+        assert comp["channels"]["sampro"]["latest_published_at"] == "20260323"
+        assert comp["channels"]["sampro"]["latest_reference_at"] == "20260323"
 
     def test_empty_when_missing(self, tmp_path: Path):
         assert load_channel_comparison(tmp_path) == {}

@@ -1725,7 +1725,7 @@ with tabs[-2]:
             row["스킵"] = info.get("skipped_videos", 0)
             row["가능 비율"] = f"{actionable_ratio:.0%}"
             row["메타 fallback"] = info.get("metadata_fallback_videos", 0)
-            row["최신 게시일"] = format_signal_date(info.get("latest_published_at", ""))
+            row["최신 기준 시각"] = format_signal_datetime(info.get("latest_reference_at", ""))
             row["순위상관"] = (
                 f"{info.get('ranking_spearman', 0.0):.2f}"
                 if info.get("ranking_spearman") is not None
@@ -1896,7 +1896,7 @@ with tabs[-1]:
             ("엄격 액션", str(pipeline_summary.get("strict_actionable_videos", 0))),
             ("실자막 기반", str(pipeline_summary.get("transcript_backed_videos", 0))),
             ("메타 fallback", str(pipeline_summary.get("metadata_fallback_videos", 0))),
-            ("최근 게시", format_signal_date(pipeline_summary.get("latest_published_at", ""))),
+            ("최신 기준", format_signal_datetime(pipeline_summary.get("latest_reference_at", ""))),
         ], cols_desktop=5)
 
         top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])

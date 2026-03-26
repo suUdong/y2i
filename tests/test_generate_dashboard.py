@@ -171,6 +171,8 @@ def sample_comparison():
             "transcript_backed_videos": 44,
             "metadata_fallback_videos": 36,
             "latest_published_at": "20260323T053248Z",
+            "latest_reference_at": "20260323T053248Z",
+            "latest_reference_kind": "generated_at",
             "signal_breakdown": {"ACTIONABLE": 37, "NOISE": 43},
             "top_skip_reasons": [
                 {"reason": "종목 분석에 활용할 실질 신호가 부족함", "count": 30},
@@ -188,6 +190,8 @@ def sample_comparison():
                 "skipped_videos": 43,
                 "metadata_fallback_videos": 36,
                 "latest_published_at": "20260323T053248Z",
+                "latest_reference_at": "20260323T053248Z",
+                "latest_reference_kind": "generated_at",
                 "top_skip_reasons": [
                     {"reason": "종목 분석에 활용할 실질 신호가 부족함", "count": 30},
                 ],
@@ -209,6 +213,8 @@ def sample_comparison():
                 "skipped_videos": 0,
                 "metadata_fallback_videos": 0,
                 "latest_published_at": "",
+                "latest_reference_at": "",
+                "latest_reference_kind": "unknown",
                 "top_skip_reasons": [],
                 "quality_scorecard": {
                     "overall": 0.0,
@@ -448,6 +454,7 @@ class TestRenderPipelineHealth:
         assert "## Pipeline Health" in md
         assert "Metadata fallback" in md
         assert "Strict ACTIONABLE" in md
+        assert "Latest Reference" in md
         assert "Top Skip Reasons" in md
         assert "Channel Gate Health" in md
         assert "종목 분석에 활용할 실질 신호가 부족함" in md
@@ -495,6 +502,8 @@ class TestRenderPipelineHealth:
         assert summary["analyzable_videos"] == 1
         assert summary["strict_actionable_videos"] == 0
         assert summary["skipped_videos"] == 0
+        assert summary["latest_published_at"] == "20260323"
+        assert summary["latest_reference_at"] == "20260323T094413Z"
 
 
 # ---------------------------------------------------------------------------

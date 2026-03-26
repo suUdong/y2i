@@ -88,7 +88,7 @@ def _derive_channel_health(data_30d: dict[str, Any], slug: str) -> dict[str, Any
     strict_actionable_videos = 0
     transcript_backed_videos = 0
     metadata_fallback_videos = 0
-    latest_published_at = data_30d.get("generated_at", "") or ""
+    latest_published_at = ""
 
     for video in videos:
         signal_class = video.get("video_signal_class", "UNKNOWN")
@@ -116,6 +116,8 @@ def _derive_channel_health(data_30d: dict[str, Any], slug: str) -> dict[str, Any
         {"reason": reason, "count": count}
         for reason, count in sorted(skip_reason_counts.items(), key=lambda item: (-item[1], item[0]))[:5]
     ]
+    latest_reference_at = latest_published_at or data_30d.get("generated_at", "") or ""
+    latest_reference_kind = "published_at" if latest_published_at else ("generated_at" if latest_reference_at else "unknown")
     return {
         "display_name": data_30d.get("channel_name", slug),
         "total_videos": len(videos),
@@ -127,6 +129,8 @@ def _derive_channel_health(data_30d: dict[str, Any], slug: str) -> dict[str, Any
         "transcript_backed_videos": transcript_backed_videos,
         "metadata_fallback_videos": metadata_fallback_videos,
         "latest_published_at": latest_published_at,
+        "latest_reference_at": latest_reference_at,
+        "latest_reference_kind": latest_reference_kind,
         "signal_breakdown": signal_distribution,
         "top_skip_reasons": top_skip_reasons,
         "quality_scorecard": data_30d.get("quality_scorecard", {}),
@@ -137,6 +141,7 @@ def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -
     signal_distribution: dict[str, int] = {}
     skip_reason_counts: dict[str, int] = {}
     latest_published_at = ""
+    latest_reference_at = ""
     total_videos = 0
     actionable_videos = 0
     strict_actionable_videos = 0
@@ -154,6 +159,9 @@ def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -
         latest_value = info.get("latest_published_at", "")
         if _is_newer_timestamp(latest_value, latest_published_at):
             latest_published_at = latest_value
+        latest_reference_value = info.get("latest_reference_at", "") or latest_value
+        if _is_newer_timestamp(latest_reference_value, latest_reference_at):
+            latest_reference_at = latest_reference_value
 
         for klass, count in info.get("signal_breakdown", {}).items():
             signal_distribution[klass] = signal_distribution.get(klass, 0) + count
@@ -176,6 +184,8 @@ def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -
         "transcript_backed_videos": transcript_backed_videos,
         "metadata_fallback_videos": metadata_fallback_videos,
         "latest_published_at": latest_published_at,
+        "latest_reference_at": latest_reference_at,
+        "latest_reference_kind": "published_at" if latest_published_at else ("generated_at" if latest_reference_at else "unknown"),
         "signal_breakdown": signal_distribution,
         "top_skip_reasons": top_skip_reasons,
     }
@@ -231,6 +241,8 @@ def load_channel_comparison(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, 
                 "transcript_backed_videos",
                 "metadata_fallback_videos",
                 "latest_published_at",
+                "latest_reference_at",
+                "latest_reference_kind",
                 "signal_breakdown",
                 "top_skip_reasons",
                 "quality_scorecard",

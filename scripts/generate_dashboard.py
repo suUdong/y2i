@@ -138,19 +138,27 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
         "transcript_backed_videos": 0,
         "metadata_fallback_videos": 0,
         "latest_published_at": "",
+        "latest_reference_at": "",
+        "latest_reference_kind": "unknown",
         "signal_breakdown": {},
         "top_skip_reasons": [],
     }
     signal_breakdown: Counter[str] = Counter()
     skip_reasons: Counter[str] = Counter()
     latest_published = ""
+    latest_reference = ""
     latest_published_ts: datetime | None = None
+    latest_reference_ts: datetime | None = None
 
     for data in channel_data.values():
         if not data:
             continue
         summary["total_channels"] += 1
-        latest_published = data.get("generated_at", latest_published)
+        generated_at = data.get("generated_at", "")
+        generated_ts = _parse_time_like(generated_at)
+        if generated_ts is not None and (latest_reference_ts is None or generated_ts > latest_reference_ts):
+            latest_reference_ts = generated_ts
+            latest_reference = generated_at
         for video in data.get("videos", []):
             summary["total_videos"] += 1
             signal_class = video.get("video_signal_class", "UNKNOWN")
@@ -171,27 +179,18 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
             elif transcript_language:
                 summary["transcript_backed_videos"] += 1
 
-            published_at = video.get("published_at") or data.get("generated_at")
-            if published_at:
-                published_ts = None
-                for fmt in ("%Y%m%dT%H%M%SZ", "%Y%m%d", "%Y-%m-%d"):
-                    try:
-                        published_ts = datetime.strptime(published_at, fmt).replace(tzinfo=timezone.utc)
-                        break
-                    except ValueError:
-                        continue
-                if published_ts is None:
-                    try:
-                        published_ts = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
-                    except ValueError:
-                        published_ts = None
-                    if published_ts is not None and published_ts.tzinfo is None:
-                        published_ts = published_ts.replace(tzinfo=timezone.utc)
-                if published_ts is not None and (latest_published_ts is None or published_ts > latest_published_ts):
-                    latest_published_ts = published_ts
-                    latest_published = published_at
+            published_at = video.get("published_at")
+            published_ts = _parse_time_like(published_at)
+            if published_ts is not None and (latest_published_ts is None or published_ts > latest_published_ts):
+                latest_published_ts = published_ts
+                latest_published = published_at
+            if published_ts is not None and (latest_reference_ts is None or published_ts > latest_reference_ts):
+                latest_reference_ts = published_ts
+                latest_reference = published_at
 
     summary["latest_published_at"] = latest_published
+    summary["latest_reference_at"] = latest_reference
+    summary["latest_reference_kind"] = "published_at" if latest_published else ("generated_at" if latest_reference else "unknown")
     summary["analyzable_videos"] = summary["actionable_videos"]
     summary["signal_breakdown"] = dict(signal_breakdown)
     summary["top_skip_reasons"] = [
@@ -207,40 +206,34 @@ def build_channel_gate_health(channel_data: dict[str, dict | None]) -> dict[str,
         if data is None:
             continue
         videos = data.get("videos", [])
-        latest_published = data.get("generated_at", "") or ""
+        latest_published = ""
+        latest_reference = data.get("generated_at", "") or ""
         latest_published_ts: datetime | None = None
+        latest_reference_ts: datetime | None = _parse_time_like(latest_reference)
         skip_counts: Counter[str] = Counter(
             (video.get("skip_reason") or video.get("reason") or "").strip()
             for video in videos
             if not video.get("should_analyze_stocks") and (video.get("skip_reason") or video.get("reason"))
         )
         for video in videos:
-            published_at = video.get("published_at") or data.get("generated_at")
+            published_at = video.get("published_at")
             if not published_at:
                 continue
-            published_ts = None
-            for fmt in ("%Y%m%dT%H%M%SZ", "%Y%m%d", "%Y-%m-%d"):
-                try:
-                    published_ts = datetime.strptime(published_at, fmt).replace(tzinfo=timezone.utc)
-                    break
-                except ValueError:
-                    continue
-            if published_ts is None:
-                try:
-                    published_ts = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
-                except ValueError:
-                    published_ts = None
-                if published_ts is not None and published_ts.tzinfo is None:
-                    published_ts = published_ts.replace(tzinfo=timezone.utc)
+            published_ts = _parse_time_like(published_at)
             if published_ts is not None and (latest_published_ts is None or published_ts > latest_published_ts):
                 latest_published_ts = published_ts
                 latest_published = published_at
+            if published_ts is not None and (latest_reference_ts is None or published_ts > latest_reference_ts):
+                latest_reference_ts = published_ts
+                latest_reference = published_at
 
         channel_health[slug] = {
             "display_name": channel_label(slug, data),
             "skipped_videos": sum(1 for video in videos if not video.get("should_analyze_stocks")),
             "metadata_fallback_videos": sum(1 for video in videos if video.get("transcript_language") == "metadata_fallback"),
             "latest_published_at": latest_published,
+            "latest_reference_at": latest_reference,
+            "latest_reference_kind": "published_at" if latest_published else ("generated_at" if latest_reference else "unknown"),
             "top_skip_reasons": [
                 {"reason": reason, "count": count}
                 for reason, count in skip_counts.most_common(1)
@@ -283,6 +276,26 @@ def _format_date(value: str | None) -> str:
     except ValueError:
         return normalized
     return parsed.astimezone(timezone.utc).strftime("%Y-%m-%d")
+
+
+def _parse_time_like(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    normalized = value.strip()
+    if not normalized:
+        return None
+    for fmt in ("%Y%m%dT%H%M%SZ", "%Y%m%d", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(normalized, fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+    try:
+        parsed = datetime.fromisoformat(normalized.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 # ---------------------------------------------------------------------------
@@ -547,7 +560,7 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
     lines.append(f"| Skipped | {summary.get('skipped_videos', 0)} |")
     lines.append(f"| Transcript-backed | {summary.get('transcript_backed_videos', 0)} |")
     lines.append(f"| Metadata fallback | {summary.get('metadata_fallback_videos', 0)} |")
-    lines.append(f"| Latest published | {_format_date(summary.get('latest_published_at'))} |")
+    lines.append(f"| Latest reference | {_format_date(summary.get('latest_reference_at'))} |")
     lines.append("")
 
     top_skip_reasons = summary.get("top_skip_reasons", [])
@@ -574,6 +587,10 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
             info["metadata_fallback_videos"] = fallback_channels.get(slug, {}).get("metadata_fallback_videos", 0)
         if not info.get("latest_published_at"):
             info["latest_published_at"] = fallback_channels.get(slug, {}).get("latest_published_at", "")
+        if not info.get("latest_reference_at"):
+            info["latest_reference_at"] = fallback_channels.get(slug, {}).get("latest_reference_at", "")
+        if not info.get("latest_reference_kind"):
+            info["latest_reference_kind"] = fallback_channels.get(slug, {}).get("latest_reference_kind", "unknown")
         if not info.get("top_skip_reasons"):
             info["top_skip_reasons"] = fallback_channels.get(slug, {}).get("top_skip_reasons", [])
         merged_channels[slug] = info
@@ -581,7 +598,7 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
     if channels:
         lines.append("### Channel Gate Health")
         lines.append("")
-        lines.append("| Channel | Skipped | Metadata Fallback | Latest Published | Top Skip Reason |")
+        lines.append("| Channel | Skipped | Metadata Fallback | Latest Reference | Top Skip Reason |")
         lines.append("|---------|--------:|------------------:|------------------|-----------------|")
         for slug, info in channels.items():
             label = info.get("display_name", slug)
@@ -590,7 +607,7 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
                 top_reason = info["top_skip_reasons"][0].get("reason", "")
             lines.append(
                 f"| {label} | {info.get('skipped_videos', 0)} | {info.get('metadata_fallback_videos', 0)} | "
-                f"{_format_date(info.get('latest_published_at'))} | {top_reason or 'N/A'} |"
+                f"{_format_date(info.get('latest_reference_at'))} | {top_reason or 'N/A'} |"
             )
         lines.append("")
 

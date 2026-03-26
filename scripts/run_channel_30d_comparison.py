@@ -192,6 +192,8 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
                 f"- transcript_backed_videos: {pipeline_summary.get('transcript_backed_videos', 0)}",
                 f"- metadata_fallback_videos: {pipeline_summary.get('metadata_fallback_videos', 0)}",
                 f"- latest_published_at: {pipeline_summary.get('latest_published_at', '')}",
+                f"- latest_reference_at: {pipeline_summary.get('latest_reference_at', '')}",
+                f"- latest_reference_kind: {pipeline_summary.get('latest_reference_kind', '')}",
             ]
         )
         top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])
@@ -212,6 +214,8 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
                 f"- transcript_backed_videos: {info.get('transcript_backed_videos', 0)}",
                 f"- metadata_fallback_videos: {info.get('metadata_fallback_videos', 0)}",
                 f"- latest_published_at: {info.get('latest_published_at', '')}",
+                f"- latest_reference_at: {info.get('latest_reference_at', '')}",
+                f"- latest_reference_kind: {info.get('latest_reference_kind', '')}",
                 f"- ranking_top_1_return_pct: {info['ranking_top_1_return_pct']}",
                 f"- ranking_top_3_return_pct: {info['ranking_top_3_return_pct']}",
                 f"- ranking_spearman: {info['ranking_spearman']}",
