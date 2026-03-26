@@ -146,6 +146,7 @@ def analyze_video_heuristic(
         "video_signal_class": signal.video_signal_class,
         "should_analyze_stocks": signal.should_analyze_stocks,
         "reason": signal.reason,
+        "skip_reason": signal.skip_reason or (signal.reason if not signal.should_analyze_stocks else ""),
         "signal_metrics": dict(signal.metrics),
         "transcript_language": transcript_language,
         "macro_insights": macro_insights_data,
@@ -223,6 +224,7 @@ def heuristic_rows_to_reports(rows: list[dict]) -> list[VideoAnalysisReport]:
             video_signal_class=row["video_signal_class"],
             should_analyze_stocks=row["should_analyze_stocks"],
             reason=row["reason"],
+            skip_reason=row.get("skip_reason", ""),
             video_type=row.get("video_type", "OTHER"),
         )
         macro_insights = [MacroInsight(**m) for m in row.get("macro_insights", [])]

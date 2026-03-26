@@ -151,10 +151,18 @@ def run_comparison_job(config: AppConfig) -> dict:
 
     comparison = compare_channels(channel_payloads, context)
     compare_json, compare_txt = save_comparison_artifacts(comparison, context)
+    dashboard_markdown = None
+    try:
+        from scripts.generate_dashboard import generate_dashboard
+
+        dashboard_markdown = str(generate_dashboard(output_dir, output_dir.parent / "DASHBOARD.md"))
+    except Exception as exc:
+        logger.warning("Dashboard markdown generation failed: %s", exc)
     payload = {
         "channels": {slug: {"json_path": item["json_path"], "txt_path": item["txt_path"]} for slug, item in channel_payloads.items()},
         "comparison_json": str(compare_json),
         "comparison_txt": str(compare_txt),
+        "dashboard_markdown": dashboard_markdown,
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return payload
@@ -171,21 +179,49 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
         f"더 나은 랭킹 예측력: {comparison['better_ranking_channel']}",
         "",
     ]
+    pipeline_summary = comparison.get("pipeline_summary", {})
+    if pipeline_summary:
+        lines.extend(
+            [
+                "[파이프라인 요약]",
+                f"- total_channels: {pipeline_summary.get('total_channels', 0)}",
+                f"- total_videos: {pipeline_summary.get('total_videos', 0)}",
+                f"- actionable_videos: {pipeline_summary.get('actionable_videos', 0)}",
+                f"- skipped_videos: {pipeline_summary.get('skipped_videos', 0)}",
+                f"- transcript_backed_videos: {pipeline_summary.get('transcript_backed_videos', 0)}",
+                f"- metadata_fallback_videos: {pipeline_summary.get('metadata_fallback_videos', 0)}",
+                f"- latest_published_at: {pipeline_summary.get('latest_published_at', '')}",
+            ]
+        )
+        top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])
+        if top_skip_reasons:
+            lines.append("- top_skip_reasons:")
+            for item in top_skip_reasons:
+                lines.append(f"  - {item['reason']} ({item['count']})")
+        lines.append("")
     for slug, info in comparison["channels"].items():
         lines.extend(
             [
                 f"[{slug}] {info['display_name']}",
                 f"- total_videos: {info['total_videos']}",
                 f"- actionable_videos: {info['actionable_videos']}",
+                f"- skipped_videos: {info.get('skipped_videos', 0)}",
                 f"- actionable_ratio: {info['actionable_ratio']}",
+                f"- transcript_backed_videos: {info.get('transcript_backed_videos', 0)}",
+                f"- metadata_fallback_videos: {info.get('metadata_fallback_videos', 0)}",
+                f"- latest_published_at: {info.get('latest_published_at', '')}",
                 f"- ranking_top_1_return_pct: {info['ranking_top_1_return_pct']}",
                 f"- ranking_top_3_return_pct: {info['ranking_top_3_return_pct']}",
                 f"- ranking_spearman: {info['ranking_spearman']}",
                 f"- ranking_eval_positions: {info['ranking_eval_positions']}",
                 f"- quality_scorecard: {json.dumps(info['quality_scorecard'], ensure_ascii=False)}",
-                "",
             ]
         )
+        if info.get("top_skip_reasons"):
+            lines.append(f"- top_skip_reasons: {json.dumps(info['top_skip_reasons'], ensure_ascii=False)}")
+        if info.get("signal_breakdown"):
+            lines.append(f"- signal_breakdown: {json.dumps(info['signal_breakdown'], ensure_ascii=False)}")
+        lines.append("")
     txt_path.write_text("\n".join(lines), encoding="utf-8")
     return json_path, txt_path
 

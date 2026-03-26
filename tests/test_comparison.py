@@ -49,6 +49,7 @@ def _make_row(title="test video", should_analyze=True, stocks=None, transcript_l
         "signal_score": 75.0,
         "should_analyze_stocks": should_analyze,
         "reason": "test",
+        "skip_reason": "" if should_analyze else "test",
         "transcript_language": transcript_language,
         "stocks": stocks or [],
     }
@@ -205,3 +206,6 @@ def test_compare_channels_two_channels():
     assert len(result["channels"]) == 2
     assert result["more_actionable_channel"] == "chan_a"
     assert result["better_ranking_channel"] is not None
+    assert result["pipeline_summary"]["total_videos"] == 3
+    assert result["pipeline_summary"]["skipped_videos"] == 1
+    assert result["channels"]["chan_b"]["top_skip_reasons"][0]["reason"] == "test"

@@ -19,6 +19,7 @@ def _make_row(video_id="v1", title="Test Video", signal_score=70, video_type="ST
         "video_signal_class": "ACTIONABLE",
         "should_analyze_stocks": True,
         "reason": "test",
+        "skip_reason": "",
         "signal_metrics": {},
         "transcript_language": "ko",
         "macro_insights": [],

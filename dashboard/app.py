@@ -906,7 +906,7 @@ with tabs[0]:
             pub_date = format_signal_date(rv.get("published_at", ""))
             updated_at = format_timestamp_local(rv.get("_updated_at"), include_tz=False)
             ch_name = channel_names.get(rv.get("_channel", ""), rv.get("_channel", ""))
-            reason = rv.get("reason", "")
+            reason = rv.get("skip_reason") or rv.get("reason", "")
             title_full = rv.get("title", "제목 없음")
             title_short = title_full[:60] + ("..." if len(title_full) > 60 else "")
             with rcols[i % len(rcols)]:
@@ -1721,7 +1721,10 @@ with tabs[-2]:
             row = {"채널": channel_label}
             row["영상 수"] = info.get("total_videos", 0)
             row["분석 대상"] = info.get("actionable_videos", 0)
+            row["스킵"] = info.get("skipped_videos", 0)
             row["대상 비율"] = f"{actionable_ratio:.0%}"
+            row["메타 fallback"] = info.get("metadata_fallback_videos", 0)
+            row["최신 게시일"] = format_signal_date(info.get("latest_published_at", ""))
             row["순위상관"] = (
                 f"{info.get('ranking_spearman', 0.0):.2f}"
                 if info.get("ranking_spearman") is not None
@@ -1736,6 +1739,8 @@ with tabs[-2]:
             row["_sort_top1_return"] = top1_return
             row["_sort_top3_return"] = top3_return
             row["_sort_predictive_power"] = predictive_power
+            top_skip_reasons = info.get("top_skip_reasons", [])
+            row["대표 스킵 사유"] = top_skip_reasons[0]["reason"] if top_skip_reasons else EMPTY_TEXT
             rows.append(row)
 
             metric_kr = {
@@ -1875,6 +1880,35 @@ with tabs[-1]:
             ("경과 시간", f"{age_min:.0f}분 전"),
             ("채널 수", str(len(available_channels))),
         ], cols_desktop=4)
+
+    try:
+        comp_status = load_channel_comparison(OUTPUT_DIR)
+    except Exception as _e:
+        st.error(f"파이프라인 상태 로딩 오류: {_e}")
+        comp_status = None
+
+    pipeline_summary = (comp_status or {}).get("pipeline_summary", {})
+    if pipeline_summary:
+        st.markdown("#### 게이트 운영 요약")
+        render_metrics_row([
+            ("스킵 영상", str(pipeline_summary.get("skipped_videos", 0))),
+            ("실자막 기반", str(pipeline_summary.get("transcript_backed_videos", 0))),
+            ("메타 fallback", str(pipeline_summary.get("metadata_fallback_videos", 0))),
+            ("최근 게시", format_signal_date(pipeline_summary.get("latest_published_at", ""))),
+        ], cols_desktop=4)
+
+        top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])
+        if top_skip_reasons:
+            st.markdown("#### 상위 스킵 사유")
+            reason_rows = "".join(
+                f'<div class="status-row">'
+                f'<div class="status-dot"></div>'
+                f'<div class="status-time">{item["count"]}건</div>'
+                f'<div class="status-label">{item["reason"]}</div>'
+                f'</div>'
+                for item in top_skip_reasons
+            )
+            st.markdown(f'<div class="omx-card">{reason_rows}</div>', unsafe_allow_html=True)
 
     # Pipeline activity log
     activity = get_pipeline_activity(OUTPUT_DIR)

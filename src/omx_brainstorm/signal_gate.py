@@ -102,6 +102,7 @@ def assess_video_signal(
         video_signal_class=klass,
         should_analyze_stocks=should,
         reason=reason,
+        skip_reason="" if should else reason,
         video_type=video_type.value,
         metrics={
             'finance_keyword_hits': finance_hits,

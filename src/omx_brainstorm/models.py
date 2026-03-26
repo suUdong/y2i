@@ -54,6 +54,7 @@ class VideoSignalAssessment:
     video_signal_class: str
     should_analyze_stocks: bool
     reason: str
+    skip_reason: str = ""
     video_type: str = "OTHER"
     metrics: dict[str, Any] = field(default_factory=dict)
 

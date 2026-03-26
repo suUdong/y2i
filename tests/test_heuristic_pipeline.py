@@ -229,3 +229,4 @@ def test_heuristic_no_stock_analysis_when_low_signal(tmp_path):
 
     result = analyze_video_heuristic(video, TranscriptCache(tmp_path / "cache"), _NoStockFetcher(), _DummyFundamentals())
     assert result["stocks"] == []
+    assert result["skip_reason"] == result["reason"]

@@ -44,3 +44,5 @@ def test_run_comparison_job_handles_empty_channel_set(tmp_path):
     config = AppConfig(output_dir=str(tmp_path / "out"), registry_path=str(tmp_path / "channels.json"), channels=[])
     payload = run_comparison_job(config)
     assert "channels" in payload
+    assert payload["dashboard_markdown"] is not None
+    assert Path(payload["dashboard_markdown"]).exists()

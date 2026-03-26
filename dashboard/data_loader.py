@@ -229,6 +229,7 @@ def get_recent_videos(
             row = dict(v)
             row["_channel"] = slug
             row["_updated_at"] = updated_at
+            row["skip_reason"] = row.get("skip_reason", row.get("reason", ""))
             recent.append(row)
     recent.sort(
         key=lambda item: (
@@ -336,6 +337,7 @@ def build_overview_report(
                 "signal_class": signal_class,
                 "signal_score": video.get("signal_score", 0),
                 "published_at": video.get("published_at", ""),
+                "skip_reason": video.get("skip_reason", video.get("reason", "")),
             })
 
     per_video.sort(

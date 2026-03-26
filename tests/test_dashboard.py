@@ -74,6 +74,7 @@ def tmp_output(tmp_path: Path) -> Path:
                 "video_signal_class": "NOISE",
                 "signal_score": 20.0,
                 "published_at": "20260321",
+                "skip_reason": "종목 분석에 활용할 실질 신호가 부족함",
                 "stocks": [],
             },
         ],
@@ -176,6 +177,7 @@ class TestLoad30dResults:
         data = load_30d_results("sampro", tmp_output)
         assert data["channel_slug"] == "sampro"
         assert len(data["videos"]) == 2
+        assert data["videos"][1]["skip_reason"] == "종목 분석에 활용할 실질 신호가 부족함"
 
     def test_loads_itgod(self, tmp_output: Path):
         data = load_30d_results("itgod", tmp_output)
