@@ -995,15 +995,15 @@ with tabs[2]:
         df_macro = df_macro.sort_values(["confidence", "label"], ascending=[False, True])
         macro_filter = st.text_input("매크로 검색 (라벨 / 출처 영상 / 채널)", "", key="macro_filter")
         if macro_filter:
-            search_columns = [
-                c for c in ["_channel", "label", "direction", "sentiment", "source_video"] if c in df_macro.columns
-            ]
-            macro_index = (
-                df_macro[search_columns]
-                .fillna("")
-                .astype(str)
-                .agg(" ".join, axis=1)
-            )
+            macro_search_df = pd.DataFrame(index=df_macro.index)
+            for column in ["_channel", "label", "source_video"]:
+                if column in df_macro.columns:
+                    macro_search_df[column] = df_macro[column].fillna("").astype(str)
+            if "direction" in df_macro.columns:
+                macro_search_df["direction"] = df_macro["direction"].map(translate_direction).fillna("")
+            if "sentiment" in df_macro.columns:
+                macro_search_df["sentiment"] = df_macro["sentiment"].map(translate_direction).fillna("")
+            macro_index = macro_search_df.astype(str).agg(" ".join, axis=1)
             df_macro = df_macro[macro_index.str.upper().str.contains(macro_filter.upper(), regex=False, na=False)]
         display_cols = [c for c in ["_channel", "label", "direction", "confidence", "sentiment", "source_video"] if c in df_macro.columns]
         display_df = df_macro[display_cols].copy()
@@ -1119,6 +1119,12 @@ with tabs[3]:
             filtered_insights = []
             needle = expert_filter.upper()
             for insight in insights:
+                sentiment_label = translate_direction(str(insight.get("sentiment", "")))
+                display_tickers = " ".join(
+                    format_ticker_display(str(t))
+                    for t in insight.get("mentioned_tickers", [])
+                    if t
+                )
                 haystack = " ".join(
                     [
                         str(insight.get("expert_name", "")),
@@ -1126,7 +1132,8 @@ with tabs[3]:
                         str(insight.get("topic", "")),
                         str(insight.get("source_video", "")),
                         str(insight.get("_channel", "")),
-                        " ".join(str(t) for t in insight.get("mentioned_tickers", []) if t),
+                        sentiment_label,
+                        display_tickers,
                     ]
                 ).upper()
                 if needle in haystack:
