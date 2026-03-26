@@ -822,7 +822,18 @@ with tabs[0]:
                     display_df["시그널"] = display_df["시그널"].map(translate_signal_class)
                 if "게시일" in display_df.columns:
                     display_df["게시일"] = display_df["게시일"].map(format_signal_date)
-                st.dataframe(display_df, use_container_width=True, height=400)
+                video_filter = st.text_input("영상 검색 (채널 / 제목 / 유형 / 시그널)", "", key="overview_video_filter")
+                total_videos_count = len(display_df)
+                if video_filter:
+                    search_index = display_df.fillna("").astype(str).agg(" ".join, axis=1)
+                    display_df = display_df[
+                        search_index.str.upper().str.contains(video_filter.upper(), regex=False, na=False)
+                    ]
+                st.caption(f"표시 영상 {len(display_df)}개 / 전체 {total_videos_count}개")
+                if display_df.empty:
+                    st.info("검색 조건에 맞는 영상이 없습니다.")
+                else:
+                    st.dataframe(display_df, use_container_width=True, height=400)
 
     # -- 콘텐츠 라벨 --
     titles_data = load_all_video_titles(OUTPUT_DIR)
@@ -1336,7 +1347,18 @@ for idx, ch_slug in enumerate(available_channels):
                 if "video_signal_class" in display_df.columns:
                     display_df["video_signal_class"] = display_df["video_signal_class"].map(translate_signal_class)
                 display_df = display_df.rename(columns=vid_col_map)
-                st.dataframe(display_df, use_container_width=True, height=400, hide_index=True)
+                video_filter = st.text_input("영상 검색 (제목 / 유형 / 시그널)", "", key=f"video_filter_{ch_slug}")
+                total_video_count = len(display_df)
+                if video_filter:
+                    search_index = display_df.fillna("").astype(str).agg(" ".join, axis=1)
+                    display_df = display_df[
+                        search_index.str.upper().str.contains(video_filter.upper(), regex=False, na=False)
+                    ]
+                st.caption(f"표시 영상 {len(display_df)}개 / 전체 {total_video_count}개")
+                if display_df.empty:
+                    st.info("검색 조건에 맞는 영상이 없습니다.")
+                else:
+                    st.dataframe(display_df, use_container_width=True, height=400, hide_index=True)
 
         # Ranking
         ch_ranking = extract_cross_video_ranking(ch_data)
