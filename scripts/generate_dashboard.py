@@ -566,6 +566,7 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
 
     lines.append("| Metric | Value |")
     lines.append("|--------|------:|")
+    lines.append(f"| Snapshot run | {comparison.get('generated_at', 'N/A') if comparison else 'N/A'} |")
     lines.append(f"| Channels | {summary.get('total_channels', 0)} |")
     lines.append(f"| Videos | {summary.get('total_videos', 0)} |")
     lines.append(f"| Analyzable | {summary.get('analyzable_videos', summary.get('actionable_videos', 0))} |")

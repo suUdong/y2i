@@ -307,6 +307,7 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
     pipeline_summary = comparison.get("pipeline_summary", {})
     if pipeline_summary:
         lines.append("[파이프라인 요약]")
+        lines.append(f"- 스냅샷 run: {comparison.get('generated_at', context.run_id)}")
         for key in (
             "total_channels",
             "total_videos",

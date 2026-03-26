@@ -1904,6 +1904,7 @@ with tabs[-1]:
     if pipeline_summary:
         st.markdown("#### 게이트 운영 요약")
         render_metrics_row([
+            ("스냅샷 run", (comp_status or {}).get("generated_at", EMPTY_TEXT)),
             ("스킵 영상", str(pipeline_summary.get("skipped_videos", 0))),
             ("엄격 액션", str(pipeline_summary.get("strict_actionable_videos", 0))),
             ("실자막 기반", str(pipeline_summary.get("transcript_backed_videos", 0))),
@@ -1915,7 +1916,7 @@ with tabs[-1]:
                     pipeline_summary.get("latest_reference_kind", "unknown"),
                 ),
             ),
-        ], cols_desktop=5)
+        ], cols_desktop=6)
 
         top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])
         if top_skip_reasons:

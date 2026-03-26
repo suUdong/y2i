@@ -452,6 +452,8 @@ class TestRenderPipelineHealth:
     def test_with_data(self, sample_comparison, sample_30d):
         md = gd.render_pipeline_health(sample_comparison, {"sampro": sample_30d})
         assert "## Pipeline Health" in md
+        assert "Snapshot run" in md
+        assert "20260323T053248Z" in md
         assert "Metadata fallback" in md
         assert "Strict ACTIONABLE" in md
         assert "Latest Reference" in md

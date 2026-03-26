@@ -119,6 +119,7 @@ def test_save_comparison_artifacts_writes_human_readable_labels(tmp_path):
     txt = txt_path.read_text(encoding="utf-8")
     assert "분석 가능 비율 최고: 삼프로TV" in txt
     assert "랭킹 예측력 최고: IT의 신 이형수" in txt
+    assert "- 스냅샷 run: 20260326T000000Z" in txt
     assert "- 채널 수: 2" in txt
     assert "- 최신 기준 출처: 스냅샷" in txt
     assert "- 분석 가능 비율: 53.3%" in txt
