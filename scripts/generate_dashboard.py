@@ -139,6 +139,7 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
         if not data:
             continue
         summary["total_channels"] += 1
+        latest_published = data.get("generated_at", latest_published)
         for video in data.get("videos", []):
             summary["total_videos"] += 1
             signal_class = video.get("video_signal_class", "UNKNOWN")
@@ -157,7 +158,7 @@ def build_pipeline_summary_from_channels(channel_data: dict[str, dict | None]) -
             elif transcript_language:
                 summary["transcript_backed_videos"] += 1
 
-            published_at = video.get("published_at")
+            published_at = video.get("published_at") or data.get("generated_at")
             if published_at:
                 published_ts = None
                 for fmt in ("%Y%m%dT%H%M%SZ", "%Y%m%d", "%Y-%m-%d"):
@@ -192,7 +193,7 @@ def build_channel_gate_health(channel_data: dict[str, dict | None]) -> dict[str,
         if data is None:
             continue
         videos = data.get("videos", [])
-        latest_published = ""
+        latest_published = data.get("generated_at", "") or ""
         latest_published_ts: datetime | None = None
         skip_counts: Counter[str] = Counter(
             (video.get("skip_reason") or video.get("reason") or "").strip()
@@ -200,7 +201,7 @@ def build_channel_gate_health(channel_data: dict[str, dict | None]) -> dict[str,
             if not video.get("should_analyze_stocks") and (video.get("skip_reason") or video.get("reason"))
         )
         for video in videos:
-            published_at = video.get("published_at")
+            published_at = video.get("published_at") or data.get("generated_at")
             if not published_at:
                 continue
             published_ts = None

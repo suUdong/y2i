@@ -68,6 +68,102 @@ def _is_older_timestamp(candidate: str, current: str) -> bool:
     return candidate_ts < current_ts
 
 
+def _is_transcript_backed(language: str | None) -> bool:
+    return (language or "").startswith("cache") or language not in {None, "", "metadata_fallback"}
+
+
+def _derive_channel_health(data_30d: dict[str, Any], slug: str) -> dict[str, Any]:
+    videos = data_30d.get("videos", [])
+    signal_distribution: dict[str, int] = {}
+    skip_reason_counts: dict[str, int] = {}
+    actionable_videos = 0
+    transcript_backed_videos = 0
+    metadata_fallback_videos = 0
+    latest_published_at = data_30d.get("generated_at", "") or ""
+
+    for video in videos:
+        signal_class = video.get("video_signal_class", "UNKNOWN")
+        signal_distribution[signal_class] = signal_distribution.get(signal_class, 0) + 1
+        if video.get("should_analyze_stocks"):
+            actionable_videos += 1
+        else:
+            skip_reason = (video.get("skip_reason") or video.get("reason") or "").strip()
+            if skip_reason:
+                skip_reason_counts[skip_reason] = skip_reason_counts.get(skip_reason, 0) + 1
+
+        transcript_language = video.get("transcript_language")
+        if transcript_language == "metadata_fallback":
+            metadata_fallback_videos += 1
+        elif _is_transcript_backed(transcript_language):
+            transcript_backed_videos += 1
+
+        published_at = video.get("published_at", "")
+        if _is_newer_timestamp(published_at, latest_published_at):
+            latest_published_at = published_at
+
+    top_skip_reasons = [
+        {"reason": reason, "count": count}
+        for reason, count in sorted(skip_reason_counts.items(), key=lambda item: (-item[1], item[0]))[:5]
+    ]
+    return {
+        "display_name": data_30d.get("channel_name", slug),
+        "total_videos": len(videos),
+        "actionable_videos": actionable_videos,
+        "actionable_ratio": round(actionable_videos / len(videos), 3) if videos else 0.0,
+        "skipped_videos": len(videos) - actionable_videos,
+        "transcript_backed_videos": transcript_backed_videos,
+        "metadata_fallback_videos": metadata_fallback_videos,
+        "latest_published_at": latest_published_at,
+        "signal_breakdown": signal_distribution,
+        "top_skip_reasons": top_skip_reasons,
+        "quality_scorecard": data_30d.get("quality_scorecard", {}),
+    }
+
+
+def _build_pipeline_summary_from_channels(channels: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    signal_distribution: dict[str, int] = {}
+    skip_reason_counts: dict[str, int] = {}
+    latest_published_at = ""
+    total_videos = 0
+    actionable_videos = 0
+    skipped_videos = 0
+    transcript_backed_videos = 0
+    metadata_fallback_videos = 0
+
+    for info in channels.values():
+        total_videos += info.get("total_videos", 0)
+        actionable_videos += info.get("actionable_videos", 0)
+        skipped_videos += info.get("skipped_videos", 0)
+        transcript_backed_videos += info.get("transcript_backed_videos", 0)
+        metadata_fallback_videos += info.get("metadata_fallback_videos", 0)
+        latest_value = info.get("latest_published_at", "")
+        if _is_newer_timestamp(latest_value, latest_published_at):
+            latest_published_at = latest_value
+
+        for klass, count in info.get("signal_breakdown", {}).items():
+            signal_distribution[klass] = signal_distribution.get(klass, 0) + count
+        for item in info.get("top_skip_reasons", []):
+            reason = item.get("reason", "")
+            if reason:
+                skip_reason_counts[reason] = skip_reason_counts.get(reason, 0) + int(item.get("count", 0))
+
+    top_skip_reasons = [
+        {"reason": reason, "count": count}
+        for reason, count in sorted(skip_reason_counts.items(), key=lambda item: (-item[1], item[0]))[:5]
+    ]
+    return {
+        "total_channels": len(channels),
+        "total_videos": total_videos,
+        "actionable_videos": actionable_videos,
+        "skipped_videos": skipped_videos,
+        "transcript_backed_videos": transcript_backed_videos,
+        "metadata_fallback_videos": metadata_fallback_videos,
+        "latest_published_at": latest_published_at,
+        "signal_breakdown": signal_distribution,
+        "top_skip_reasons": top_skip_reasons,
+    }
+
+
 # ── Integration report (sampro_integration_report.json) ──────────────────────
 
 def load_integration_report(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
@@ -86,7 +182,43 @@ def load_30d_results(channel_slug: str, output_dir: Path = DEFAULT_OUTPUT_DIR) -
 
 def load_channel_comparison(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
     path = _latest_file(output_dir, "channel_comparison_30d_*.json")
-    return _load_json(path)
+    comparison = _load_json(path)
+    if not isinstance(comparison, dict):
+        return {}
+
+    enriched_channels: dict[str, dict[str, Any]] = {}
+    for slug in get_available_channels(output_dir):
+        data_30d = load_30d_results(slug, output_dir)
+        if isinstance(data_30d, dict) and data_30d:
+            enriched_channels[slug] = _derive_channel_health(data_30d, slug)
+
+    existing_channels = comparison.get("channels", {})
+    merged_channels: dict[str, dict[str, Any]] = {}
+    for slug in sorted(set(enriched_channels) | set(existing_channels)):
+        merged = dict(existing_channels.get(slug, {}))
+        if slug in enriched_channels:
+            derived = enriched_channels[slug]
+            for key in (
+                "display_name",
+                "total_videos",
+                "actionable_videos",
+                "actionable_ratio",
+                "skipped_videos",
+                "transcript_backed_videos",
+                "metadata_fallback_videos",
+                "latest_published_at",
+                "signal_breakdown",
+                "top_skip_reasons",
+                "quality_scorecard",
+            ):
+                merged[key] = derived.get(key)
+        merged_channels[slug] = merged
+
+    if merged_channels:
+        comparison["channels"] = merged_channels
+        comparison["pipeline_summary"] = _build_pipeline_summary_from_channels(merged_channels)
+
+    return comparison
 
 
 # ── Video titles with labels ─────────────────────────────────────────────────

@@ -435,6 +435,7 @@ class TestRenderPipelineHealth:
 
     def test_missing_summary_falls_back_to_channels(self, sample_30d):
         data = dict(sample_30d)
+        data["generated_at"] = "20260323T053248Z"
         data["videos"] = [
             {
                 "video_id": "v1",
@@ -444,12 +445,13 @@ class TestRenderPipelineHealth:
                 "reason": "종목 분석에 활용할 실질 신호가 부족함",
                 "skip_reason": "종목 분석에 활용할 실질 신호가 부족함",
                 "transcript_language": "metadata_fallback",
-                "published_at": "20260323T053248Z",
+                "published_at": "",
             }
         ]
         md = gd.render_pipeline_health({"channels": {}}, {"sampro": data})
         assert "Top Skip Reasons" in md
         assert "종목 분석에 활용할 실질 신호가 부족함" in md
+        assert "2026-03-23" in md
 
 
 # ---------------------------------------------------------------------------

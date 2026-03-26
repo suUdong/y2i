@@ -59,6 +59,7 @@ def tmp_output(tmp_path: Path) -> Path:
                 "title": "Test Video 1",
                 "video_signal_class": "ACTIONABLE",
                 "signal_score": 70.0,
+                "should_analyze_stocks": True,
                 "published_at": "20260320",
                 "stocks": [],
                 "macro_insights": [
@@ -73,6 +74,7 @@ def tmp_output(tmp_path: Path) -> Path:
                 "title": "Test Video 2",
                 "video_signal_class": "NOISE",
                 "signal_score": 20.0,
+                "should_analyze_stocks": False,
                 "published_at": "20260321",
                 "skip_reason": "종목 분석에 활용할 실질 신호가 부족함",
                 "stocks": [],
@@ -194,6 +196,10 @@ class TestLoadChannelComparison:
         comp = load_channel_comparison(tmp_output)
         assert "channels" in comp
         assert "sampro" in comp["channels"]
+        assert "pipeline_summary" in comp
+        assert comp["channels"]["sampro"]["skipped_videos"] == 1
+        assert comp["channels"]["sampro"]["latest_published_at"] == "20260323T094413Z"
+        assert comp["pipeline_summary"]["skipped_videos"] == 1
 
     def test_empty_when_missing(self, tmp_path: Path):
         assert load_channel_comparison(tmp_path) == {}
