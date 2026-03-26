@@ -38,6 +38,42 @@ REFERENCE_KIND_LABELS = {
     "unknown": "미분류",
 }
 
+SUMMARY_LABELS = {
+    "total_channels": "채널 수",
+    "total_videos": "분석 영상 수",
+    "actionable_videos": "분석 가능 영상",
+    "strict_actionable_videos": "엄격 액션 영상",
+    "skipped_videos": "스킵 영상",
+    "transcript_backed_videos": "실자막 기반 영상",
+    "metadata_fallback_videos": "메타 fallback 영상",
+    "latest_published_at": "최신 게시일",
+    "latest_reference_at": "최신 기준 시각",
+    "latest_reference_kind": "최신 기준 출처",
+    "ranking_top_1_return_pct": "상위 1개 수익률",
+    "ranking_top_3_return_pct": "상위 3개 수익률",
+    "ranking_spearman": "순위 상관",
+    "ranking_eval_positions": "평가 표본",
+    "actionable_ratio": "분석 가능 비율",
+}
+
+
+def _fmt_scalar(value: object) -> str:
+    if value is None or value == "":
+        return "미제공"
+    if isinstance(value, float):
+        return f"{value:.3f}".rstrip("0").rstrip(".")
+    return str(value)
+
+
+def _fmt_ratio(value: object) -> str:
+    if isinstance(value, (int, float)):
+        return f"{value:.1%}"
+    return _fmt_scalar(value)
+
+
+def _fmt_reference_kind(value: object) -> str:
+    return REFERENCE_KIND_LABELS.get(str(value or "unknown"), str(value or "unknown"))
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the 30-day paper-trading style channel comparison job.")
@@ -179,60 +215,72 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
     json_path = context.output_dir / f"channel_comparison_30d_{context.run_id}.json"
     txt_path = context.output_dir / f"channel_comparison_30d_{context.run_id}.txt"
     json_path.write_text(json.dumps(comparison, ensure_ascii=False, indent=2), encoding="utf-8")
+    channel_display_names = {
+        slug: info.get("display_name", slug)
+        for slug, info in comparison.get("channels", {}).items()
+    }
+    best_analyzable = channel_display_names.get(comparison["more_actionable_channel"], comparison["more_actionable_channel"])
+    best_ranking = channel_display_names.get(comparison["better_ranking_channel"], comparison["better_ranking_channel"])
     lines = [
         f"30일 채널 비교 ({context.run_id})",
-        f"분석 가능 비율 최고: {comparison['more_actionable_channel']}",
-        f"더 나은 랭킹 예측력: {comparison['better_ranking_channel']}",
+        f"분석 가능 비율 최고: {best_analyzable}",
+        f"랭킹 예측력 최고: {best_ranking}",
         "",
     ]
     pipeline_summary = comparison.get("pipeline_summary", {})
     if pipeline_summary:
-        lines.extend(
-            [
-                "[파이프라인 요약]",
-                f"- total_channels: {pipeline_summary.get('total_channels', 0)}",
-                f"- total_videos: {pipeline_summary.get('total_videos', 0)}",
-                f"- actionable_videos: {pipeline_summary.get('actionable_videos', 0)}",
-                f"- strict_actionable_videos: {pipeline_summary.get('strict_actionable_videos', 0)}",
-                f"- skipped_videos: {pipeline_summary.get('skipped_videos', 0)}",
-                f"- transcript_backed_videos: {pipeline_summary.get('transcript_backed_videos', 0)}",
-                f"- metadata_fallback_videos: {pipeline_summary.get('metadata_fallback_videos', 0)}",
-                f"- latest_published_at: {pipeline_summary.get('latest_published_at', '')}",
-                f"- latest_reference_at: {pipeline_summary.get('latest_reference_at', '')}",
-                f"- latest_reference_kind: {REFERENCE_KIND_LABELS.get(pipeline_summary.get('latest_reference_kind', 'unknown'), pipeline_summary.get('latest_reference_kind', 'unknown'))}",
-            ]
-        )
+        lines.append("[파이프라인 요약]")
+        for key in (
+            "total_channels",
+            "total_videos",
+            "actionable_videos",
+            "strict_actionable_videos",
+            "skipped_videos",
+            "transcript_backed_videos",
+            "metadata_fallback_videos",
+            "latest_published_at",
+            "latest_reference_at",
+            "latest_reference_kind",
+        ):
+            value = pipeline_summary.get(key, "")
+            if key == "latest_reference_kind":
+                value = _fmt_reference_kind(value)
+            lines.append(f"- {SUMMARY_LABELS[key]}: {_fmt_scalar(value)}")
         top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])
         if top_skip_reasons:
-            lines.append("- top_skip_reasons:")
+            lines.append("- 상위 스킵 사유:")
             for item in top_skip_reasons:
                 lines.append(f"  - {item['reason']} ({item['count']})")
         lines.append("")
     for slug, info in comparison["channels"].items():
-        lines.extend(
-            [
-                f"[{slug}] {info['display_name']}",
-                f"- total_videos: {info['total_videos']}",
-                f"- actionable_videos: {info['actionable_videos']}",
-                f"- strict_actionable_videos: {info.get('strict_actionable_videos', 0)}",
-                f"- skipped_videos: {info.get('skipped_videos', 0)}",
-                f"- actionable_ratio: {info['actionable_ratio']}",
-                f"- transcript_backed_videos: {info.get('transcript_backed_videos', 0)}",
-                f"- metadata_fallback_videos: {info.get('metadata_fallback_videos', 0)}",
-                f"- latest_published_at: {info.get('latest_published_at', '')}",
-                f"- latest_reference_at: {info.get('latest_reference_at', '')}",
-                f"- latest_reference_kind: {REFERENCE_KIND_LABELS.get(info.get('latest_reference_kind', 'unknown'), info.get('latest_reference_kind', 'unknown'))}",
-                f"- ranking_top_1_return_pct: {info['ranking_top_1_return_pct']}",
-                f"- ranking_top_3_return_pct: {info['ranking_top_3_return_pct']}",
-                f"- ranking_spearman: {info['ranking_spearman']}",
-                f"- ranking_eval_positions: {info['ranking_eval_positions']}",
-                f"- quality_scorecard: {json.dumps(info['quality_scorecard'], ensure_ascii=False)}",
-            ]
-        )
+        lines.append(f"[{slug}] {info['display_name']}")
+        for key in (
+            "total_videos",
+            "actionable_videos",
+            "strict_actionable_videos",
+            "skipped_videos",
+            "actionable_ratio",
+            "transcript_backed_videos",
+            "metadata_fallback_videos",
+            "latest_published_at",
+            "latest_reference_at",
+            "latest_reference_kind",
+            "ranking_top_1_return_pct",
+            "ranking_top_3_return_pct",
+            "ranking_spearman",
+            "ranking_eval_positions",
+        ):
+            value = info.get(key, "")
+            if key == "actionable_ratio":
+                value = _fmt_ratio(value)
+            elif key == "latest_reference_kind":
+                value = _fmt_reference_kind(value)
+            lines.append(f"- {SUMMARY_LABELS[key]}: {_fmt_scalar(value)}")
+        lines.append(f"- 품질 점수표: {json.dumps(info['quality_scorecard'], ensure_ascii=False)}")
         if info.get("top_skip_reasons"):
-            lines.append(f"- top_skip_reasons: {json.dumps(info['top_skip_reasons'], ensure_ascii=False)}")
+            lines.append(f"- 상위 스킵 사유: {json.dumps(info['top_skip_reasons'], ensure_ascii=False)}")
         if info.get("signal_breakdown"):
-            lines.append(f"- signal_breakdown: {json.dumps(info['signal_breakdown'], ensure_ascii=False)}")
+            lines.append(f"- 시그널 분포: {json.dumps(info['signal_breakdown'], ensure_ascii=False)}")
         lines.append("")
     txt_path.write_text("\n".join(lines), encoding="utf-8")
     return json_path, txt_path
