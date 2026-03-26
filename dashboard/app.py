@@ -46,6 +46,13 @@ st.set_page_config(
 # -- Auto-refresh every 60s ----------------------------------------------------
 
 st_autorefresh(interval=60_000, limit=None, key="auto_refresh")
+st.markdown(
+    '<div style="position:fixed;bottom:8px;right:10px;z-index:999;'
+    'background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.06);'
+    'border-radius:8px;padding:3px 8px;font-size:0.65rem;color:#64748B;">'
+    '60초 자동 새로고침</div>',
+    unsafe_allow_html=True,
+)
 
 # -- Design System CSS ---------------------------------------------------------
 
@@ -424,6 +431,93 @@ header[data-testid="stHeader"] {
 @media (min-width: 1024px) {
     .block-container { max-width: 1400px !important; }
 }
+
+/* -- Galaxy Z Fold7 cover screen (375px) ------------------------------- */
+@media (max-width: 600px) {
+    /* KPI 값 축소 */
+    [data-testid="stMetricValue"] {
+        font-size: 1.4rem !important;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 0.65rem !important;
+    }
+    [data-testid="stMetricDelta"] {
+        font-size: 0.75rem !important;
+    }
+    /* 블록 패딩 최소화 */
+    .block-container {
+        padding: 0.5rem 0.5rem 1.5rem !important;
+    }
+    /* 시그널 히어로 카드 — 단일 열로 스택 */
+    .signal-hero {
+        margin-bottom: 0.5rem;
+    }
+    .signal-hero .hero-score {
+        font-size: 1.2rem;
+    }
+    /* 비디오 카드 그리드 — 단일 열 */
+    .video-card {
+        margin-bottom: 0.5rem;
+    }
+    /* 알럿 배너 — 텍스트 줄바꿈 */
+    .omx-alert {
+        padding: 0.75rem 1rem;
+    }
+    .omx-alert-title {
+        font-size: 0.75rem;
+    }
+    /* 티커 칩 — 모바일 축소 */
+    .ticker-chip {
+        font-size: 0.7rem;
+        padding: 3px 7px;
+    }
+    /* 탭 바 — 375px 오버플로 방지 */
+    .stTabs [data-baseweb="tab-list"] {
+        padding: 2px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        min-height: 44px;
+        padding: 0 12px;
+        font-size: 0.78rem !important;
+    }
+    /* 엑스펜더 콘텐츠 전체 너비 */
+    [data-testid="stExpander"] > div {
+        padding: 0.5rem !important;
+    }
+    /* 상태 타임라인 */
+    .status-time {
+        min-width: 100px;
+        font-size: 0.7rem;
+    }
+    /* 버튼/입력 최소 높이 완화 */
+    .stButton > button,
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div {
+        min-height: 44px !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* -- 데이터프레임/테이블 수평 스크롤 래퍼 -------------------------------- */
+[data-testid="stDataFrame"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+[data-testid="stDataFrame"] table {
+    font-size: 12px;
+}
+@media (max-width: 600px) {
+    [data-testid="stDataFrame"] table {
+        font-size: 11px;
+    }
+}
+
+/* -- 채널 비교 테이블 수평 스크롤 ---------------------------------------- */
+.comp-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -513,26 +607,26 @@ VIDEO_TYPE_KR = {
 }
 
 
-def render_chart(fig: go.Figure, key: str | None = None, height: int = 400) -> None:
+def render_chart(fig: go.Figure, key: str | None = None, height: int = 300) -> None:
     """Render a Plotly chart with dark theme."""
     fig.update_layout(
         template=PLOTLY_TEMPLATE,
-        margin=dict(l=16, r=16, t=48, b=24),
-        font=dict(size=14),
+        margin=dict(l=8, r=8, t=32, b=8),
+        font=dict(size=11),
         hovermode="x unified",
-        hoverlabel=dict(bgcolor="#0F172A", bordercolor="rgba(255,255,255,0.12)", font=dict(color="#F8FAFC")),
+        hoverlabel=dict(bgcolor="#0F172A", bordercolor="rgba(255,255,255,0.12)", font=dict(color="#F8FAFC", size=11)),
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=-0.24,
+            y=-0.28,
             xanchor="center",
             x=0.5,
-            font=dict(size=12, color="#94A3B8"),
+            font=dict(size=11, color="#94A3B8"),
         ),
         height=height,
     )
-    fig.update_xaxes(showline=False, tickfont=dict(color="#CBD5E1"))
-    fig.update_yaxes(showline=False, tickfont=dict(color="#CBD5E1"))
+    fig.update_xaxes(showline=False, tickfont=dict(color="#CBD5E1", size=11))
+    fig.update_yaxes(showline=False, tickfont=dict(color="#CBD5E1", size=11))
     st.plotly_chart(fig, use_container_width=True, key=key)
 
 
@@ -673,7 +767,11 @@ tabs = st.tabs(tab_labels)
 
 with tabs[0]:
     # -- 핵심 시그널 카드 (Top ranked stocks across all channels) --
-    all_rankings = get_all_rankings(OUTPUT_DIR)
+    try:
+        all_rankings = get_all_rankings(OUTPUT_DIR)
+    except Exception as _e:
+        st.error(f"종목 랭킹 로딩 오류: {_e}")
+        all_rankings = []
     if all_rankings:
         st.markdown("#### 핵심 종목 시그널")
         hero_cols = st.columns(min(len(all_rankings), 3))
@@ -716,11 +814,17 @@ with tabs[0]:
                     f'</div>',
                     unsafe_allow_html=True,
                 )
+    else:
+        st.info("분석된 종목이 없습니다.")
 
     st.markdown("---")
 
     # -- Actionable Signal Alert Banner --
-    actionable = extract_actionable_signals(OUTPUT_DIR)
+    try:
+        actionable = extract_actionable_signals(OUTPUT_DIR)
+    except Exception as _e:
+        st.error(f"액션 시그널 로딩 오류: {_e}")
+        actionable = []
     if actionable:
         ticker_stats: dict[str, dict[str, float | int]] = {}
         for sig in actionable:
@@ -757,7 +861,11 @@ with tabs[0]:
             )
 
     # -- 최근 분석 (24h) --
-    recent_videos = get_recent_videos(OUTPUT_DIR, hours=24)
+    try:
+        recent_videos = get_recent_videos(OUTPUT_DIR, hours=24)
+    except Exception as _e:
+        st.error(f"최근 영상 로딩 오류: {_e}")
+        recent_videos = []
     if recent_videos:
         st.markdown("#### 최근 분석 (24시간)")
         recent_sort = st.selectbox(
@@ -821,7 +929,11 @@ with tabs[0]:
     st.markdown("---")
 
     # -- 파이프라인 요약 KPIs --
-    report = build_overview_report(OUTPUT_DIR)
+    try:
+        report = build_overview_report(OUTPUT_DIR)
+    except Exception as _e:
+        st.error(f"파이프라인 요약 로딩 오류: {_e}")
+        report = None
     if report:
         st.markdown("#### 파이프라인 요약")
         render_metrics_row([
@@ -854,7 +966,7 @@ with tabs[0]:
                 )
                 fig_type.update_traces(textposition="outside", hovertemplate="%{y}: %{x}개 (%{text})<extra></extra>")
                 fig_type.update_layout(showlegend=False)
-                render_chart(fig_type, key="overview_type", height=420)
+                render_chart(fig_type, key="overview_type", height=300)
 
         with col_b:
             sig_dist = extract_signal_distribution(report)
@@ -881,7 +993,7 @@ with tabs[0]:
                     textposition="outside",
                     hovertemplate="%{y}: %{x}개 (%{text})<extra></extra>",
                 )
-                render_chart(fig_bar, key="overview_signal", height=420)
+                render_chart(fig_bar, key="overview_signal", height=300)
 
         with st.expander("영상별 상세", expanded=False):
             per_video = extract_per_video(report)
@@ -938,7 +1050,7 @@ with tabs[0]:
                 )
                 fig_labels.update_traces(textposition="outside", hovertemplate="%{y}: %{x}개<extra></extra>")
                 fig_labels.update_layout(coloraxis_showscale=False)
-                render_chart(fig_labels, key="overview_labels", height=420)
+                render_chart(fig_labels, key="overview_labels", height=300)
 
 # =============================================================================
 # TAB 1 — 종목 랭킹
@@ -949,14 +1061,18 @@ with tabs[1]:
     rank_ch_options = ["전체 (통합)"] + [channel_names.get(ch, ch) for ch in available_channels]
     rank_ch_idx = st.selectbox("채널 선택", rank_ch_options, key="rank_ch")
 
-    if rank_ch_idx == "전체 (통합)":
-        ranking = get_all_rankings(OUTPUT_DIR)
-    else:
-        # Find the slug for the selected display name
-        slug_map = {channel_names.get(ch, ch): ch for ch in available_channels}
-        selected_slug = slug_map.get(rank_ch_idx, "")
-        data_30d = load_30d_results(selected_slug, OUTPUT_DIR)
-        ranking = extract_cross_video_ranking(data_30d)
+    try:
+        if rank_ch_idx == "전체 (통합)":
+            ranking = get_all_rankings(OUTPUT_DIR)
+        else:
+            # Find the slug for the selected display name
+            slug_map = {channel_names.get(ch, ch): ch for ch in available_channels}
+            selected_slug = slug_map.get(rank_ch_idx, "")
+            data_30d = load_30d_results(selected_slug, OUTPUT_DIR)
+            ranking = extract_cross_video_ranking(data_30d)
+    except Exception as _e:
+        st.error(f"랭킹 데이터 로딩 오류: {_e}")
+        ranking = []
 
     if ranking:
         filter_text = st.text_input("종목 검색 (코드 / 회사명)", "", key="rank_filter")
@@ -1065,7 +1181,7 @@ with tabs[1]:
                 color_discrete_map=verdict_colors,
             )
             fig_rank.update_traces(textposition="outside", hovertemplate="%{y}: %{x}점<extra>%{fullData.name}</extra>")
-            render_chart(fig_rank, key="rank_scores", height=460)
+            render_chart(fig_rank, key="rank_scores", height=320)
     else:
         st.info("랭킹 데이터가 없습니다.")
 
@@ -1079,20 +1195,24 @@ with tabs[2]:
     macro_ch_display = st.selectbox("채널 선택", macro_ch_options, key="macro_ch")
     macro_slug_map = {channel_names.get(ch, ch): ch for ch in available_channels}
 
-    if macro_ch_display == "전체 (통합)":
-        # Aggregate macro signals from all channels
+    try:
+        if macro_ch_display == "전체 (통합)":
+            # Aggregate macro signals from all channels
+            macro_signals = []
+            for _slug in available_channels:
+                _data = load_30d_results(_slug, OUTPUT_DIR)
+                _videos = extract_videos(_data)
+                for sig in extract_macro_signals(_videos):
+                    sig["_channel"] = channel_names.get(_slug, _slug)
+                    macro_signals.append(sig)
+        else:
+            macro_slug = macro_slug_map.get(macro_ch_display, "")
+            macro_30d = load_30d_results(macro_slug, OUTPUT_DIR)
+            videos = extract_videos(macro_30d)
+            macro_signals = extract_macro_signals(videos)
+    except Exception as _e:
+        st.error(f"매크로 데이터 로딩 오류: {_e}")
         macro_signals = []
-        for _slug in available_channels:
-            _data = load_30d_results(_slug, OUTPUT_DIR)
-            _videos = extract_videos(_data)
-            for sig in extract_macro_signals(_videos):
-                sig["_channel"] = channel_names.get(_slug, _slug)
-                macro_signals.append(sig)
-    else:
-        macro_slug = macro_slug_map.get(macro_ch_display, "")
-        macro_30d = load_30d_results(macro_slug, OUTPUT_DIR)
-        videos = extract_videos(macro_30d)
-        macro_signals = extract_macro_signals(videos)
 
     if macro_signals:
         df_macro = pd.DataFrame(macro_signals)
@@ -1158,7 +1278,7 @@ with tabs[2]:
                 )
                 fig_labels.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
                 fig_labels.update_layout(coloraxis_showscale=False)
-                render_chart(fig_labels, key="macro_labels", height=420)
+                render_chart(fig_labels, key="macro_labels", height=300)
 
             with chart_col_b:
                 if "direction" in df_macro.columns:
@@ -1182,7 +1302,7 @@ with tabs[2]:
                         textposition="outside",
                         hovertemplate="%{y}: %{x}건 (%{text})<extra></extra>",
                     )
-                    render_chart(fig_dir, key="macro_pie", height=420)
+                    render_chart(fig_dir, key="macro_pie", height=300)
 
             if "_channel" in df_macro.columns and macro_ch_display == "전체 (통합)":
                 source_counts = df_macro["_channel"].value_counts().reset_index()
@@ -1199,9 +1319,12 @@ with tabs[2]:
                 )
                 fig_sources.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
                 fig_sources.update_layout(coloraxis_showscale=False)
-                render_chart(fig_sources, key="macro_sources", height=360)
+                render_chart(fig_sources, key="macro_sources", height=280)
     else:
-        st.info(f"'{macro_ch_display}' 채널의 매크로 시그널이 없습니다.")
+        if macro_ch_display == "전체 (통합)":
+            st.info("매크로 시그널이 없습니다.")
+        else:
+            st.info(f"'{macro_ch_display}' 채널의 매크로 시그널이 없습니다.")
 
 # =============================================================================
 # TAB 3 — 전문가
@@ -1213,19 +1336,23 @@ with tabs[3]:
     expert_ch_display = st.selectbox("채널 선택", expert_ch_options, key="expert_ch")
     expert_slug_map = {channel_names.get(ch, ch): ch for ch in available_channels}
 
-    if expert_ch_display == "전체 (통합)":
+    try:
+        if expert_ch_display == "전체 (통합)":
+            insights = []
+            for _slug in available_channels:
+                _data = load_30d_results(_slug, OUTPUT_DIR)
+                _videos = extract_videos(_data)
+                for ins in extract_expert_insights(_videos):
+                    ins["_channel"] = channel_names.get(_slug, _slug)
+                    insights.append(ins)
+        else:
+            expert_slug = expert_slug_map.get(expert_ch_display, "")
+            expert_30d = load_30d_results(expert_slug, OUTPUT_DIR)
+            expert_videos = extract_videos(expert_30d)
+            insights = extract_expert_insights(expert_videos)
+    except Exception as _e:
+        st.error(f"전문가 인사이트 로딩 오류: {_e}")
         insights = []
-        for _slug in available_channels:
-            _data = load_30d_results(_slug, OUTPUT_DIR)
-            _videos = extract_videos(_data)
-            for ins in extract_expert_insights(_videos):
-                ins["_channel"] = channel_names.get(_slug, _slug)
-                insights.append(ins)
-    else:
-        expert_slug = expert_slug_map.get(expert_ch_display, "")
-        expert_30d = load_30d_results(expert_slug, OUTPUT_DIR)
-        expert_videos = extract_videos(expert_30d)
-        insights = extract_expert_insights(expert_videos)
 
     if insights:
         total_insight_count = len(insights)
@@ -1284,7 +1411,7 @@ with tabs[3]:
                 )
                 fig_expert_sources.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
                 fig_expert_sources.update_layout(coloraxis_showscale=False)
-                render_chart(fig_expert_sources, key="expert_sources", height=320)
+                render_chart(fig_expert_sources, key="expert_sources", height=260)
 
         if insights:
             for i, insight in enumerate(insights):
@@ -1331,7 +1458,10 @@ with tabs[3]:
                         display_tickers = [format_ticker_display(t) for t in tickers]
                         st.markdown(f"**언급 종목:** {', '.join(display_tickers)}")
     else:
-        st.info(f"'{expert_ch_display}' 채널의 전문가 인사이트가 없습니다.")
+        if expert_ch_display == "전체 (통합)":
+            st.info("전문가 인사이트가 없습니다.")
+        else:
+            st.info(f"'{expert_ch_display}' 채널의 전문가 인사이트가 없습니다.")
 
 # =============================================================================
 # CHANNEL TABS (dynamic, Korean)
@@ -1342,10 +1472,15 @@ for idx, ch_slug in enumerate(available_channels):
     with tabs[tab_idx]:
         ch_display = channel_names.get(ch_slug, ch_slug)
         st.markdown(f"#### {ch_display}")
-        ch_data = load_30d_results(ch_slug, OUTPUT_DIR)
+        try:
+            ch_data = load_30d_results(ch_slug, OUTPUT_DIR)
+        except Exception as _e:
+            st.error(f"채널 데이터 로딩 오류: {_e}")
+            st.info("해당 채널의 분석 데이터가 없습니다.")
+            continue
 
         if not ch_data:
-            st.info(f"'{ch_display}' 채널의 30일 데이터가 없습니다.")
+            st.info("해당 채널의 분석 데이터가 없습니다.")
             continue
 
         # Channel KPIs
@@ -1563,7 +1698,11 @@ for idx, ch_slug in enumerate(available_channels):
 
 with tabs[-2]:
     st.markdown("#### 채널 비교")
-    comp_data = load_channel_comparison(OUTPUT_DIR)
+    try:
+        comp_data = load_channel_comparison(OUTPUT_DIR)
+    except Exception as _e:
+        st.error(f"채널 비교 데이터 로딩 오류: {_e}")
+        comp_data = None
 
     if comp_data and "channels" in comp_data:
         channels_info = comp_data["channels"]
@@ -1671,7 +1810,7 @@ with tabs[-2]:
                 )
                 fig_comp.update_traces(texttemplate="%{text:.1f}", textposition="outside")
                 fig_comp.update_yaxes(title="점수", range=[0, 100])
-                render_chart(fig_comp, key="compare_scorecard", height=500)
+                render_chart(fig_comp, key="compare_scorecard", height=320)
 
             with chart_col_b:
                 df_returns = pd.DataFrame(returns_rows)
@@ -1692,7 +1831,7 @@ with tabs[-2]:
                 )
                 fig_returns.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
                 fig_returns.update_yaxes(title="수익률 (%)", zeroline=True, zerolinecolor="rgba(255,255,255,0.18)")
-                render_chart(fig_returns, key="compare_returns", height=500)
+                render_chart(fig_returns, key="compare_returns", height=320)
 
         if scorecard_rows:
             with st.expander("품질 지표 히트맵", expanded=False):
@@ -1707,7 +1846,7 @@ with tabs[-2]:
                     title="채널 품질 지표 히트맵",
                 )
                 fig_heatmap.update_xaxes(side="top")
-                render_chart(fig_heatmap, key="compare_heatmap", height=460)
+                render_chart(fig_heatmap, key="compare_heatmap", height=300)
 
         more_act = comp_data.get("more_actionable_channel", EMPTY_TEXT)
         better_rank = comp_data.get("better_ranking_channel", EMPTY_TEXT)
@@ -1771,7 +1910,7 @@ with tabs[-1]:
             )
             fig_activity.update_traces(textposition="outside", hovertemplate="%{y}: %{x}회<extra></extra>")
             fig_activity.update_layout(coloraxis_showscale=False)
-            render_chart(fig_activity, key="status_activity", height=360)
+            render_chart(fig_activity, key="status_activity", height=280)
     else:
         st.info("파이프라인 활동 기록이 없습니다.")
 
