@@ -567,15 +567,47 @@ def video_card_class(signal_class: str) -> str:
     }.get(signal_class, "video-card-noise")
 
 
+def parse_timestamp_string(value: str) -> datetime | None:
+    if not value:
+        return None
+
+    normalized = value.strip()
+    if not normalized:
+        return None
+
+    for fmt in ("%Y%m%dT%H%M%SZ", "%Y%m%d", "%Y-%m-%d"):
+        try:
+            parsed = datetime.strptime(normalized, fmt)
+            return parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+
+    iso_candidate = normalized.replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(iso_candidate)
+    except ValueError:
+        return None
+
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
 def format_signal_date(date_str: str) -> str:
-    """Format date string for display (YYYYMMDD -> YYYY-MM-DD)."""
+    """Format date string for display across compact and ISO timestamps."""
+    parsed = parse_timestamp_string(date_str)
+    if parsed is not None:
+        return parsed.astimezone(KST).strftime("%Y-%m-%d")
     if not date_str:
         return EMPTY_TEXT
-    if len(date_str) == 8 and date_str.isdigit():
-        return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
-    if "T" in date_str and len(date_str) > 10:
-        return date_str[:10]
     return date_str
+
+
+def format_signal_datetime(date_str: str) -> str:
+    parsed = parse_timestamp_string(date_str)
+    if parsed is not None:
+        return parsed.astimezone(KST).strftime("%Y-%m-%d %H:%M")
+    return EMPTY_TEXT if not date_str else date_str
 
 
 def format_timestamp_local(dt: datetime | None, include_tz: bool = True) -> str:
@@ -847,9 +879,7 @@ with tabs[1]:
             currency = item.get("currency", "KRW")
             last_signal = format_signal_date(item.get("last_signal_at", item.get("first_signal_at", "")))
             appearances = item.get("appearances", item.get("mention_count", 0))
-            checked_at = item.get("latest_checked_at", "")
-            if checked_at and "T" in checked_at:
-                checked_at = checked_at[:16].replace("T", " ")
+            checked_at = format_signal_datetime(item.get("latest_checked_at", ""))
 
             rows.append({
                 "순위": i + 1,
@@ -1133,8 +1163,7 @@ for idx, ch_slug in enumerate(available_channels):
 
         # Channel KPIs
         generated = ch_data.get("generated_at", EMPTY_TEXT)
-        if generated and "T" in generated:
-            generated = format_signal_date(generated)
+        generated = format_signal_datetime(generated)
         render_metrics_row([
             ("채널", ch_data.get("channel_name", ch_slug)),
             ("분석 기간", f"{ch_data.get('window_days', 30)}일"),
