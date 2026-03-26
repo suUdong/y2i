@@ -981,6 +981,7 @@ with tabs[2]:
 
     if macro_signals:
         df_macro = pd.DataFrame(macro_signals)
+        total_macro_count = len(df_macro)
         col_map = {
             "_channel": "채널",
             "direction": "방향",
@@ -992,79 +993,98 @@ with tabs[2]:
         if "label" not in df_macro.columns and "indicator" in df_macro.columns:
             df_macro["label"] = df_macro["indicator"]
         df_macro = df_macro.sort_values(["confidence", "label"], ascending=[False, True])
+        macro_filter = st.text_input("매크로 검색 (라벨 / 출처 영상 / 채널)", "", key="macro_filter")
+        if macro_filter:
+            search_columns = [
+                c for c in ["_channel", "label", "direction", "sentiment", "source_video"] if c in df_macro.columns
+            ]
+            macro_index = (
+                df_macro[search_columns]
+                .fillna("")
+                .astype(str)
+                .agg(" ".join, axis=1)
+            )
+            df_macro = df_macro[macro_index.str.upper().str.contains(macro_filter.upper(), regex=False, na=False)]
         display_cols = [c for c in ["_channel", "label", "direction", "confidence", "sentiment", "source_video"] if c in df_macro.columns]
         display_df = df_macro[display_cols].copy()
+        render_metrics_row([
+            ("전체 인사이트", str(total_macro_count)),
+            ("현재 표시", str(len(df_macro))),
+        ], cols_desktop=2)
 
-        # Translate direction and sentiment to Korean
-        if "direction" in display_df.columns:
-            display_df["direction"] = display_df["direction"].map(translate_direction)
-        if "sentiment" in display_df.columns:
-            display_df["sentiment"] = display_df["sentiment"].map(translate_direction)
-        if "confidence" in display_df.columns:
-            display_df["confidence"] = display_df["confidence"].map(lambda x: f"{x:.0%}" if isinstance(x, (int, float)) else x)
+        if df_macro.empty:
+            st.info("검색 조건에 맞는 매크로 인사이트가 없습니다.")
+        else:
+            # Translate direction and sentiment to Korean
+            if "direction" in display_df.columns:
+                display_df["direction"] = display_df["direction"].map(translate_direction)
+            if "sentiment" in display_df.columns:
+                display_df["sentiment"] = display_df["sentiment"].map(translate_direction)
+            if "confidence" in display_df.columns:
+                display_df["confidence"] = display_df["confidence"].map(lambda x: f"{x:.0%}" if isinstance(x, (int, float)) else x)
 
-        display_df = display_df.rename(columns=col_map)
-        st.dataframe(display_df, use_container_width=True, height=400, hide_index=True)
+            display_df = display_df.rename(columns=col_map)
+            st.dataframe(display_df, use_container_width=True, height=400, hide_index=True)
 
-        chart_col_a, chart_col_b = st.columns(2)
+            chart_col_a, chart_col_b = st.columns(2)
 
-        with chart_col_a:
-            label_counts = df_macro["label"].value_counts().head(10).reset_index()
-            label_counts.columns = ["라벨", "건수"]
-            fig_labels = px.bar(
-                label_counts.sort_values("건수", ascending=True),
-                x="건수",
-                y="라벨",
-                orientation="h",
-                title="주요 매크로 키워드",
-                text="건수",
-                color="건수",
-                color_continuous_scale=["#1D4ED8", "#22C55E"],
-            )
-            fig_labels.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
-            fig_labels.update_layout(coloraxis_showscale=False)
-            render_chart(fig_labels, key="macro_labels", height=420)
-
-        with chart_col_b:
-            if "direction" in df_macro.columns:
-                dir_counts = df_macro["direction"].value_counts().reset_index()
-                dir_counts.columns = ["방향", "건수"]
-                dir_counts["방향"] = dir_counts["방향"].map(translate_direction)
-                color_map = {"상승": "#22C55E", "하락": "#EF4444", "중립": "#94A3B8", "강세": "#22C55E", "약세": "#EF4444"}
-                dir_counts = dir_counts.sort_values("건수", ascending=True)
-                dir_counts["비중"] = (dir_counts["건수"] / dir_counts["건수"].sum()).map(lambda x: f"{x:.0%}")
-                fig_dir = px.bar(
-                    dir_counts,
+            with chart_col_a:
+                label_counts = df_macro["label"].value_counts().head(10).reset_index()
+                label_counts.columns = ["라벨", "건수"]
+                fig_labels = px.bar(
+                    label_counts.sort_values("건수", ascending=True),
                     x="건수",
-                    y="방향",
+                    y="라벨",
                     orientation="h",
-                    title="매크로 시그널 방향 분포",
-                    color="방향",
-                    color_discrete_map=color_map,
-                    text="비중",
+                    title="주요 매크로 키워드",
+                    text="건수",
+                    color="건수",
+                    color_continuous_scale=["#1D4ED8", "#22C55E"],
                 )
-                fig_dir.update_traces(
-                    textposition="outside",
-                    hovertemplate="%{y}: %{x}건 (%{text})<extra></extra>",
-                )
-                render_chart(fig_dir, key="macro_pie", height=420)
+                fig_labels.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
+                fig_labels.update_layout(coloraxis_showscale=False)
+                render_chart(fig_labels, key="macro_labels", height=420)
 
-        if "_channel" in df_macro.columns and macro_ch_display == "전체 (통합)":
-            source_counts = df_macro["_channel"].value_counts().reset_index()
-            source_counts.columns = ["채널", "건수"]
-            fig_sources = px.bar(
-                source_counts.sort_values("건수", ascending=True),
-                x="건수",
-                y="채널",
-                orientation="h",
-                title="매크로 인사이트 출처 채널",
-                text="건수",
-                color="건수",
-                color_continuous_scale=["#1D4ED8", "#06B6D4"],
-            )
-            fig_sources.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
-            fig_sources.update_layout(coloraxis_showscale=False)
-            render_chart(fig_sources, key="macro_sources", height=360)
+            with chart_col_b:
+                if "direction" in df_macro.columns:
+                    dir_counts = df_macro["direction"].value_counts().reset_index()
+                    dir_counts.columns = ["방향", "건수"]
+                    dir_counts["방향"] = dir_counts["방향"].map(translate_direction)
+                    color_map = {"상승": "#22C55E", "하락": "#EF4444", "중립": "#94A3B8", "강세": "#22C55E", "약세": "#EF4444"}
+                    dir_counts = dir_counts.sort_values("건수", ascending=True)
+                    dir_counts["비중"] = (dir_counts["건수"] / dir_counts["건수"].sum()).map(lambda x: f"{x:.0%}")
+                    fig_dir = px.bar(
+                        dir_counts,
+                        x="건수",
+                        y="방향",
+                        orientation="h",
+                        title="매크로 시그널 방향 분포",
+                        color="방향",
+                        color_discrete_map=color_map,
+                        text="비중",
+                    )
+                    fig_dir.update_traces(
+                        textposition="outside",
+                        hovertemplate="%{y}: %{x}건 (%{text})<extra></extra>",
+                    )
+                    render_chart(fig_dir, key="macro_pie", height=420)
+
+            if "_channel" in df_macro.columns and macro_ch_display == "전체 (통합)":
+                source_counts = df_macro["_channel"].value_counts().reset_index()
+                source_counts.columns = ["채널", "건수"]
+                fig_sources = px.bar(
+                    source_counts.sort_values("건수", ascending=True),
+                    x="건수",
+                    y="채널",
+                    orientation="h",
+                    title="매크로 인사이트 출처 채널",
+                    text="건수",
+                    color="건수",
+                    color_continuous_scale=["#1D4ED8", "#06B6D4"],
+                )
+                fig_sources.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
+                fig_sources.update_layout(coloraxis_showscale=False)
+                render_chart(fig_sources, key="macro_sources", height=360)
     else:
         st.info(f"'{macro_ch_display}' 채널의 매크로 시그널이 없습니다.")
 
@@ -1093,11 +1113,37 @@ with tabs[3]:
         insights = extract_expert_insights(expert_videos)
 
     if insights:
-        if expert_ch_display == "전체 (통합)":
+        total_insight_count = len(insights)
+        expert_filter = st.text_input("전문가 검색 (이름 / 주제 / 종목 / 출처)", "", key="expert_filter")
+        if expert_filter:
+            filtered_insights = []
+            needle = expert_filter.upper()
+            for insight in insights:
+                haystack = " ".join(
+                    [
+                        str(insight.get("expert_name", "")),
+                        str(insight.get("affiliation", "")),
+                        str(insight.get("topic", "")),
+                        str(insight.get("source_video", "")),
+                        str(insight.get("_channel", "")),
+                        " ".join(str(t) for t in insight.get("mentioned_tickers", []) if t),
+                    ]
+                ).upper()
+                if needle in haystack:
+                    filtered_insights.append(insight)
+            insights = filtered_insights
+
+        render_metrics_row([
+            ("전체 인사이트", str(total_insight_count)),
+            ("현재 표시", str(len(insights))),
+        ], cols_desktop=2)
+
+        if not insights:
+            st.info("검색 조건에 맞는 전문가 인사이트가 없습니다.")
+        elif expert_ch_display == "전체 (통합)":
             render_metrics_row([
-                ("전문가 인사이트", str(len(insights))),
                 ("출처 채널", str(len({item.get('_channel', '') for item in insights if item.get('_channel')}))),
-            ], cols_desktop=2)
+            ], cols_desktop=1)
 
             df_expert_sources = pd.DataFrame(
                 [{"채널": item.get("_channel", EMPTY_TEXT)} for item in insights if item.get("_channel")]
@@ -1118,49 +1164,50 @@ with tabs[3]:
                 fig_expert_sources.update_layout(coloraxis_showscale=False)
                 render_chart(fig_expert_sources, key="expert_sources", height=320)
 
-        for i, insight in enumerate(insights):
-            expert_name = insight.get("expert_name", "미상")
-            affiliation = insight.get("affiliation", "")
-            source_channel = insight.get("_channel", "")
-            prefix = f"[{source_channel}] " if source_channel and expert_ch_display == "전체 (통합)" else ""
-            label = f"{prefix}{expert_name} — {affiliation}" if affiliation else f"{prefix}{expert_name}"
+        if insights:
+            for i, insight in enumerate(insights):
+                expert_name = insight.get("expert_name", "미상")
+                affiliation = insight.get("affiliation", "")
+                source_channel = insight.get("_channel", "")
+                prefix = f"[{source_channel}] " if source_channel and expert_ch_display == "전체 (통합)" else ""
+                label = f"{prefix}{expert_name} — {affiliation}" if affiliation else f"{prefix}{expert_name}"
 
-            with st.expander(label, expanded=(i < 2)):
-                cols = st.columns([2, 1])
-                with cols[0]:
-                    st.markdown(f"**주제:** {insight.get('topic', EMPTY_TEXT)}")
-                    sentiment = insight.get("sentiment", "NEUTRAL")
-                    sentiment_kr = translate_direction(sentiment)
-                    sentiment_color = {"BULLISH": "#22C55E", "BEARISH": "#EF4444"}.get(sentiment, "#94A3B8")
-                    st.markdown(f"**센티멘트:** <span style='color:{sentiment_color};font-weight:700;'>{sentiment_kr}</span>", unsafe_allow_html=True)
-                with cols[1]:
-                    if source_channel and expert_ch_display == "전체 (통합)":
-                        st.markdown(f"**채널:** {source_channel}")
-                    st.markdown(f"**출처:** {insight.get('source_video', '')[:40]}")
+                with st.expander(label, expanded=(i < 2)):
+                    cols = st.columns([2, 1])
+                    with cols[0]:
+                        st.markdown(f"**주제:** {insight.get('topic', EMPTY_TEXT)}")
+                        sentiment = insight.get("sentiment", "NEUTRAL")
+                        sentiment_kr = translate_direction(sentiment)
+                        sentiment_color = {"BULLISH": "#22C55E", "BEARISH": "#EF4444"}.get(sentiment, "#94A3B8")
+                        st.markdown(f"**센티멘트:** <span style='color:{sentiment_color};font-weight:700;'>{sentiment_kr}</span>", unsafe_allow_html=True)
+                    with cols[1]:
+                        if source_channel and expert_ch_display == "전체 (통합)":
+                            st.markdown(f"**채널:** {source_channel}")
+                        st.markdown(f"**출처:** {insight.get('source_video', '')[:40]}")
 
-                claims = insight.get("key_claims", [])
-                if claims:
-                    st.markdown("**핵심 주장:**")
-                    for claim in claims:
-                        st.markdown(f"- {claim}")
+                    claims = insight.get("key_claims", [])
+                    if claims:
+                        st.markdown("**핵심 주장:**")
+                        for claim in claims:
+                            st.markdown(f"- {claim}")
 
-                structured = insight.get("structured_claims", [])
-                if structured:
-                    st.markdown("**구조화된 주장:**")
-                    for sc in structured:
-                        direction = sc.get("direction", "NEUTRAL")
-                        direction_kr = translate_direction(direction)
-                        icon = {"BULLISH": ":green_circle:", "BEARISH": ":red_circle:"}.get(direction, ":white_circle:")
-                        conf = sc.get("confidence", 0)
-                        st.markdown(f"{icon} **{sc.get('claim', '')}**")
-                        st.caption(f"신뢰도: {conf:.0%} | {direction_kr}")
-                        if sc.get("reasoning"):
-                            st.caption(f"근거: {sc['reasoning']}")
+                    structured = insight.get("structured_claims", [])
+                    if structured:
+                        st.markdown("**구조화된 주장:**")
+                        for sc in structured:
+                            direction = sc.get("direction", "NEUTRAL")
+                            direction_kr = translate_direction(direction)
+                            icon = {"BULLISH": ":green_circle:", "BEARISH": ":red_circle:"}.get(direction, ":white_circle:")
+                            conf = sc.get("confidence", 0)
+                            st.markdown(f"{icon} **{sc.get('claim', '')}**")
+                            st.caption(f"신뢰도: {conf:.0%} | {direction_kr}")
+                            if sc.get("reasoning"):
+                                st.caption(f"근거: {sc['reasoning']}")
 
-                tickers = insight.get("mentioned_tickers", [])
-                if tickers:
-                    display_tickers = [format_ticker_display(t) for t in tickers]
-                    st.markdown(f"**언급 종목:** {', '.join(display_tickers)}")
+                    tickers = insight.get("mentioned_tickers", [])
+                    if tickers:
+                        display_tickers = [format_ticker_display(t) for t in tickers]
+                        st.markdown(f"**언급 종목:** {', '.join(display_tickers)}")
     else:
         st.info(f"'{expert_ch_display}' 채널의 전문가 인사이트가 없습니다.")
 
