@@ -250,6 +250,12 @@ class TestLoadFunctions:
         result = gd.load_latest_comparison(tmp_output)
         assert result is None
 
+    def test_get_available_channels_detects_new_files(self, tmp_output, sample_30d):
+        (tmp_output / "sampro_30d_20260323T094413Z.json").write_text(json.dumps(sample_30d), encoding="utf-8")
+        other = dict(sample_30d, channel_slug="newalpha", channel_name="새 채널")
+        (tmp_output / "newalpha_30d_20260323T094500Z.json").write_text(json.dumps(other), encoding="utf-8")
+        assert gd.get_available_channels(tmp_output) == ["newalpha", "sampro"]
+
 
 # ---------------------------------------------------------------------------
 # Render section tests
@@ -401,6 +407,10 @@ class TestGenerateDashboard:
         (tmp_output / "sampro_30d_20260323T094413Z.json").write_text(
             json.dumps(sample_30d), encoding="utf-8"
         )
+        other = dict(sample_30d, channel_slug="newalpha", channel_name="새 채널")
+        (tmp_output / "newalpha_30d_20260323T094500Z.json").write_text(
+            json.dumps(other), encoding="utf-8"
+        )
         (tmp_output / "channel_comparison_30d_20260323T053248Z.json").write_text(
             json.dumps(sample_comparison), encoding="utf-8"
         )
@@ -415,13 +425,14 @@ class TestGenerateDashboard:
         assert "## Macro Signals" in content
         assert "## Expert Insights" in content
         assert "Quality Scorecard" in content
+        assert "새 채널" in content
 
     def test_empty_output_dir(self, tmp_output):
         dest = tmp_output.parent / "DASHBOARD.md"
         result = gd.generate_dashboard(tmp_output, dest)
         content = Path(result).read_text(encoding="utf-8")
         assert "# OMX Pipeline Dashboard" in content
-        assert "No integration report data" in content
+        assert "No type distribution data" in content
 
     def test_main_function(self, tmp_output, sample_integration_report):
         (tmp_output / "sampro_integration_report.json").write_text(

@@ -11,8 +11,8 @@ from pathlib import Path
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
 DASHBOARD_PATH = Path(__file__).resolve().parent.parent / "DASHBOARD.md"
 
-# Channels to include in dashboard (slug -> display_name)
-CHANNELS = {
+# Default display names used as a fallback when channel metadata is missing.
+DEFAULT_CHANNELS = {
     "sampro": "삼프로TV",
     "syuka": "슈카월드",
     "hsacademy": "이효석아카데미",
@@ -54,10 +54,67 @@ def load_latest_comparison(directory: Path | None = None) -> dict | None:
     return load_json(_latest_file("channel_comparison_30d_*.json", d))
 
 
-def load_all_channels(directory: Path | None = None) -> dict[str, dict | None]:
-    """Load latest 30d data for all configured channels."""
+def get_available_channels(directory: Path | None = None) -> list[str]:
     d = directory or OUTPUT_DIR
-    return {slug: load_latest_30d(slug, d) for slug in CHANNELS}
+    slugs = {
+        p.stem.split("_30d_")[0]
+        for p in d.glob("*_30d_*.json")
+        if not p.stem.startswith("channel_comparison")
+    }
+    return sorted(slugs)
+
+
+def channel_label(slug: str, data: dict | None = None) -> str:
+    if data and data.get("channel_name"):
+        return data["channel_name"]
+    return DEFAULT_CHANNELS.get(slug, slug)
+
+
+def load_all_channels(directory: Path | None = None) -> dict[str, dict | None]:
+    """Load latest 30d data for all detected channels."""
+    d = directory or OUTPUT_DIR
+    return {slug: load_latest_30d(slug, d) for slug in get_available_channels(d)}
+
+
+def build_summary_report(channel_data: dict[str, dict | None]) -> dict:
+    type_distribution: dict[str, int] = {}
+    signal_distribution: dict[str, int] = {}
+    per_video: list[dict] = []
+    total_videos = 0
+    analyzable_count = 0
+
+    for slug, data in channel_data.items():
+        if not data:
+            continue
+        for video in data.get("videos", []):
+            total_videos += 1
+            video_type = video.get("video_type", "OTHER")
+            signal_class = video.get("video_signal_class", "UNKNOWN")
+            type_distribution[video_type] = type_distribution.get(video_type, 0) + 1
+            signal_distribution[signal_class] = signal_distribution.get(signal_class, 0) + 1
+            if video.get("should_analyze_stocks") or signal_class == "ACTIONABLE":
+                analyzable_count += 1
+            per_video.append({
+                "video_id": video.get("video_id"),
+                "title": video.get("title", ""),
+                "video_type": video_type,
+                "signal_class": signal_class,
+                "signal_score": video.get("signal_score", 0),
+                "should_analyze": video.get("should_analyze_stocks", False),
+                "macro_count": len(video.get("macro_insights", [])),
+                "expert_count": len(video.get("expert_insights", [])),
+                "expert_names": [item.get("expert_name", "") for item in video.get("expert_insights", []) if item.get("expert_name")],
+                "transcript_len": 0,
+                "channel": channel_label(slug, data),
+            })
+
+    return {
+        "total_videos": total_videos,
+        "analyzable_count": analyzable_count,
+        "type_distribution": type_distribution,
+        "signal_distribution": signal_distribution,
+        "per_video": per_video,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -88,7 +145,7 @@ def render_header(channel_data: dict[str, dict | None]) -> str:
         "# OMX Pipeline Dashboard (6-Month / 180-Day Analysis)",
         "",
         f"> Auto-generated: {now}",
-        f"> Channels analyzed: {active}/{len(CHANNELS)}",
+        f"> Channels analyzed: {active}/{len(channel_data)}",
         "> Data source: `output/` directory pipeline results",
         "",
         "---",
@@ -103,7 +160,7 @@ def render_channel_overview(channel_data: dict[str, dict | None]) -> str:
     lines.append("|---------|------:|----------:|------:|------------:|--------------:|")
 
     for slug, data in channel_data.items():
-        name = CHANNELS.get(slug, slug)
+        name = channel_label(slug, data)
         if data is None:
             lines.append(f"| {name} | - | - | - | - | - |")
             continue
@@ -121,7 +178,7 @@ def render_channel_overview(channel_data: dict[str, dict | None]) -> str:
 
 
 def render_channel_stock_ranking(slug: str, data: dict | None) -> str:
-    name = CHANNELS.get(slug, slug)
+    name = channel_label(slug, data)
     lines = [f"### {name} - Stock Ranking", ""]
     if not data:
         lines.append(f"_No data available for {name}._")
@@ -170,7 +227,7 @@ def render_cross_channel_top_stocks(channel_data: dict[str, dict | None]) -> str
     for slug, data in channel_data.items():
         if not data:
             continue
-        name = CHANNELS.get(slug, slug)
+        name = channel_label(slug, data)
         for stock in data.get("cross_video_ranking", []):
             ticker = stock.get("ticker", "?")
             if ticker not in ticker_agg:
@@ -301,7 +358,7 @@ def render_quality_comparison(channel_data: dict[str, dict | None]) -> str:
         lines.append("_No channel data available._")
         return "\n".join(lines)
 
-    header = "| Metric | " + " | ".join(CHANNELS.get(slug, slug) for slug in active_channels) + " |"
+    header = "| Metric | " + " | ".join(channel_label(slug, data) for slug, data in active_channels.items()) + " |"
     sep = "|--------|" + "|".join("------:" for _ in active_channels) + "|"
     lines.append(header)
     lines.append(sep)
@@ -390,9 +447,8 @@ def render_expert_insights(report: dict | None) -> str:
 
 def generate_dashboard(output_dir: Path | None = None, dest: Path | None = None) -> str:
     d = output_dir or OUTPUT_DIR
-    report = load_integration_report(d)
-    channel_data = {slug: load_latest_30d(slug, d) for slug in CHANNELS}
-    comparison = load_latest_comparison(d)
+    channel_data = load_all_channels(d)
+    report = build_summary_report(channel_data)
 
     sections = [
         render_header(channel_data),

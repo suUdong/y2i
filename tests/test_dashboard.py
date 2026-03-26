@@ -9,6 +9,7 @@ import pytest
 from dashboard.data_loader import (
     _latest_file,
     _load_json,
+    build_overview_report,
     extract_actionable_signals,
     extract_cross_video_ranking,
     extract_expert_insights,
@@ -22,6 +23,7 @@ from dashboard.data_loader import (
     get_pipeline_activity,
     get_recent_videos,
     load_30d_results,
+    load_all_video_titles,
     load_channel_comparison,
     load_integration_report,
     load_video_titles,
@@ -117,6 +119,13 @@ def tmp_output(tmp_path: Path) -> Path:
         ],
     }
     (tmp_path / "sampro_video_titles.json").write_text(json.dumps(titles), encoding="utf-8")
+    other_titles = {
+        "channel": "IT God",
+        "titles": [
+            {"video_id": "it1", "title": "AI Theme", "published_at": "2026-03-22", "labels": ["ai", "sector"]},
+        ],
+    }
+    (tmp_path / "itgod_video_titles.json").write_text(json.dumps(other_titles), encoding="utf-8")
 
     return tmp_path
 
@@ -198,6 +207,17 @@ class TestLoadVideoTitles:
 
     def test_empty_when_missing(self, tmp_path: Path):
         assert load_video_titles(tmp_path) == {}
+
+
+class TestLoadAllVideoTitles:
+    def test_loads_and_merges_all_channels(self, tmp_output: Path):
+        titles = load_all_video_titles(tmp_output)
+        assert "titles" in titles
+        assert len(titles["titles"]) == 3
+        assert {row["_channel"] for row in titles["titles"]} == {"sampro", "itgod"}
+
+    def test_empty_when_missing(self, tmp_path: Path):
+        assert load_all_video_titles(tmp_path) == {}
 
 
 # ── extract helpers ──────────────────────────────────────────────────────────
@@ -331,6 +351,10 @@ class TestGetRecentVideos:
     def test_returns_empty_for_empty_dir(self, tmp_path: Path):
         assert get_recent_videos(tmp_path) == []
 
+    def test_sorts_by_recent_date_then_score(self, tmp_output: Path):
+        videos = get_recent_videos(tmp_output, hours=24)
+        assert videos[0]["published_at"] >= videos[-1]["published_at"]
+
 
 # ── extract_actionable_signals (US-006) ─────────────────────────────────────
 
@@ -365,3 +389,18 @@ class TestGetPipelineActivity:
 
     def test_empty_dir(self, tmp_path: Path):
         assert get_pipeline_activity(tmp_path) == []
+
+
+class TestBuildOverviewReport:
+    def test_aggregates_channels(self, tmp_output: Path):
+        report = build_overview_report(tmp_output)
+        assert report["channel_count"] == 2
+        assert report["total_videos"] == 2
+        assert report["analyzable_count"] == 1
+        assert report["expert_video_count"] == 1
+        assert report["macro_video_count"] == 1
+        assert report["type_distribution"]["OTHER"] == 2
+
+    def test_includes_channel_labels_in_per_video(self, tmp_output: Path):
+        report = build_overview_report(tmp_output)
+        assert report["per_video"][0]["channel"] in {"Test Channel", "IT God"}

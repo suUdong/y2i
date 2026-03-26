@@ -51,6 +51,36 @@ def load_video_titles(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
     return _load_json(path)
 
 
+def load_all_video_titles(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
+    """Load and merge title-label data across all available channels."""
+    merged_titles: list[dict[str, Any]] = []
+    channels: list[dict[str, str]] = []
+
+    for path in sorted(output_dir.glob("*_video_titles.json")):
+        data = _load_json(path)
+        if not isinstance(data, dict):
+            continue
+
+        slug = path.stem.removesuffix("_video_titles")
+        channel_name = (
+            data.get("channel_name")
+            or data.get("channel")
+            or slug
+        )
+        channels.append({"slug": slug, "channel_name": channel_name})
+
+        for item in data.get("titles", []):
+            row = dict(item)
+            row.setdefault("_channel", slug)
+            row.setdefault("_channel_name", channel_name)
+            merged_titles.append(row)
+
+    if not merged_titles and not channels:
+        return {}
+
+    return {"channels": channels, "titles": merged_titles}
+
+
 # ── Individual video report JSONs ────────────────────────────────────────────
 
 def load_video_reports(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[dict[str, Any]]:
@@ -149,6 +179,14 @@ def get_recent_videos(
         for v in data.get("videos", []):
             v["_channel"] = slug
             recent.append(v)
+    recent.sort(
+        key=lambda item: (
+            item.get("published_at", ""),
+            item.get("signal_score", 0),
+            item.get("title", ""),
+        ),
+        reverse=True,
+    )
     return recent
 
 
@@ -200,6 +238,70 @@ def get_pipeline_activity(
         if len(entries) >= limit:
             break
     return entries
+
+
+def build_overview_report(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+) -> dict[str, Any]:
+    """Build an aggregate overview report from all latest 30d channel outputs."""
+    type_distribution: dict[str, int] = {}
+    signal_distribution: dict[str, int] = {}
+    per_video: list[dict[str, Any]] = []
+    total_videos = 0
+    analyzable_count = 0
+    macro_video_count = 0
+    expert_video_count = 0
+    ranked_stock_count = 0
+
+    channel_names = get_channel_display_names(output_dir)
+    channels = get_available_channels(output_dir)
+
+    for slug in channels:
+        data = load_30d_results(slug, output_dir)
+        videos = data.get("videos", [])
+        ranked_stock_count += len(data.get("cross_video_ranking", []))
+
+        for video in videos:
+            total_videos += 1
+
+            video_type = video.get("video_type", "OTHER")
+            type_distribution[video_type] = type_distribution.get(video_type, 0) + 1
+
+            signal_class = video.get("video_signal_class", "UNKNOWN")
+            signal_distribution[signal_class] = signal_distribution.get(signal_class, 0) + 1
+
+            if video.get("should_analyze_stocks") or signal_class == "ACTIONABLE":
+                analyzable_count += 1
+            if video.get("macro_insights") or video_type in {"MACRO", "MARKET_REVIEW"}:
+                macro_video_count += 1
+            if video.get("expert_insights") or video_type == "EXPERT_INTERVIEW":
+                expert_video_count += 1
+
+            per_video.append({
+                "channel": channel_names.get(slug, slug),
+                "title": video.get("title", ""),
+                "video_type": video_type,
+                "signal_class": signal_class,
+                "signal_score": video.get("signal_score", 0),
+                "published_at": video.get("published_at", ""),
+            })
+
+    per_video.sort(
+        key=lambda item: (item.get("published_at", ""), item.get("signal_score", 0)),
+        reverse=True,
+    )
+
+    return {
+        "channel_count": len(channels),
+        "total_videos": total_videos,
+        "analyzable_count": analyzable_count,
+        "macro_video_count": macro_video_count,
+        "expert_video_count": expert_video_count,
+        "ranked_stock_count": ranked_stock_count,
+        "type_distribution": type_distribution,
+        "signal_distribution": signal_distribution,
+        "per_video": per_video,
+    }
 
 
 # ── Korean stock name mapping ─────────────────────────────────────────────
@@ -281,7 +383,7 @@ def format_ticker_display(ticker: str, company_name: str = "") -> str:
 def format_price(price: float | None, currency: str = "KRW") -> str:
     """Format price with currency symbol."""
     if price is None:
-        return "N/A"
+        return "미제공"
     if currency == "KRW":
         return f"₩{price:,.0f}"
     return f"${price:,.2f}"

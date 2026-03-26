@@ -12,6 +12,7 @@ from streamlit_autorefresh import st_autorefresh
 
 from data_loader import (
     DEFAULT_OUTPUT_DIR,
+    build_overview_report,
     extract_actionable_signals,
     extract_cross_video_ranking,
     extract_expert_insights,
@@ -30,8 +31,7 @@ from data_loader import (
     get_recent_videos,
     load_30d_results,
     load_channel_comparison,
-    load_integration_report,
-    load_video_titles,
+    load_all_video_titles,
 )
 
 # -- Page config ---------------------------------------------------------------
@@ -428,7 +428,7 @@ with header_cols[1]:
         ts_str = last_update.strftime("%Y-%m-%d %H:%M UTC")
         badge_html = ""
         if age_min < 5:
-            badge_html = ' <span class="badge badge-new">NEW</span>'
+            badge_html = ' <span class="badge badge-new">신규</span>'
         st.markdown(
             f'<div style="text-align:right;padding-top:1.2rem;">'
             f'<span style="color:#94A3B8;font-size:0.8rem;">최종 업데이트</span><br>'
@@ -460,6 +460,8 @@ PLOTLY_TEMPLATE = {
 }
 
 SIGNAL_COLORS = {"ACTIONABLE": "#22C55E", "NOISE": "#EF4444", "UNKNOWN": "#64748B"}
+SIGNAL_CLASS_KR = {"ACTIONABLE": "분석 대상", "NOISE": "노이즈", "UNKNOWN": "미분류"}
+EMPTY_TEXT = "미제공"
 
 VERDICT_KR = {"BUY": "매수", "SELL": "매도", "HOLD": "보유", "WATCH": "관망"}
 VERDICT_CSS = {"BUY": "buy", "SELL": "sell", "HOLD": "hold", "WATCH": "watch"}
@@ -479,6 +481,7 @@ def render_chart(fig: go.Figure, key: str | None = None, height: int = 400) -> N
         template=PLOTLY_TEMPLATE,
         margin=dict(l=16, r=16, t=48, b=24),
         font=dict(size=14),
+        hoverlabel=dict(bgcolor="#0F172A", bordercolor="rgba(255,255,255,0.12)", font=dict(color="#F8FAFC")),
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -489,6 +492,8 @@ def render_chart(fig: go.Figure, key: str | None = None, height: int = 400) -> N
         ),
         height=height,
     )
+    fig.update_xaxes(showline=False, tickfont=dict(color="#CBD5E1"))
+    fig.update_yaxes(showline=False, tickfont=dict(color="#CBD5E1"))
     st.plotly_chart(fig, use_container_width=True, key=key)
 
 
@@ -502,7 +507,7 @@ def render_metrics_row(metrics: list[tuple[str, str]], cols_desktop: int = 4) ->
 def signal_badge(signal_class: str) -> str:
     """Return HTML for a signal badge (Korean)."""
     if signal_class == "ACTIONABLE":
-        return '<span class="badge badge-actionable">액션가능</span>'
+        return f'<span class="badge badge-actionable">{SIGNAL_CLASS_KR["ACTIONABLE"]}</span>'
     return '<span class="badge badge-noise">노이즈</span>'
 
 
@@ -533,7 +538,7 @@ def confidence_bar(score: float, max_score: float = 100.0) -> str:
 def format_signal_date(date_str: str) -> str:
     """Format date string for display (YYYYMMDD -> YYYY-MM-DD)."""
     if not date_str:
-        return "N/A"
+        return EMPTY_TEXT
     if len(date_str) == 8 and date_str.isdigit():
         return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
     if "T" in date_str and len(date_str) > 10:
@@ -649,73 +654,111 @@ with tabs[0]:
     st.markdown("---")
 
     # -- 파이프라인 요약 KPIs --
-    report = load_integration_report(OUTPUT_DIR)
+    report = build_overview_report(OUTPUT_DIR)
     if report:
         st.markdown("#### 파이프라인 요약")
         render_metrics_row([
             ("분석 영상", str(report.get("total_videos", 0))),
             ("분석 가능", str(report.get("analyzable_count", 0))),
-            ("전문가 추출률", str(report.get("expert_extraction_rate", "N/A"))),
-            ("매크로 커버리지", str(report.get("macro_coverage", "N/A"))),
+            ("전문가 포함 영상", str(report.get("expert_video_count", 0))),
+            ("매크로 포함 영상", str(report.get("macro_video_count", 0))),
         ], cols_desktop=4)
 
         col_a, col_b = st.columns(2)
         with col_a:
             type_dist = extract_type_distribution(report)
             if type_dist:
-                kr_labels = {k: VIDEO_TYPE_KR.get(k, k) for k in type_dist}
                 df_type = pd.DataFrame(
-                    {"유형": [kr_labels.get(k, k) for k in type_dist.keys()], "건수": list(type_dist.values())}
-                )
-                fig_pie = px.pie(
-                    df_type, names="유형", values="건수",
+                    [
+                        {"유형": VIDEO_TYPE_KR.get(label, label), "건수": count}
+                        for label, count in type_dist.items()
+                    ]
+                ).sort_values("건수", ascending=True)
+                fig_type = px.bar(
+                    df_type,
+                    x="건수",
+                    y="유형",
+                    orientation="h",
                     title="영상 유형 분포",
-                    color_discrete_sequence=["#3B82F6", "#22C55E", "#F59E0B", "#EF4444", "#8B5CF6"],
+                    text="건수",
+                    color="건수",
+                    color_continuous_scale=["#1D4ED8", "#22C55E"],
                 )
-                render_chart(fig_pie, key="overview_pie")
+                fig_type.update_traces(textposition="outside", hovertemplate="%{y}: %{x}개<extra></extra>")
+                fig_type.update_layout(coloraxis_showscale=False)
+                render_chart(fig_type, key="overview_type", height=420)
 
         with col_b:
             sig_dist = extract_signal_distribution(report)
             if sig_dist:
-                kr_sig = {"ACTIONABLE": "액션가능", "NOISE": "노이즈"}
                 df_sig = pd.DataFrame(
-                    {"시그널": [kr_sig.get(k, k) for k in sig_dist.keys()], "건수": list(sig_dist.values())}
+                    {
+                        "시그널": [SIGNAL_CLASS_KR.get(k, k) for k in sig_dist.keys()],
+                        "건수": list(sig_dist.values()),
+                    }
                 )
-                color_map = {"액션가능": "#22C55E", "노이즈": "#EF4444"}
-                fig_bar = px.bar(
-                    df_sig, x="시그널", y="건수",
+                color_map = {"분석 대상": "#22C55E", "노이즈": "#EF4444", "미분류": "#64748B"}
+                fig_bar = px.pie(
+                    df_sig,
+                    names="시그널",
+                    values="건수",
                     title="시그널 분포",
                     color="시그널",
                     color_discrete_map=color_map,
+                    hole=0.55,
                 )
-                render_chart(fig_bar, key="overview_bar")
+                fig_bar.update_traces(
+                    textposition="inside",
+                    texttemplate="%{label}<br>%{percent}",
+                    hovertemplate="%{label}: %{value}개<extra></extra>",
+                )
+                render_chart(fig_bar, key="overview_signal", height=420)
 
         with st.expander("영상별 상세", expanded=False):
             per_video = extract_per_video(report)
             if per_video:
                 df_pv = pd.DataFrame(per_video)
-                col_map = {"title": "제목", "video_type": "유형", "signal_class": "시그널", "signal_score": "점수"}
-                mobile_cols = [c for c in ["title", "video_type", "signal_class", "signal_score"] if c in df_pv.columns]
+                col_map = {
+                    "channel": "채널",
+                    "title": "제목",
+                    "video_type": "유형",
+                    "signal_class": "시그널",
+                    "signal_score": "점수",
+                    "published_at": "게시일",
+                }
+                mobile_cols = [c for c in ["channel", "title", "video_type", "signal_class", "signal_score", "published_at"] if c in df_pv.columns]
                 display_df = df_pv[mobile_cols].rename(columns=col_map) if mobile_cols else df_pv
+                if "유형" in display_df.columns:
+                    display_df["유형"] = display_df["유형"].map(lambda x: VIDEO_TYPE_KR.get(x, x))
+                if "시그널" in display_df.columns:
+                    display_df["시그널"] = display_df["시그널"].map(lambda x: SIGNAL_CLASS_KR.get(x, x))
+                if "게시일" in display_df.columns:
+                    display_df["게시일"] = display_df["게시일"].map(format_signal_date)
                 st.dataframe(display_df, use_container_width=True, height=400)
 
     # -- 콘텐츠 라벨 --
-    titles_data = load_video_titles(OUTPUT_DIR)
+    titles_data = load_all_video_titles(OUTPUT_DIR)
     if titles_data and "titles" in titles_data:
         all_labels: list[str] = []
         for t in titles_data["titles"]:
             all_labels.extend(t.get("labels", []))
         if all_labels:
             with st.expander("콘텐츠 라벨", expanded=False):
-                label_counts = pd.Series(all_labels).value_counts().reset_index()
+                label_counts = pd.Series(all_labels).value_counts().head(12).reset_index()
                 label_counts.columns = ["라벨", "건수"]
                 fig_labels = px.bar(
-                    label_counts, x="라벨", y="건수",
+                    label_counts,
+                    x="건수",
+                    y="라벨",
+                    orientation="h",
                     title="콘텐츠 라벨 분포",
-                    color="라벨",
-                    color_discrete_sequence=["#3B82F6", "#22C55E", "#F59E0B", "#8B5CF6", "#06B6D4"],
+                    text="건수",
+                    color="건수",
+                    color_continuous_scale=["#1D4ED8", "#06B6D4"],
                 )
-                render_chart(fig_labels, key="overview_labels")
+                fig_labels.update_traces(textposition="outside", hovertemplate="%{y}: %{x}개<extra></extra>")
+                fig_labels.update_layout(coloraxis_showscale=False)
+                render_chart(fig_labels, key="overview_labels", height=420)
 
 # =============================================================================
 # TAB 1 — 종목 랭킹
@@ -809,14 +852,16 @@ with tabs[2]:
     if macro_signals:
         df_macro = pd.DataFrame(macro_signals)
         col_map = {
-            "indicator": "지표",
             "direction": "방향",
             "confidence": "신뢰도",
             "sentiment": "센티멘트",
             "label": "라벨",
             "source_video": "출처 영상",
         }
-        display_cols = [c for c in ["indicator", "label", "direction", "confidence", "sentiment", "source_video"] if c in df_macro.columns]
+        if "label" not in df_macro.columns and "indicator" in df_macro.columns:
+            df_macro["label"] = df_macro["indicator"]
+        df_macro = df_macro.sort_values(["confidence", "label"], ascending=[False, True])
+        display_cols = [c for c in ["label", "direction", "confidence", "sentiment", "source_video"] if c in df_macro.columns]
         display_df = df_macro[display_cols].copy()
 
         # Translate direction and sentiment to Korean
@@ -830,18 +875,46 @@ with tabs[2]:
         display_df = display_df.rename(columns=col_map)
         st.dataframe(display_df, use_container_width=True, height=400, hide_index=True)
 
-        if "direction" in df_macro.columns:
-            dir_counts = df_macro["direction"].value_counts().reset_index()
-            dir_counts.columns = ["방향", "건수"]
-            dir_counts["방향"] = dir_counts["방향"].map(lambda x: DIRECTION_KR.get(x, x))
-            color_map = {"상승": "#22C55E", "하락": "#EF4444", "중립": "#94A3B8"}
-            fig_dir = px.pie(
-                dir_counts, names="방향", values="건수",
-                title="매크로 시그널 방향 분포",
-                color="방향",
-                color_discrete_map=color_map,
+        chart_col_a, chart_col_b = st.columns(2)
+
+        with chart_col_a:
+            label_counts = df_macro["label"].value_counts().head(10).reset_index()
+            label_counts.columns = ["라벨", "건수"]
+            fig_labels = px.bar(
+                label_counts.sort_values("건수", ascending=True),
+                x="건수",
+                y="라벨",
+                orientation="h",
+                title="주요 매크로 키워드",
+                text="건수",
+                color="건수",
+                color_continuous_scale=["#1D4ED8", "#22C55E"],
             )
-            render_chart(fig_dir, key="macro_pie")
+            fig_labels.update_traces(textposition="outside", hovertemplate="%{y}: %{x}건<extra></extra>")
+            fig_labels.update_layout(coloraxis_showscale=False)
+            render_chart(fig_labels, key="macro_labels", height=420)
+
+        with chart_col_b:
+            if "direction" in df_macro.columns:
+                dir_counts = df_macro["direction"].value_counts().reset_index()
+                dir_counts.columns = ["방향", "건수"]
+                dir_counts["방향"] = dir_counts["방향"].map(lambda x: DIRECTION_KR.get(x, x))
+                color_map = {"상승": "#22C55E", "하락": "#EF4444", "중립": "#94A3B8", "강세": "#22C55E", "약세": "#EF4444"}
+                fig_dir = px.pie(
+                    dir_counts,
+                    names="방향",
+                    values="건수",
+                    title="매크로 시그널 방향 분포",
+                    color="방향",
+                    color_discrete_map=color_map,
+                    hole=0.55,
+                )
+                fig_dir.update_traces(
+                    textposition="inside",
+                    texttemplate="%{label}<br>%{percent}",
+                    hovertemplate="%{label}: %{value}건<extra></extra>",
+                )
+                render_chart(fig_dir, key="macro_pie", height=420)
     else:
         st.info(f"'{macro_ch_display}' 채널의 매크로 시그널이 없습니다.")
 
@@ -869,7 +942,7 @@ with tabs[3]:
             with st.expander(label, expanded=(i < 2)):
                 cols = st.columns([2, 1])
                 with cols[0]:
-                    st.markdown(f"**주제:** {insight.get('topic', 'N/A')}")
+                    st.markdown(f"**주제:** {insight.get('topic', EMPTY_TEXT)}")
                     sentiment = insight.get("sentiment", "NEUTRAL")
                     sentiment_kr = DIRECTION_KR.get(sentiment, sentiment)
                     sentiment_color = {"BULLISH": "#22C55E", "BEARISH": "#EF4444"}.get(sentiment, "#94A3B8")
@@ -919,7 +992,7 @@ for idx, ch_slug in enumerate(available_channels):
             continue
 
         # Channel KPIs
-        generated = ch_data.get("generated_at", "N/A")
+        generated = ch_data.get("generated_at", EMPTY_TEXT)
         if generated and "T" in generated:
             generated = format_signal_date(generated)
         render_metrics_row([
@@ -944,7 +1017,7 @@ for idx, ch_slug in enumerate(available_channels):
             actionable_count = sum(1 for v in ch_videos if v.get("video_signal_class") == "ACTIONABLE")
             st.markdown(
                 f'영상: **{len(ch_videos)}**개 &middot; '
-                f'<span class="badge badge-actionable">액션가능: {actionable_count}</span>',
+                f'<span class="badge badge-actionable">분석 대상: {actionable_count}</span>',
                 unsafe_allow_html=True,
             )
 
@@ -953,33 +1026,45 @@ for idx, ch_slug in enumerate(available_channels):
                 signal_classes = [v.get("video_signal_class", "UNKNOWN") for v in ch_videos]
                 sig_series = pd.Series(signal_classes).value_counts().reset_index()
                 sig_series.columns = ["시그널", "건수"]
-                kr_map = {"ACTIONABLE": "액션가능", "NOISE": "노이즈", "UNKNOWN": "미분류"}
-                sig_series["시그널"] = sig_series["시그널"].map(lambda x: kr_map.get(x, x))
-                color_map_kr = {"액션가능": "#22C55E", "노이즈": "#EF4444", "미분류": "#64748B"}
-                fig = px.bar(
-                    sig_series, x="시그널", y="건수",
+                sig_series["시그널"] = sig_series["시그널"].map(lambda x: SIGNAL_CLASS_KR.get(x, x))
+                color_map_kr = {"분석 대상": "#22C55E", "노이즈": "#EF4444", "미분류": "#64748B"}
+                fig = px.pie(
+                    sig_series,
+                    names="시그널",
+                    values="건수",
                     title=f"{ch_display} 시그널 분포",
                     color="시그널",
                     color_discrete_map=color_map_kr,
+                    hole=0.55,
                 )
-                render_chart(fig, key=f"ch_{ch_slug}_signals")
+                fig.update_traces(
+                    textposition="inside",
+                    texttemplate="%{label}<br>%{percent}",
+                    hovertemplate="%{label}: %{value}개<extra></extra>",
+                )
+                render_chart(fig, key=f"ch_{ch_slug}_signals", height=420)
 
             with col_b:
                 dates = [v.get("published_at", "") for v in ch_videos]
                 if any(dates):
                     df_timeline = pd.DataFrame({
                         "날짜": [format_signal_date(d) for d in dates],
-                        "시그널": [kr_map.get(sc, sc) for sc in signal_classes],
+                        "시그널": [SIGNAL_CLASS_KR.get(sc, sc) for sc in signal_classes],
                     })
-                    df_timeline = df_timeline[df_timeline["날짜"] != "N/A"]
+                    df_timeline = df_timeline[df_timeline["날짜"] != EMPTY_TEXT]
                     if not df_timeline.empty:
                         timeline_counts = df_timeline.groupby(["날짜", "시그널"]).size().reset_index(name="건수")
-                        fig_timeline = px.bar(
-                            timeline_counts, x="날짜", y="건수", color="시그널",
+                        fig_timeline = px.line(
+                            timeline_counts.sort_values("날짜"),
+                            x="날짜",
+                            y="건수",
+                            color="시그널",
+                            markers=True,
                             title=f"{ch_display} — 30일 타임라인",
                             color_discrete_map=color_map_kr,
                         )
-                        render_chart(fig_timeline, key=f"ch_{ch_slug}_timeline")
+                        fig_timeline.update_traces(line=dict(width=3), hovertemplate="%{x}: %{y}개<extra>%{fullData.name}</extra>")
+                        render_chart(fig_timeline, key=f"ch_{ch_slug}_timeline", height=420)
 
             with st.expander("영상 상세", expanded=False):
                 df_vids = pd.DataFrame(ch_videos)
@@ -995,8 +1080,7 @@ for idx, ch_slug in enumerate(available_channels):
                 if "published_at" in display_df.columns:
                     display_df["published_at"] = display_df["published_at"].map(format_signal_date)
                 if "video_signal_class" in display_df.columns:
-                    kr_map2 = {"ACTIONABLE": "액션가능", "NOISE": "노이즈"}
-                    display_df["video_signal_class"] = display_df["video_signal_class"].map(lambda x: kr_map2.get(x, x))
+                    display_df["video_signal_class"] = display_df["video_signal_class"].map(lambda x: SIGNAL_CLASS_KR.get(x, x))
                 display_df = display_df.rename(columns=vid_col_map)
                 st.dataframe(display_df, use_container_width=True, height=400, hide_index=True)
 
@@ -1031,12 +1115,12 @@ with tabs[-2]:
         for slug, info in channels_info.items():
             row = {"채널": info.get("display_name", slug)}
             row["영상 수"] = info.get("total_videos", 0)
-            row["액션가능"] = info.get("actionable_videos", 0)
-            row["비율"] = f"{info.get('actionable_ratio', 0.0):.0%}"
+            row["분석 대상"] = info.get("actionable_videos", 0)
+            row["대상 비율"] = f"{info.get('actionable_ratio', 0.0):.0%}"
             sc = info.get("quality_scorecard", {})
             row["종합 점수"] = f"{sc.get('overall', 0.0):.1f}"
-            row["Top1 수익률"] = f"{info.get('ranking_top_1_return_pct', 0.0):.1f}%"
-            row["Top3 수익률"] = f"{info.get('ranking_top_3_return_pct', 0.0):.1f}%"
+            row["상위 1개 수익률"] = f"{info.get('ranking_top_1_return_pct', 0.0):.1f}%"
+            row["상위 3개 수익률"] = f"{info.get('ranking_top_3_return_pct', 0.0):.1f}%"
             rows.append(row)
 
         df_comp = pd.DataFrame(rows)
@@ -1064,14 +1148,18 @@ with tabs[-2]:
                         })
             if chart_rows:
                 df_chart = pd.DataFrame(chart_rows)
-                fig_comp = px.bar(
-                    df_chart, x="지표", y="점수", color="채널",
-                    barmode="group", title="채널 품질 지표 비교",
+                fig_comp = px.imshow(
+                    df_chart.pivot(index="채널", columns="지표", values="점수"),
+                    text_auto=".1f",
+                    aspect="auto",
+                    color_continuous_scale=["#0F172A", "#1D4ED8", "#22C55E"],
+                    title="채널 품질 지표 히트맵",
                 )
-                render_chart(fig_comp, key="compare_chart")
+                fig_comp.update_xaxes(side="top")
+                render_chart(fig_comp, key="compare_chart", height=480)
 
-        more_act = comp_data.get("more_actionable_channel", "N/A")
-        better_rank = comp_data.get("better_ranking_channel", "N/A")
+        more_act = comp_data.get("more_actionable_channel", EMPTY_TEXT)
+        better_rank = comp_data.get("better_ranking_channel", EMPTY_TEXT)
         more_act_name = channel_names.get(more_act, more_act)
         better_rank_name = channel_names.get(better_rank, better_rank)
         st.markdown(f"**액션 시그널 최다:** {more_act_name}")
