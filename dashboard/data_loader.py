@@ -175,6 +175,9 @@ def extract_actionable_signals(
                 "signal_score": v.get("signal_score", 0),
                 "tickers": tickers,
                 "published_at": v.get("published_at", ""),
+                "reason": v.get("reason", ""),
+                "video_type": v.get("video_type", ""),
+                "stocks": v.get("stocks", []),
             })
     signals.sort(key=lambda s: s.get("signal_score", 0), reverse=True)
     return signals
@@ -197,3 +200,123 @@ def get_pipeline_activity(
         if len(entries) >= limit:
             break
     return entries
+
+
+# ── Korean stock name mapping ─────────────────────────────────────────────
+
+KOREAN_STOCK_NAMES: dict[str, str] = {
+    "005930.KS": "삼성전자",
+    "000660.KS": "SK하이닉스",
+    "005380.KS": "현대차",
+    "000270.KS": "기아",
+    "035420.KS": "NAVER",
+    "035720.KS": "카카오",
+    "006400.KS": "삼성SDI",
+    "051910.KS": "LG화학",
+    "373220.KS": "LG에너지솔루션",
+    "207940.KS": "삼성바이오로직스",
+    "068270.KS": "셀트리온",
+    "005490.KS": "POSCO홀딩스",
+    "055550.KS": "신한지주",
+    "105560.KS": "KB금융",
+    "034730.KS": "SK",
+    "028260.KS": "삼성물산",
+    "012330.KS": "현대모비스",
+    "066570.KS": "LG전자",
+    "003550.KS": "LG",
+    "017670.KS": "SK텔레콤",
+    "030200.KS": "KT",
+    "086790.KS": "하나금융지주",
+    "316140.KS": "우리금융지주",
+    "009150.KS": "삼성전기",
+    "018260.KS": "삼성에스디에스",
+    "036570.KS": "엔씨소프트",
+    "259960.KS": "크래프톤",
+    "352820.KS": "하이브",
+    "247540.KS": "에코프로비엠",
+    "086520.KS": "에코프로",
+    "042700.KS": "한미반도체",
+    "402340.KS": "SK스퀘어",
+    "003670.KS": "포스코퓨처엠",
+    "096770.KS": "SK이노베이션",
+    "010130.KS": "고려아연",
+    "032830.KS": "삼성생명",
+    "251270.KS": "넷마블",
+    "011200.KS": "HMM",
+    "329180.KS": "HD현대중공업",
+    "042660.KS": "한화오션",
+    "267260.KS": "HD현대일렉트릭",
+    "003490.KS": "대한항공",
+    "015760.KS": "한국전력",
+    "090430.KS": "아모레퍼시픽",
+    "326030.KS": "SK바이오팜",
+    "323410.KS": "카카오뱅크",
+    "377300.KS": "카카오페이",
+    "009540.KS": "한국조선해양",
+    "004020.KS": "현대제철",
+    "010950.KS": "S-Oil",
+    "011170.KS": "롯데케미칼",
+    "004990.KS": "롯데지주",
+    # KOSDAQ
+    "196170.KQ": "알테오젠",
+    "403870.KQ": "HPSP",
+    "058470.KQ": "리노공업",
+    "039030.KQ": "이오테크닉스",
+    "095340.KQ": "ISC",
+    "241560.KQ": "두산퓨얼셀",
+}
+
+
+def format_ticker_display(ticker: str, company_name: str = "") -> str:
+    """Format ticker for Korean display: code + Korean/English name."""
+    kr_name = KOREAN_STOCK_NAMES.get(ticker)
+    if kr_name:
+        code = ticker.replace(".KS", "").replace(".KQ", "")
+        return f"{code} {kr_name}"
+    if company_name:
+        return f"{ticker} {company_name}"
+    return ticker
+
+
+def format_price(price: float | None, currency: str = "KRW") -> str:
+    """Format price with currency symbol."""
+    if price is None:
+        return "N/A"
+    if currency == "KRW":
+        return f"₩{price:,.0f}"
+    return f"${price:,.2f}"
+
+
+def get_channel_display_names(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+) -> dict[str, str]:
+    """Return {slug: display_name} mapping from comparison or 30d data."""
+    comp = load_channel_comparison(output_dir)
+    names: dict[str, str] = {}
+    if comp and "channels" in comp:
+        for slug, info in comp["channels"].items():
+            names[slug] = info.get("display_name", slug)
+    for slug in get_available_channels(output_dir):
+        if slug not in names:
+            data = load_30d_results(slug, output_dir)
+            names[slug] = data.get("channel_name", slug)
+    return names
+
+
+def get_all_rankings(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+) -> list[dict[str, Any]]:
+    """Aggregate cross_video_ranking across all channels, best entry per ticker."""
+    best: dict[str, dict[str, Any]] = {}
+    for slug in get_available_channels(output_dir):
+        data = load_30d_results(slug, output_dir)
+        for item in data.get("cross_video_ranking", []):
+            ticker = item.get("ticker", "")
+            if not ticker:
+                continue
+            entry = dict(item)
+            entry["_source_channel"] = slug
+            existing = best.get(ticker)
+            if existing is None or entry.get("aggregate_score", 0) > existing.get("aggregate_score", 0):
+                best[ticker] = entry
+    return sorted(best.values(), key=lambda x: x.get("aggregate_score", 0), reverse=True)
