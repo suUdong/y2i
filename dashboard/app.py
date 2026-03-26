@@ -630,6 +630,19 @@ def first_non_empty(*values: str | None) -> str:
     return ""
 
 
+def format_reference_timing(
+    last_signal_at: str | None,
+    first_signal_at: str | None,
+    latest_checked_at: str | None,
+) -> str:
+    signal_value = first_non_empty(last_signal_at, first_signal_at)
+    if signal_value:
+        return f"신호 {format_signal_date(signal_value)}"
+    if latest_checked_at:
+        return f"확인 {format_signal_date(latest_checked_at)}"
+    return EMPTY_TEXT
+
+
 def translate_signal_class(signal_class: str) -> str:
     return SIGNAL_CLASS_KR.get(signal_class, signal_class or EMPTY_TEXT)
 
@@ -673,12 +686,10 @@ with tabs[0]:
             verdict = stock.get("aggregate_verdict", "WATCH")
             verdict_css = VERDICT_CSS.get(verdict, "reject")
             score_color = "#22C55E" if score >= 65 else "#F59E0B" if score >= 50 else "#94A3B8" if verdict == "REJECT" else "#EF4444"
-            signal_date = format_signal_date(
-                first_non_empty(
-                    stock.get("last_signal_at"),
-                    stock.get("first_signal_at"),
-                    stock.get("latest_checked_at"),
-                )
+            timing_display = format_reference_timing(
+                stock.get("last_signal_at"),
+                stock.get("first_signal_at"),
+                stock.get("latest_checked_at"),
             )
             appearances = stock.get("appearances", 0)
             source_channels_display = stock.get("_source_channels_display", [])
@@ -699,7 +710,7 @@ with tabs[0]:
                     f'<div class="hero-price">{price_str}</div>'
                     f'<div class="hero-score" style="color:{score_color};">{score:.0f}</div>'
                     f'<div class="hero-meta">'
-                    f'{channel_count}개 채널 &middot; {appearances}회 출현 &middot; {signal_date}'
+                    f'{channel_count}개 채널 &middot; {appearances}회 출현 &middot; {timing_display}'
                     f'</div>'
                     f'<div style="font-size:0.7rem;color:#64748B;margin-top:2px;">{source_label}</div>'
                     f'</div>',
@@ -927,12 +938,10 @@ with tabs[1]:
             verdict_label = translate_verdict(verdict)
             price = item.get("latest_price")
             currency = item.get("currency", "KRW")
-            last_signal = format_signal_date(
-                first_non_empty(
-                    item.get("last_signal_at"),
-                    item.get("first_signal_at"),
-                    item.get("latest_checked_at"),
-                )
+            timing_display = format_reference_timing(
+                item.get("last_signal_at"),
+                item.get("first_signal_at"),
+                item.get("latest_checked_at"),
             )
             appearances = item.get("appearances", item.get("mention_count", 0))
             checked_at = format_signal_datetime(item.get("latest_checked_at", ""))
@@ -943,7 +952,7 @@ with tabs[1]:
                 "종목": display,
                 "점수": round(score, 1),
                 "판단": verdict_label,
-                "판단 시점": last_signal,
+                "최근 시점": timing_display,
                 "현재가": price_label,
                 "출현": appearances,
                 "가격확인": checked_at,
@@ -954,7 +963,7 @@ with tabs[1]:
                         display,
                         verdict,
                         verdict_label,
-                        last_signal,
+                        timing_display,
                         checked_at,
                         price_label,
                     ]
@@ -1415,24 +1424,22 @@ for idx, ch_slug in enumerate(available_channels):
                     verdict = item.get("aggregate_verdict", item.get("final_verdict", ""))
                     verdict_label = translate_verdict(verdict)
                     price_label = format_price(item.get("latest_price"), item.get("currency", "KRW"))
-                    last_signal = format_signal_date(
-                        first_non_empty(
-                            item.get("last_signal_at"),
-                            item.get("first_signal_at"),
-                            item.get("latest_checked_at"),
-                        )
+                    timing_display = format_reference_timing(
+                        item.get("last_signal_at"),
+                        item.get("first_signal_at"),
+                        item.get("latest_checked_at"),
                     )
                     rank_rows.append({
                         "순위": ri + 1,
                         "종목": display,
                         "점수": round(item.get("aggregate_score", item.get("total_score", 0)), 1),
                         "판단": verdict_label,
-                        "판단 시점": last_signal,
+                        "최근 시점": timing_display,
                         "현재가": price_label,
                         "출현": item.get("appearances", item.get("mention_count", 0)),
                         "_검색": " ".join(
                             str(value)
-                            for value in [ticker, display, verdict, verdict_label, last_signal, price_label]
+                            for value in [ticker, display, verdict, verdict_label, timing_display, price_label]
                         ),
                     })
                 df_rank_rows = pd.DataFrame(rank_rows)
