@@ -960,6 +960,11 @@ with tabs[1]:
 
     if ranking:
         filter_text = st.text_input("종목 검색 (코드 / 회사명)", "", key="rank_filter")
+        rank_sort = st.selectbox(
+            "정렬 기준",
+            ["점수", "출현", "최근 시점"],
+            key="rank_sort",
+        )
 
         # Build display dataframe
         rows = []
@@ -979,6 +984,11 @@ with tabs[1]:
             appearances = item.get("appearances", item.get("mention_count", 0))
             checked_at = format_signal_datetime(item.get("latest_checked_at", ""))
             price_label = format_price(price, currency)
+            timing_raw = first_non_empty(
+                item.get("last_signal_at"),
+                item.get("first_signal_at"),
+                item.get("latest_checked_at"),
+            )
 
             rows.append({
                 "순위": i + 1,
@@ -1002,6 +1012,8 @@ with tabs[1]:
                     ]
                 ),
                 "_점수": round(score, 1),
+                "_출현": appearances,
+                "_최근시점": parse_timestamp_string(timing_raw) or datetime.min.replace(tzinfo=timezone.utc),
             })
 
         df_rank = pd.DataFrame(rows)
@@ -1010,12 +1022,19 @@ with tabs[1]:
             mask = df_rank["_검색"].str.upper().str.contains(filter_text.upper(), regex=False, na=False)
             df_rank = df_rank[mask]
 
+        sort_columns = {
+            "점수": ["_점수", "_출현", "종목"],
+            "출현": ["_출현", "_점수", "종목"],
+            "최근 시점": ["_최근시점", "_점수", "종목"],
+        }
+        df_rank = df_rank.sort_values(sort_columns[rank_sort], ascending=[False, False, True])
+
         render_metrics_row([
             ("전체 종목", str(len(rows))),
             ("현재 표시", str(len(df_rank))),
         ], cols_desktop=2)
 
-        display_rank = df_rank.drop(columns=["_검색", "_점수"], errors="ignore")
+        display_rank = df_rank.drop(columns=["_검색", "_점수", "_출현", "_최근시점"], errors="ignore")
         st.dataframe(display_rank, use_container_width=True, height=500, hide_index=True)
 
         # Confidence visualization below table
