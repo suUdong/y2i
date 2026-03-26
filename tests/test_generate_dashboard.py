@@ -455,7 +455,7 @@ class TestRenderPipelineHealth:
         assert "Metadata fallback" in md
         assert "Strict ACTIONABLE" in md
         assert "Latest Reference" in md
-        assert "(generated_at)" in md
+        assert "(스냅샷)" in md
         assert "Top Skip Reasons" in md
         assert "Channel Gate Health" in md
         assert "종목 분석에 활용할 실질 신호가 부족함" in md

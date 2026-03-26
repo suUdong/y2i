@@ -22,6 +22,12 @@ DEFAULT_CHANNELS = {
     "kimjakgatv": "김작가TV",
 }
 
+REFERENCE_KIND_LABELS = {
+    "published_at": "게시",
+    "generated_at": "스냅샷",
+    "unknown": "미분류",
+}
+
 
 # ---------------------------------------------------------------------------
 # Data loading
@@ -279,6 +285,10 @@ def _format_date(value: str | None) -> str:
     except ValueError:
         return normalized
     return parsed.astimezone(timezone.utc).strftime("%Y-%m-%d")
+
+
+def _format_reference_kind(kind: str | None) -> str:
+    return REFERENCE_KIND_LABELS.get(kind or "unknown", kind or "unknown")
 
 
 def _parse_time_like(value: str | None) -> datetime | None:
@@ -564,7 +574,7 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
     lines.append(f"| Transcript-backed | {summary.get('transcript_backed_videos', 0)} |")
     lines.append(f"| Metadata fallback | {summary.get('metadata_fallback_videos', 0)} |")
     reference_kind = summary.get("latest_reference_kind", "unknown")
-    lines.append(f"| Latest reference | {_format_date(summary.get('latest_reference_at'))} ({reference_kind}) |")
+    lines.append(f"| Latest reference | {_format_date(summary.get('latest_reference_at'))} ({_format_reference_kind(reference_kind)}) |")
     lines.append("")
 
     top_skip_reasons = summary.get("top_skip_reasons", [])
@@ -611,7 +621,7 @@ def render_pipeline_health(comparison: dict | None, channel_data: dict[str, dict
                 top_reason = info["top_skip_reasons"][0].get("reason", "")
             lines.append(
                 f"| {label} | {info.get('skipped_videos', 0)} | {info.get('metadata_fallback_videos', 0)} | "
-                f"{_format_date(info.get('latest_reference_at'))} ({info.get('latest_reference_kind', 'unknown')}) | {top_reason or 'N/A'} |"
+                f"{_format_date(info.get('latest_reference_at'))} ({_format_reference_kind(info.get('latest_reference_kind', 'unknown'))}) | {top_reason or 'N/A'} |"
             )
         lines.append("")
 

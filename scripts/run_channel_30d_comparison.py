@@ -32,6 +32,12 @@ DEFAULT_CHANNELS = {
     },
 }
 
+REFERENCE_KIND_LABELS = {
+    "published_at": "게시",
+    "generated_at": "스냅샷",
+    "unknown": "미분류",
+}
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the 30-day paper-trading style channel comparison job.")
@@ -193,7 +199,7 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
                 f"- metadata_fallback_videos: {pipeline_summary.get('metadata_fallback_videos', 0)}",
                 f"- latest_published_at: {pipeline_summary.get('latest_published_at', '')}",
                 f"- latest_reference_at: {pipeline_summary.get('latest_reference_at', '')}",
-                f"- latest_reference_kind: {pipeline_summary.get('latest_reference_kind', '')}",
+                f"- latest_reference_kind: {REFERENCE_KIND_LABELS.get(pipeline_summary.get('latest_reference_kind', 'unknown'), pipeline_summary.get('latest_reference_kind', 'unknown'))}",
             ]
         )
         top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])
@@ -215,7 +221,7 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
                 f"- metadata_fallback_videos: {info.get('metadata_fallback_videos', 0)}",
                 f"- latest_published_at: {info.get('latest_published_at', '')}",
                 f"- latest_reference_at: {info.get('latest_reference_at', '')}",
-                f"- latest_reference_kind: {info.get('latest_reference_kind', '')}",
+                f"- latest_reference_kind: {REFERENCE_KIND_LABELS.get(info.get('latest_reference_kind', 'unknown'), info.get('latest_reference_kind', 'unknown'))}",
                 f"- ranking_top_1_return_pct: {info['ranking_top_1_return_pct']}",
                 f"- ranking_top_3_return_pct: {info['ranking_top_3_return_pct']}",
                 f"- ranking_spearman: {info['ranking_spearman']}",
