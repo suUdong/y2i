@@ -122,5 +122,8 @@ def test_save_comparison_artifacts_writes_human_readable_labels(tmp_path):
     assert "- 채널 수: 2" in txt
     assert "- 최신 기준 출처: 스냅샷" in txt
     assert "- 분석 가능 비율: 53.3%" in txt
-    assert "- 품질 점수표:" in txt
-    assert "- 시그널 분포:" in txt
+    assert "- 품질 점수표: 종합 55" in txt
+    assert "- 시그널 분포: 엄격 액션 6 | 노이즈 9" in txt
+    assert "- 최신 기준 시각: 2026-03-26 00:00 UTC" in txt
+    assert "[삼프로TV]" in txt
+    assert "- 채널 slug: sampro" in txt

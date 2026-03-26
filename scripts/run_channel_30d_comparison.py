@@ -56,6 +56,23 @@ SUMMARY_LABELS = {
     "actionable_ratio": "분석 가능 비율",
 }
 
+QUALITY_SCORECARD_LABELS = {
+    "overall": "종합",
+    "transcript_coverage": "트랜스크립트",
+    "actionable_density": "액션 밀도",
+    "ranking_predictive_power": "랭킹 예측력",
+    "horizon_adequacy": "기간 적합성",
+}
+
+SIGNAL_CLASS_LABELS = {
+    "ACTIONABLE": "엄격 액션",
+    "SECTOR_ONLY": "섹터 참고",
+    "LOW_SIGNAL": "저신호",
+    "NON_EQUITY": "비주식",
+    "NOISE": "노이즈",
+    "UNKNOWN": "미분류",
+}
+
 
 def _fmt_scalar(value: object) -> str:
     if value is None or value == "":
@@ -63,6 +80,22 @@ def _fmt_scalar(value: object) -> str:
     if isinstance(value, float):
         return f"{value:.3f}".rstrip("0").rstrip(".")
     return str(value)
+
+
+def _fmt_dateish(value: object) -> str:
+    if value is None or value == "":
+        return "미제공"
+    text = str(value)
+    for fmt, out_fmt in (
+        ("%Y%m%dT%H%M%SZ", "%Y-%m-%d %H:%M UTC"),
+        ("%Y%m%d", "%Y-%m-%d"),
+        ("%Y-%m-%d", "%Y-%m-%d"),
+    ):
+        try:
+            return datetime.strptime(text, fmt).strftime(out_fmt)
+        except ValueError:
+            continue
+    return text
 
 
 def _fmt_ratio(value: object) -> str:
@@ -73,6 +106,50 @@ def _fmt_ratio(value: object) -> str:
 
 def _fmt_reference_kind(value: object) -> str:
     return REFERENCE_KIND_LABELS.get(str(value or "unknown"), str(value or "unknown"))
+
+
+def _fmt_percentage(value: object) -> str:
+    if value is None or value == "":
+        return "미제공"
+    if isinstance(value, (int, float)):
+        return f"{value:.2f}%"
+    return str(value)
+
+
+def _fmt_scorecard(scorecard: dict[str, object]) -> str:
+    parts: list[str] = []
+    for key in ("overall", "transcript_coverage", "actionable_density", "ranking_predictive_power", "horizon_adequacy"):
+        if key in scorecard:
+            parts.append(f"{QUALITY_SCORECARD_LABELS[key]} {_fmt_scalar(scorecard[key])}")
+    return " | ".join(parts) if parts else "미제공"
+
+
+def _fmt_signal_breakdown(signal_breakdown: dict[str, object]) -> str:
+    if not signal_breakdown:
+        return "미제공"
+    parts = [
+        f"{SIGNAL_CLASS_LABELS.get(key, key)} {value}"
+        for key, value in signal_breakdown.items()
+    ]
+    return " | ".join(parts)
+
+
+def _fmt_skip_reasons(top_skip_reasons: list[dict[str, object]]) -> str:
+    if not top_skip_reasons:
+        return "미제공"
+    return " | ".join(f"{item.get('reason', '미제공')} ({item.get('count', 0)})" for item in top_skip_reasons)
+
+
+def _fmt_summary_value(key: str, value: object) -> str:
+    if key == "actionable_ratio":
+        return _fmt_ratio(value)
+    if key in {"ranking_top_1_return_pct", "ranking_top_3_return_pct"}:
+        return _fmt_percentage(value)
+    if key in {"latest_published_at", "latest_reference_at"}:
+        return _fmt_dateish(value)
+    if key == "latest_reference_kind":
+        return _fmt_reference_kind(value)
+    return _fmt_scalar(value)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -243,17 +320,13 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
             "latest_reference_kind",
         ):
             value = pipeline_summary.get(key, "")
-            if key == "latest_reference_kind":
-                value = _fmt_reference_kind(value)
-            lines.append(f"- {SUMMARY_LABELS[key]}: {_fmt_scalar(value)}")
+            lines.append(f"- {SUMMARY_LABELS[key]}: {_fmt_summary_value(key, value)}")
         top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])
-        if top_skip_reasons:
-            lines.append("- 상위 스킵 사유:")
-            for item in top_skip_reasons:
-                lines.append(f"  - {item['reason']} ({item['count']})")
+        lines.append(f"- 상위 스킵 사유: {_fmt_skip_reasons(top_skip_reasons)}")
         lines.append("")
     for slug, info in comparison["channels"].items():
-        lines.append(f"[{slug}] {info['display_name']}")
+        lines.append(f"[{info['display_name']}]")
+        lines.append(f"- 채널 slug: {slug}")
         for key in (
             "total_videos",
             "actionable_videos",
@@ -271,16 +344,10 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
             "ranking_eval_positions",
         ):
             value = info.get(key, "")
-            if key == "actionable_ratio":
-                value = _fmt_ratio(value)
-            elif key == "latest_reference_kind":
-                value = _fmt_reference_kind(value)
-            lines.append(f"- {SUMMARY_LABELS[key]}: {_fmt_scalar(value)}")
-        lines.append(f"- 품질 점수표: {json.dumps(info['quality_scorecard'], ensure_ascii=False)}")
-        if info.get("top_skip_reasons"):
-            lines.append(f"- 상위 스킵 사유: {json.dumps(info['top_skip_reasons'], ensure_ascii=False)}")
-        if info.get("signal_breakdown"):
-            lines.append(f"- 시그널 분포: {json.dumps(info['signal_breakdown'], ensure_ascii=False)}")
+            lines.append(f"- {SUMMARY_LABELS[key]}: {_fmt_summary_value(key, value)}")
+        lines.append(f"- 품질 점수표: {_fmt_scorecard(info['quality_scorecard'])}")
+        lines.append(f"- 상위 스킵 사유: {_fmt_skip_reasons(info.get('top_skip_reasons', []))}")
+        lines.append(f"- 시그널 분포: {_fmt_signal_breakdown(info.get('signal_breakdown', {}))}")
         lines.append("")
     txt_path.write_text("\n".join(lines), encoding="utf-8")
     return json_path, txt_path
