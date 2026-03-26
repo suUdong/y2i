@@ -274,6 +274,12 @@ header[data-testid="stHeader"] {
     font-weight: 700;
     font-family: monospace;
 }
+.ticker-chip-count {
+    color: #94A3B8;
+    margin-left: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
 
 /* -- Signal Hero Cards ------------------------------------------------- */
 .signal-hero {
@@ -705,17 +711,35 @@ with tabs[0]:
     # -- Actionable Signal Alert Banner --
     actionable = extract_actionable_signals(OUTPUT_DIR)
     if actionable:
-        all_tickers: list[str] = []
+        ticker_stats: dict[str, dict[str, float | int]] = {}
         for sig in actionable:
-            all_tickers.extend(sig.get("tickers", []))
-        unique_tickers = sorted(set(all_tickers))
-        if unique_tickers:
+            score = float(sig.get("signal_score", 0) or 0)
+            for ticker in sig.get("tickers", []):
+                if not ticker:
+                    continue
+                if ticker not in ticker_stats:
+                    ticker_stats[ticker] = {"count": 0, "best_score": score}
+                ticker_stats[ticker]["count"] = int(ticker_stats[ticker]["count"]) + 1
+                ticker_stats[ticker]["best_score"] = max(float(ticker_stats[ticker]["best_score"]), score)
+
+        ranked_tickers = sorted(
+            ticker_stats.items(),
+            key=lambda item: (
+                int(item[1]["count"]),
+                float(item[1]["best_score"]),
+                item[0],
+            ),
+            reverse=True,
+        )
+        if ranked_tickers:
             ticker_chips = "".join(
-                f'<span class="ticker-chip">{format_ticker_display(t)}</span>' for t in unique_tickers[:20]
+                f'<span class="ticker-chip">{format_ticker_display(ticker)}'
+                f'<span class="ticker-chip-count">{int(stats["count"])}회</span></span>'
+                for ticker, stats in ranked_tickers[:20]
             )
             st.markdown(
                 f'<div class="omx-alert">'
-                f'<div class="omx-alert-title">액션 가능 시그널 발견 ({len(actionable)}개 영상)</div>'
+                f'<div class="omx-alert-title">액션 가능 시그널 상위 종목 ({len(actionable)}개 영상)</div>'
                 f'<div class="omx-alert-tickers">{ticker_chips}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
