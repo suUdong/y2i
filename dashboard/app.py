@@ -1469,6 +1469,11 @@ for idx, ch_slug in enumerate(available_channels):
         if ch_ranking:
             with st.expander("종목 랭킹", expanded=False):
                 rank_filter = st.text_input("종목 검색 (코드 / 회사명)", "", key=f"rank_filter_{ch_slug}")
+                rank_sort = st.selectbox(
+                    "정렬 기준",
+                    ["점수", "출현", "최근 시점"],
+                    key=f"rank_sort_{ch_slug}",
+                )
                 rank_rows = []
                 for ri, item in enumerate(ch_ranking):
                     ticker = item.get("ticker", "")
@@ -1481,30 +1486,46 @@ for idx, ch_slug in enumerate(available_channels):
                         item.get("first_signal_at"),
                         item.get("latest_checked_at"),
                     )
+                    timing_raw = first_non_empty(
+                        item.get("last_signal_at"),
+                        item.get("first_signal_at"),
+                        item.get("latest_checked_at"),
+                    )
+                    appearances = item.get("appearances", item.get("mention_count", 0))
+                    score_value = round(item.get("aggregate_score", item.get("total_score", 0)), 1)
                     rank_rows.append({
                         "순위": ri + 1,
                         "종목": display,
-                        "점수": round(item.get("aggregate_score", item.get("total_score", 0)), 1),
+                        "점수": score_value,
                         "판단": verdict_label,
                         "최근 시점": timing_display,
                         "현재가": price_label,
-                        "출현": item.get("appearances", item.get("mention_count", 0)),
+                        "출현": appearances,
                         "_검색": " ".join(
                             str(value)
                             for value in [ticker, display, verdict, verdict_label, timing_display, price_label]
                         ),
+                        "_점수": score_value,
+                        "_출현": appearances,
+                        "_최근시점": parse_timestamp_string(timing_raw) or datetime.min.replace(tzinfo=timezone.utc),
                     })
                 df_rank_rows = pd.DataFrame(rank_rows)
                 if rank_filter:
                     df_rank_rows = df_rank_rows[
                         df_rank_rows["_검색"].str.upper().str.contains(rank_filter.upper(), regex=False, na=False)
                     ]
+                sort_columns = {
+                    "점수": ["_점수", "_출현", "종목"],
+                    "출현": ["_출현", "_점수", "종목"],
+                    "최근 시점": ["_최근시점", "_점수", "종목"],
+                }
+                df_rank_rows = df_rank_rows.sort_values(sort_columns[rank_sort], ascending=[False, False, True])
                 st.caption(f"표시 종목 {len(df_rank_rows)}개 / 전체 {len(rank_rows)}개")
                 if df_rank_rows.empty:
                     st.info("검색 조건에 맞는 종목이 없습니다.")
                 else:
                     st.dataframe(
-                        df_rank_rows.drop(columns=["_검색"], errors="ignore"),
+                        df_rank_rows.drop(columns=["_검색", "_점수", "_출현", "_최근시점"], errors="ignore"),
                         use_container_width=True,
                         height=350,
                         hide_index=True,
