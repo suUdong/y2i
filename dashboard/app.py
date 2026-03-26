@@ -179,6 +179,22 @@ header[data-testid="stHeader"] {
     color: #EF4444;
     border: 1px solid rgba(239,68,68,0.2);
 }
+.badge-low-signal {
+    background: rgba(245,158,11,0.14);
+    color: #F59E0B;
+    border: 1px solid rgba(245,158,11,0.28);
+}
+.badge-sector-only {
+    background: rgba(59,130,246,0.16);
+    color: #60A5FA;
+    border: 1px solid rgba(59,130,246,0.3);
+}
+.badge-non-equity,
+.badge-unknown {
+    background: rgba(100,116,139,0.16);
+    color: #CBD5E1;
+    border: 1px solid rgba(148,163,184,0.24);
+}
 .badge-new {
     background: rgba(59,130,246,0.15);
     color: #3B82F6;
@@ -213,6 +229,15 @@ header[data-testid="stHeader"] {
     background: rgba(245,158,11,0.15);
     color: #F59E0B;
     border: 1px solid rgba(245,158,11,0.3);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.verdict-reject {
+    background: rgba(148,163,184,0.14);
+    color: #CBD5E1;
+    border: 1px solid rgba(148,163,184,0.3);
     padding: 3px 10px;
     border-radius: 6px;
     font-size: 0.75rem;
@@ -264,6 +289,7 @@ header[data-testid="stHeader"] {
 .signal-hero-sell { border-left: 4px solid #EF4444; }
 .signal-hero-watch { border-left: 4px solid #F59E0B; }
 .signal-hero-hold { border-left: 4px solid #3B82F6; }
+.signal-hero-reject { border-left: 4px solid #94A3B8; }
 .signal-hero .ticker-name {
     font-size: 1.1rem;
     font-weight: 800;
@@ -459,15 +485,30 @@ PLOTLY_TEMPLATE = {
     }
 }
 
-SIGNAL_COLORS = {"ACTIONABLE": "#22C55E", "NOISE": "#EF4444", "UNKNOWN": "#64748B"}
-SIGNAL_CLASS_KR = {"ACTIONABLE": "분석 대상", "NOISE": "노이즈", "UNKNOWN": "미분류"}
+SIGNAL_COLORS = {
+    "ACTIONABLE": "#22C55E",
+    "SECTOR_ONLY": "#60A5FA",
+    "LOW_SIGNAL": "#F59E0B",
+    "NON_EQUITY": "#94A3B8",
+    "NOISE": "#EF4444",
+    "UNKNOWN": "#64748B",
+}
+SIGNAL_CLASS_KR = {
+    "ACTIONABLE": "분석 대상",
+    "SECTOR_ONLY": "섹터 참고",
+    "LOW_SIGNAL": "저신호",
+    "NON_EQUITY": "비주식",
+    "NOISE": "노이즈",
+    "UNKNOWN": "미분류",
+}
 EMPTY_TEXT = "미제공"
 
-VERDICT_KR = {"BUY": "매수", "SELL": "매도", "HOLD": "보유", "WATCH": "관망"}
-VERDICT_CSS = {"BUY": "buy", "SELL": "sell", "HOLD": "hold", "WATCH": "watch"}
+VERDICT_KR = {"BUY": "매수", "SELL": "매도", "HOLD": "보유", "WATCH": "관망", "REJECT": "제외"}
+VERDICT_CSS = {"BUY": "buy", "SELL": "sell", "HOLD": "hold", "WATCH": "watch", "REJECT": "reject"}
 DIRECTION_KR = {"UP": "상승", "DOWN": "하락", "NEUTRAL": "중립", "BULLISH": "강세", "BEARISH": "약세"}
 VIDEO_TYPE_KR = {
     "STOCK_PICK": "종목 분석",
+    "SECTOR": "섹터 분석",
     "MACRO": "매크로",
     "EXPERT_INTERVIEW": "전문가 인터뷰",
     "MARKET_REVIEW": "시황 리뷰",
@@ -481,11 +522,12 @@ def render_chart(fig: go.Figure, key: str | None = None, height: int = 400) -> N
         template=PLOTLY_TEMPLATE,
         margin=dict(l=16, r=16, t=48, b=24),
         font=dict(size=14),
+        hovermode="x unified",
         hoverlabel=dict(bgcolor="#0F172A", bordercolor="rgba(255,255,255,0.12)", font=dict(color="#F8FAFC")),
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=-0.2,
+            y=-0.24,
             xanchor="center",
             x=0.5,
             font=dict(size=12, color="#94A3B8"),
@@ -506,15 +548,21 @@ def render_metrics_row(metrics: list[tuple[str, str]], cols_desktop: int = 4) ->
 
 def signal_badge(signal_class: str) -> str:
     """Return HTML for a signal badge (Korean)."""
-    if signal_class == "ACTIONABLE":
-        return f'<span class="badge badge-actionable">{SIGNAL_CLASS_KR["ACTIONABLE"]}</span>'
-    return '<span class="badge badge-noise">노이즈</span>'
+    badge_css = {
+        "ACTIONABLE": "badge-actionable",
+        "SECTOR_ONLY": "badge-sector-only",
+        "LOW_SIGNAL": "badge-low-signal",
+        "NON_EQUITY": "badge-non-equity",
+        "UNKNOWN": "badge-unknown",
+    }.get(signal_class, "badge-noise")
+    label = SIGNAL_CLASS_KR.get(signal_class, signal_class or EMPTY_TEXT)
+    return f'<span class="badge {badge_css}">{label}</span>'
 
 
 def verdict_badge(verdict: str) -> str:
     """Return HTML for a verdict badge (Korean)."""
     kr = VERDICT_KR.get(verdict, verdict)
-    css = VERDICT_CSS.get(verdict, "watch")
+    css = VERDICT_CSS.get(verdict, "reject")
     return f'<span class="verdict-{css}">{kr}</span>'
 
 
@@ -546,6 +594,22 @@ def format_signal_date(date_str: str) -> str:
     return date_str
 
 
+def translate_signal_class(signal_class: str) -> str:
+    return SIGNAL_CLASS_KR.get(signal_class, signal_class or EMPTY_TEXT)
+
+
+def translate_verdict(verdict: str) -> str:
+    return VERDICT_KR.get(verdict, verdict or EMPTY_TEXT)
+
+
+def translate_video_type(video_type: str) -> str:
+    return VIDEO_TYPE_KR.get(video_type, video_type or EMPTY_TEXT)
+
+
+def translate_direction(direction: str) -> str:
+    return DIRECTION_KR.get(direction, direction or EMPTY_TEXT)
+
+
 # -- Build tabs ---------------------------------------------------------------
 
 fixed_tabs = ["요약", "종목 랭킹", "매크로", "전문가"]
@@ -571,9 +635,8 @@ with tabs[0]:
             price_str = format_price(stock.get("latest_price"), stock.get("currency", "KRW"))
             score = stock.get("aggregate_score", 0)
             verdict = stock.get("aggregate_verdict", "WATCH")
-            verdict_css = VERDICT_CSS.get(verdict, "watch")
-            verdict_kr = VERDICT_KR.get(verdict, verdict)
-            score_color = "#22C55E" if score >= 65 else "#F59E0B" if score >= 50 else "#EF4444"
+            verdict_css = VERDICT_CSS.get(verdict, "reject")
+            score_color = "#22C55E" if score >= 65 else "#F59E0B" if score >= 50 else "#94A3B8" if verdict == "REJECT" else "#EF4444"
             signal_date = format_signal_date(stock.get("last_signal_at", ""))
             appearances = stock.get("appearances", 0)
             source_channels_display = stock.get("_source_channels_display", [])
@@ -669,22 +732,23 @@ with tabs[0]:
             if type_dist:
                 df_type = pd.DataFrame(
                     [
-                        {"유형": VIDEO_TYPE_KR.get(label, label), "건수": count}
+                        {"유형": translate_video_type(label), "건수": count}
                         for label, count in type_dist.items()
                     ]
                 ).sort_values("건수", ascending=True)
+                df_type["비중"] = (df_type["건수"] / df_type["건수"].sum()).map(lambda x: f"{x:.0%}")
                 fig_type = px.bar(
                     df_type,
                     x="건수",
                     y="유형",
                     orientation="h",
                     title="영상 유형 분포",
-                    text="건수",
-                    color="건수",
-                    color_continuous_scale=["#1D4ED8", "#22C55E"],
+                    text="비중",
+                    color="유형",
+                    color_discrete_sequence=["#1D4ED8", "#3B82F6", "#06B6D4", "#22C55E", "#F59E0B", "#94A3B8"],
                 )
-                fig_type.update_traces(textposition="outside", hovertemplate="%{y}: %{x}개<extra></extra>")
-                fig_type.update_layout(coloraxis_showscale=False)
+                fig_type.update_traces(textposition="outside", hovertemplate="%{y}: %{x}개 (%{text})<extra></extra>")
+                fig_type.update_layout(showlegend=False)
                 render_chart(fig_type, key="overview_type", height=420)
 
         with col_b:
@@ -692,24 +756,25 @@ with tabs[0]:
             if sig_dist:
                 df_sig = pd.DataFrame(
                     {
-                        "시그널": [SIGNAL_CLASS_KR.get(k, k) for k in sig_dist.keys()],
+                        "시그널": [translate_signal_class(k) for k in sig_dist.keys()],
                         "건수": list(sig_dist.values()),
                     }
-                )
-                color_map = {"분석 대상": "#22C55E", "노이즈": "#EF4444", "미분류": "#64748B"}
-                fig_bar = px.pie(
+                ).sort_values("건수", ascending=True)
+                df_sig["비중"] = (df_sig["건수"] / df_sig["건수"].sum()).map(lambda x: f"{x:.0%}")
+                color_map = {translate_signal_class(k): v for k, v in SIGNAL_COLORS.items()}
+                fig_bar = px.bar(
                     df_sig,
-                    names="시그널",
-                    values="건수",
+                    x="건수",
+                    y="시그널",
+                    orientation="h",
                     title="시그널 분포",
                     color="시그널",
                     color_discrete_map=color_map,
-                    hole=0.55,
+                    text="비중",
                 )
                 fig_bar.update_traces(
-                    textposition="inside",
-                    texttemplate="%{label}<br>%{percent}",
-                    hovertemplate="%{label}: %{value}개<extra></extra>",
+                    textposition="outside",
+                    hovertemplate="%{y}: %{x}개 (%{text})<extra></extra>",
                 )
                 render_chart(fig_bar, key="overview_signal", height=420)
 
@@ -728,9 +793,9 @@ with tabs[0]:
                 mobile_cols = [c for c in ["channel", "title", "video_type", "signal_class", "signal_score", "published_at"] if c in df_pv.columns]
                 display_df = df_pv[mobile_cols].rename(columns=col_map) if mobile_cols else df_pv
                 if "유형" in display_df.columns:
-                    display_df["유형"] = display_df["유형"].map(lambda x: VIDEO_TYPE_KR.get(x, x))
+                    display_df["유형"] = display_df["유형"].map(translate_video_type)
                 if "시그널" in display_df.columns:
-                    display_df["시그널"] = display_df["시그널"].map(lambda x: SIGNAL_CLASS_KR.get(x, x))
+                    display_df["시그널"] = display_df["시그널"].map(translate_signal_class)
                 if "게시일" in display_df.columns:
                     display_df["게시일"] = display_df["게시일"].map(format_signal_date)
                 st.dataframe(display_df, use_container_width=True, height=400)
@@ -799,7 +864,7 @@ with tabs[1]:
                 "순위": i + 1,
                 "종목": display,
                 "점수": round(score, 1),
-                "판단": VERDICT_KR.get(verdict, verdict),
+                "판단": translate_verdict(verdict),
                 "판단 시점": last_signal,
                 "현재가": format_price(price, currency),
                 "출현": appearances,
@@ -815,21 +880,38 @@ with tabs[1]:
         st.dataframe(df_rank, use_container_width=True, height=500, hide_index=True)
 
         # Confidence visualization below table
-        st.markdown("##### 신뢰도 분포")
-        conf_html = ""
-        for item in ranking[:15]:
+        st.markdown("##### 상위 종목 점수 분포")
+        top_rank_rows = []
+        for item in ranking[:12]:
             ticker = item.get("ticker", "")
-            display = format_ticker_display(ticker, item.get("company_name", ""))
-            score = item.get("aggregate_score", item.get("total_score", 0))
-            name_short = display[:20]
-            conf_html += (
-                f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
-                f'<div style="min-width:150px;font-size:0.8rem;color:#F8FAFC;font-weight:600;">{name_short}</div>'
-                f'<div style="flex:1;">{confidence_bar(score)}</div>'
-                f'</div>'
+            verdict = item.get("aggregate_verdict", item.get("final_verdict", ""))
+            top_rank_rows.append({
+                "종목": format_ticker_display(ticker, item.get("company_name", ""))[:26],
+                "점수": round(item.get("aggregate_score", item.get("total_score", 0)), 1),
+                "판단": translate_verdict(verdict),
+                "판단_raw": verdict,
+            })
+        if top_rank_rows:
+            df_top_rank = pd.DataFrame(top_rank_rows).sort_values("점수", ascending=True)
+            verdict_colors = {
+                translate_verdict("BUY"): "#22C55E",
+                translate_verdict("WATCH"): "#F59E0B",
+                translate_verdict("HOLD"): "#3B82F6",
+                translate_verdict("SELL"): "#EF4444",
+                translate_verdict("REJECT"): "#94A3B8",
+            }
+            fig_rank = px.bar(
+                df_top_rank,
+                x="점수",
+                y="종목",
+                orientation="h",
+                color="판단",
+                title="상위 종목 점수 비교",
+                text="점수",
+                color_discrete_map=verdict_colors,
             )
-        if conf_html:
-            st.markdown(f'<div class="omx-card">{conf_html}</div>', unsafe_allow_html=True)
+            fig_rank.update_traces(textposition="outside", hovertemplate="%{y}: %{x}점<extra>%{fullData.name}</extra>")
+            render_chart(fig_rank, key="rank_scores", height=460)
     else:
         st.info("랭킹 데이터가 없습니다.")
 
@@ -875,9 +957,9 @@ with tabs[2]:
 
         # Translate direction and sentiment to Korean
         if "direction" in display_df.columns:
-            display_df["direction"] = display_df["direction"].map(lambda x: DIRECTION_KR.get(x, x))
+            display_df["direction"] = display_df["direction"].map(translate_direction)
         if "sentiment" in display_df.columns:
-            display_df["sentiment"] = display_df["sentiment"].map(lambda x: DIRECTION_KR.get(x, x))
+            display_df["sentiment"] = display_df["sentiment"].map(translate_direction)
         if "confidence" in display_df.columns:
             display_df["confidence"] = display_df["confidence"].map(lambda x: f"{x:.0%}" if isinstance(x, (int, float)) else x)
 
@@ -907,21 +989,23 @@ with tabs[2]:
             if "direction" in df_macro.columns:
                 dir_counts = df_macro["direction"].value_counts().reset_index()
                 dir_counts.columns = ["방향", "건수"]
-                dir_counts["방향"] = dir_counts["방향"].map(lambda x: DIRECTION_KR.get(x, x))
+                dir_counts["방향"] = dir_counts["방향"].map(translate_direction)
                 color_map = {"상승": "#22C55E", "하락": "#EF4444", "중립": "#94A3B8", "강세": "#22C55E", "약세": "#EF4444"}
-                fig_dir = px.pie(
+                dir_counts = dir_counts.sort_values("건수", ascending=True)
+                dir_counts["비중"] = (dir_counts["건수"] / dir_counts["건수"].sum()).map(lambda x: f"{x:.0%}")
+                fig_dir = px.bar(
                     dir_counts,
-                    names="방향",
-                    values="건수",
+                    x="건수",
+                    y="방향",
+                    orientation="h",
                     title="매크로 시그널 방향 분포",
                     color="방향",
                     color_discrete_map=color_map,
-                    hole=0.55,
+                    text="비중",
                 )
                 fig_dir.update_traces(
-                    textposition="inside",
-                    texttemplate="%{label}<br>%{percent}",
-                    hovertemplate="%{label}: %{value}건<extra></extra>",
+                    textposition="outside",
+                    hovertemplate="%{y}: %{x}건 (%{text})<extra></extra>",
                 )
                 render_chart(fig_dir, key="macro_pie", height=420)
     else:
@@ -962,7 +1046,7 @@ with tabs[3]:
                 with cols[0]:
                     st.markdown(f"**주제:** {insight.get('topic', EMPTY_TEXT)}")
                     sentiment = insight.get("sentiment", "NEUTRAL")
-                    sentiment_kr = DIRECTION_KR.get(sentiment, sentiment)
+                    sentiment_kr = translate_direction(sentiment)
                     sentiment_color = {"BULLISH": "#22C55E", "BEARISH": "#EF4444"}.get(sentiment, "#94A3B8")
                     st.markdown(f"**센티멘트:** <span style='color:{sentiment_color};font-weight:700;'>{sentiment_kr}</span>", unsafe_allow_html=True)
                 with cols[1]:
@@ -979,7 +1063,7 @@ with tabs[3]:
                     st.markdown("**구조화된 주장:**")
                     for sc in structured:
                         direction = sc.get("direction", "NEUTRAL")
-                        direction_kr = DIRECTION_KR.get(direction, direction)
+                        direction_kr = translate_direction(direction)
                         icon = {"BULLISH": ":green_circle:", "BEARISH": ":red_circle:"}.get(direction, ":white_circle:")
                         conf = sc.get("confidence", 0)
                         st.markdown(f"{icon} **{sc.get('claim', '')}**")
@@ -1044,21 +1128,23 @@ for idx, ch_slug in enumerate(available_channels):
                 signal_classes = [v.get("video_signal_class", "UNKNOWN") for v in ch_videos]
                 sig_series = pd.Series(signal_classes).value_counts().reset_index()
                 sig_series.columns = ["시그널", "건수"]
-                sig_series["시그널"] = sig_series["시그널"].map(lambda x: SIGNAL_CLASS_KR.get(x, x))
-                color_map_kr = {"분석 대상": "#22C55E", "노이즈": "#EF4444", "미분류": "#64748B"}
-                fig = px.pie(
+                sig_series["시그널"] = sig_series["시그널"].map(translate_signal_class)
+                sig_series = sig_series.sort_values("건수", ascending=True)
+                sig_series["비중"] = (sig_series["건수"] / sig_series["건수"].sum()).map(lambda x: f"{x:.0%}")
+                color_map_kr = {translate_signal_class(k): v for k, v in SIGNAL_COLORS.items()}
+                fig = px.bar(
                     sig_series,
-                    names="시그널",
-                    values="건수",
+                    x="건수",
+                    y="시그널",
+                    orientation="h",
                     title=f"{ch_display} 시그널 분포",
                     color="시그널",
                     color_discrete_map=color_map_kr,
-                    hole=0.55,
+                    text="비중",
                 )
                 fig.update_traces(
-                    textposition="inside",
-                    texttemplate="%{label}<br>%{percent}",
-                    hovertemplate="%{label}: %{value}개<extra></extra>",
+                    textposition="outside",
+                    hovertemplate="%{y}: %{x}개 (%{text})<extra></extra>",
                 )
                 render_chart(fig, key=f"ch_{ch_slug}_signals", height=420)
 
@@ -1067,21 +1153,24 @@ for idx, ch_slug in enumerate(available_channels):
                 if any(dates):
                     df_timeline = pd.DataFrame({
                         "날짜": [format_signal_date(d) for d in dates],
-                        "시그널": [SIGNAL_CLASS_KR.get(sc, sc) for sc in signal_classes],
+                        "시그널": [translate_signal_class(sc) for sc in signal_classes],
                     })
                     df_timeline = df_timeline[df_timeline["날짜"] != EMPTY_TEXT]
                     if not df_timeline.empty:
                         timeline_counts = df_timeline.groupby(["날짜", "시그널"]).size().reset_index(name="건수")
-                        fig_timeline = px.line(
+                        fig_timeline = px.area(
                             timeline_counts.sort_values("날짜"),
                             x="날짜",
                             y="건수",
                             color="시그널",
-                            markers=True,
                             title=f"{ch_display} — 30일 타임라인",
                             color_discrete_map=color_map_kr,
                         )
-                        fig_timeline.update_traces(line=dict(width=3), hovertemplate="%{x}: %{y}개<extra>%{fullData.name}</extra>")
+                        fig_timeline.update_traces(
+                            mode="lines",
+                            line=dict(width=2),
+                            hovertemplate="%{x}: %{y}개<extra>%{fullData.name}</extra>",
+                        )
                         render_chart(fig_timeline, key=f"ch_{ch_slug}_timeline", height=420)
 
             with st.expander("영상 상세", expanded=False):
@@ -1093,12 +1182,14 @@ for idx, ch_slug in enumerate(available_channels):
                     "published_at": "게시일",
                     "video_type": "유형",
                 }
-                mobile_cols = [c for c in ["title", "video_signal_class", "signal_score", "published_at"] if c in df_vids.columns]
+                mobile_cols = [c for c in ["title", "video_type", "video_signal_class", "signal_score", "published_at"] if c in df_vids.columns]
                 display_df = df_vids[mobile_cols].copy()
                 if "published_at" in display_df.columns:
                     display_df["published_at"] = display_df["published_at"].map(format_signal_date)
+                if "video_type" in display_df.columns:
+                    display_df["video_type"] = display_df["video_type"].map(translate_video_type)
                 if "video_signal_class" in display_df.columns:
-                    display_df["video_signal_class"] = display_df["video_signal_class"].map(lambda x: SIGNAL_CLASS_KR.get(x, x))
+                    display_df["video_signal_class"] = display_df["video_signal_class"].map(translate_signal_class)
                 display_df = display_df.rename(columns=vid_col_map)
                 st.dataframe(display_df, use_container_width=True, height=400, hide_index=True)
 
@@ -1113,7 +1204,7 @@ for idx, ch_slug in enumerate(available_channels):
                         "순위": ri + 1,
                         "종목": format_ticker_display(ticker, item.get("company_name", "")),
                         "점수": round(item.get("aggregate_score", item.get("total_score", 0)), 1),
-                        "판단": VERDICT_KR.get(item.get("aggregate_verdict", item.get("final_verdict", "")), ""),
+                        "판단": translate_verdict(item.get("aggregate_verdict", item.get("final_verdict", ""))),
                         "출현": item.get("appearances", item.get("mention_count", 0)),
                     })
                 st.dataframe(pd.DataFrame(rank_rows), use_container_width=True, height=350, hide_index=True)
