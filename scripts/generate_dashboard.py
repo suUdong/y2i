@@ -298,22 +298,23 @@ def render_header(channel_data: dict[str, dict | None]) -> str:
 
 def render_channel_overview(channel_data: dict[str, dict | None]) -> str:
     lines = ["## Channel Overview", ""]
-    lines.append("| Channel | Videos | Actionable | Ratio | Stocks Found | Quality Score |")
-    lines.append("|---------|------:|----------:|------:|------------:|--------------:|")
+    lines.append("| Channel | Videos | Analyzable | Strict ACTIONABLE | Ratio | Stocks Found | Quality Score |")
+    lines.append("|---------|------:|-----------:|------------------:|------:|------------:|--------------:|")
 
     for slug, data in channel_data.items():
         name = channel_label(slug, data)
         if data is None:
-            lines.append(f"| {name} | - | - | - | - | - |")
+            lines.append(f"| {name} | - | - | - | - | - | - |")
             continue
         videos = data.get("videos", [])
         total = len(videos)
-        actionable = sum(1 for v in videos if v.get("should_analyze_stocks"))
-        ratio = actionable / total if total else 0
+        analyzable = sum(1 for v in videos if v.get("should_analyze_stocks"))
+        strict_actionable = sum(1 for v in videos if v.get("video_signal_class") == "ACTIONABLE")
+        ratio = analyzable / total if total else 0
         stocks = len(data.get("cross_video_ranking", []))
         scorecard = data.get("quality_scorecard", {})
         quality = scorecard.get("overall", 0.0)
-        lines.append(f"| {name} | {total} | {actionable} | {ratio:.1%} | {stocks} | {quality:.1f} |")
+        lines.append(f"| {name} | {total} | {analyzable} | {strict_actionable} | {ratio:.1%} | {stocks} | {quality:.1f} |")
 
     lines.append("")
     return "\n".join(lines)

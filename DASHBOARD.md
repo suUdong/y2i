@@ -1,6 +1,6 @@
 # OMX Pipeline Dashboard (6-Month / 180-Day Analysis)
 
-> Auto-generated: 2026-03-26 10:26 UTC
+> Auto-generated: 2026-03-26 10:29 UTC
 > Channels analyzed: 6/6
 > Data source: `output/` directory pipeline results
 
@@ -8,14 +8,14 @@
 
 ## Channel Overview
 
-| Channel | Videos | Actionable | Ratio | Stocks Found | Quality Score |
-|---------|------:|----------:|------:|------------:|--------------:|
-| 이효석아카데미 | 80 | 4 | 5.0% | 9 | 25.9 |
-| IT의 신 이형수 | 80 | 8 | 10.0% | 18 | 28.0 |
-| 김작가TV | 80 | 3 | 3.8% | 8 | 26.1 |
-| 삼프로TV | 80 | 35 | 43.8% | 13 | 36.2 |
-| 소수몽키 | 80 | 1 | 1.2% | 4 | 25.4 |
-| 슈카월드 | 80 | 6 | 7.5% | 8 | 27.2 |
+| Channel | Videos | Analyzable | Strict ACTIONABLE | Ratio | Stocks Found | Quality Score |
+|---------|------:|-----------:|------------------:|------:|------------:|--------------:|
+| 이효석아카데미 | 80 | 4 | 1 | 5.0% | 9 | 25.9 |
+| IT의 신 이형수 | 80 | 8 | 5 | 10.0% | 18 | 28.0 |
+| 김작가TV | 80 | 3 | 3 | 3.8% | 8 | 26.1 |
+| 삼프로TV | 80 | 35 | 34 | 43.8% | 13 | 36.2 |
+| 소수몽키 | 80 | 1 | 1 | 1.2% | 4 | 25.4 |
+| 슈카월드 | 80 | 6 | 6 | 7.5% | 8 | 27.2 |
 
 ## Pipeline Health
 

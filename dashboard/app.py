@@ -585,7 +585,7 @@ SIGNAL_COLORS = {
     "UNKNOWN": "#64748B",
 }
 SIGNAL_CLASS_KR = {
-    "ACTIONABLE": "분석 대상",
+    "ACTIONABLE": "엄격 액션",
     "SECTOR_ONLY": "섹터 참고",
     "LOW_SIGNAL": "저신호",
     "NON_EQUITY": "비주식",
@@ -1720,10 +1720,10 @@ with tabs[-2]:
             predictive_power = sc.get("ranking_predictive_power", 0.0)
             row = {"채널": channel_label}
             row["영상 수"] = info.get("total_videos", 0)
-            row["분석 대상"] = info.get("actionable_videos", 0)
+            row["분석 가능"] = info.get("actionable_videos", 0)
             row["엄격 액션"] = info.get("strict_actionable_videos", 0)
             row["스킵"] = info.get("skipped_videos", 0)
-            row["대상 비율"] = f"{actionable_ratio:.0%}"
+            row["가능 비율"] = f"{actionable_ratio:.0%}"
             row["메타 fallback"] = info.get("metadata_fallback_videos", 0)
             row["최신 게시일"] = format_signal_date(info.get("latest_published_at", ""))
             row["순위상관"] = (
@@ -1776,7 +1776,7 @@ with tabs[-2]:
         df_comp = pd.DataFrame(rows)
         sort_options = {
             "종합 점수": "_sort_overall",
-            "대상 비율": "_sort_actionable_ratio",
+            "가능 비율": "_sort_actionable_ratio",
             "상위 3개 수익률": "_sort_top3_return",
             "상위 1개 수익률": "_sort_top1_return",
             "랭킹 예측력": "_sort_predictive_power",
@@ -1858,7 +1858,7 @@ with tabs[-2]:
         better_rank = comp_data.get("better_ranking_channel", EMPTY_TEXT)
         more_act_name = channel_names.get(more_act, more_act)
         better_rank_name = channel_names.get(better_rank, better_rank)
-        st.markdown(f"**액션 시그널 최다:** {more_act_name}")
+        st.markdown(f"**분석 가능 비율 최고:** {more_act_name}")
         st.markdown(f"**랭킹 예측력 최고:** {better_rank_name}")
     else:
         st.info("채널 비교 데이터가 없습니다.")

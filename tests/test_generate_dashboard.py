@@ -316,6 +316,8 @@ class TestRenderChannelOverview:
         channel_data = {"sampro": sample_30d}
         md = gd.render_channel_overview(channel_data)
         assert "Channel Overview" in md
+        assert "Analyzable" in md
+        assert "Strict ACTIONABLE" in md
         assert "삼프로TV" in md
 
     def test_no_data(self):
@@ -505,6 +507,7 @@ class TestGenerateDashboard:
         content = Path(result).read_text(encoding="utf-8")
         assert "# OMX Pipeline Dashboard" in content
         assert "## Channel Overview" in content
+        assert "Strict ACTIONABLE" in content
         assert "## Pipeline Health" in content
         assert "## Content Type Distribution" in content
         assert "Per-Channel Stock Rankings" in content

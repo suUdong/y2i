@@ -175,7 +175,7 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
     json_path.write_text(json.dumps(comparison, ensure_ascii=False, indent=2), encoding="utf-8")
     lines = [
         f"30일 채널 비교 ({context.run_id})",
-        f"더 많은 actionable 신호: {comparison['more_actionable_channel']}",
+        f"분석 가능 비율 최고: {comparison['more_actionable_channel']}",
         f"더 나은 랭킹 예측력: {comparison['better_ranking_channel']}",
         "",
     ]
