@@ -876,24 +876,36 @@ with tabs[1]:
             display = format_ticker_display(ticker, item.get("company_name", ""))
             score = item.get("aggregate_score", item.get("total_score", 0))
             verdict = item.get("aggregate_verdict", item.get("final_verdict", ""))
+            verdict_label = translate_verdict(verdict)
             price = item.get("latest_price")
             currency = item.get("currency", "KRW")
             last_signal = format_signal_date(item.get("last_signal_at", item.get("first_signal_at", "")))
             appearances = item.get("appearances", item.get("mention_count", 0))
             checked_at = format_signal_datetime(item.get("latest_checked_at", ""))
+            price_label = format_price(price, currency)
 
             rows.append({
                 "순위": i + 1,
                 "종목": display,
                 "점수": round(score, 1),
-                "판단": translate_verdict(verdict),
+                "판단": verdict_label,
                 "판단 시점": last_signal,
-                "현재가": format_price(price, currency),
+                "현재가": price_label,
                 "출현": appearances,
                 "가격확인": checked_at,
-                "_검색": " ".join(str(value) for value in [ticker, display, verdict, last_signal, checked_at]),
+                "_검색": " ".join(
+                    str(value)
+                    for value in [
+                        ticker,
+                        display,
+                        verdict,
+                        verdict_label,
+                        last_signal,
+                        checked_at,
+                        price_label,
+                    ]
+                ),
                 "_점수": round(score, 1),
-                "_판단_raw": verdict,
             })
 
         df_rank = pd.DataFrame(rows)
@@ -907,7 +919,7 @@ with tabs[1]:
             ("현재 표시", str(len(df_rank))),
         ], cols_desktop=2)
 
-        display_rank = df_rank.drop(columns=["_검색", "_점수", "_판단_raw"], errors="ignore")
+        display_rank = df_rank.drop(columns=["_검색", "_점수"], errors="ignore")
         st.dataframe(display_rank, use_container_width=True, height=500, hide_index=True)
 
         # Confidence visualization below table
@@ -919,7 +931,6 @@ with tabs[1]:
                 "종목": df_rank["종목"].astype(str).str.slice(0, 26),
                 "점수": df_rank["_점수"],
                 "판단": df_rank["판단"],
-                "판단_raw": df_rank["_판단_raw"],
             }).head(12).sort_values("점수", ascending=True)
             verdict_colors = {
                 translate_verdict("BUY"): "#22C55E",
