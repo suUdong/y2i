@@ -9,6 +9,7 @@ from urllib.request import urlopen
 from xml.etree import ElementTree as ET
 
 from omx_brainstorm.app_config import AppConfig, load_app_config
+from omx_brainstorm.backtest import YFinanceHistoryProvider
 from omx_brainstorm.channel_quality import compute_channel_quality, rank_channels
 from omx_brainstorm.comparison import RunContext, compare_channels, quality_scorecard, save_channel_artifacts
 from omx_brainstorm.evaluation import ranking_validation
@@ -127,6 +128,60 @@ def _fmt_percentage(value: object) -> str:
     if isinstance(value, (int, float)):
         return f"{value:.2f}%"
     return str(value)
+
+
+def _fmt_window_stats(window_stats: dict[str, object], key: str) -> str:
+    stats = window_stats.get(key, {}) if isinstance(window_stats, dict) else {}
+    tracked = stats.get("tracked", 0)
+    hit_rate = stats.get("hit_rate")
+    avg_return = stats.get("avg_return")
+    if tracked == 0 or hit_rate is None or avg_return is None:
+        return f"{key} 미성숙"
+    return f"{key} 적중률 {hit_rate:.1f}% | 평균수익률 {avg_return:.2f}% | 표본 {int(tracked)}"
+
+
+def enrich_comparison_with_signal_accuracy(
+    comparison: dict[str, object],
+    tracker_db: SignalTrackerDB,
+) -> tuple[dict[str, dict[str, object]], list[dict[str, object]]]:
+    channel_comparison_data = comparison.get("channels", {})
+    if not isinstance(channel_comparison_data, dict):
+        comparison["signal_accuracy"] = {}
+        return {}, []
+
+    accuracy_by_channel: dict[str, dict[str, object]] = {}
+    for slug in channel_comparison_data:
+        accuracy_by_channel[slug] = tracker_db.accuracy_report(slug).to_dict()
+
+    overall_accuracy = tracker_db.accuracy_report().to_dict()
+    ranked_reports = rank_channels(compute_channel_quality(channel_comparison_data, accuracy_by_channel))
+    leaderboard = [report.to_dict() for report in ranked_reports]
+    quality_by_slug = {item["slug"]: item for item in leaderboard}
+
+    for slug, info in channel_comparison_data.items():
+        accuracy = accuracy_by_channel.get(slug, {})
+        quality = quality_by_slug.get(slug, {})
+        info["signal_accuracy"] = accuracy
+        info["overall_quality_score"] = quality.get("overall_quality_score")
+        info["hit_rate_5d"] = accuracy.get("hit_rate_5d")
+        info["hit_rate_10d"] = accuracy.get("hit_rate_10d")
+        info["avg_return_5d"] = accuracy.get("avg_return_5d")
+        info["avg_return_10d"] = accuracy.get("avg_return_10d")
+        info["tracked_signals"] = accuracy.get("total_signals", 0)
+        info["tracked_signals_5d"] = accuracy.get("signals_with_price", 0)
+
+    updated_at = max(
+        (record.last_updated for record in tracker_db.records if record.last_updated),
+        default="",
+    )
+    comparison["signal_accuracy"] = {
+        "updated_at": updated_at,
+        "overall": overall_accuracy,
+        "by_channel": accuracy_by_channel,
+        "recent_signals": tracker_db.recent_records(limit=12),
+        "channel_leaderboard": leaderboard,
+    }
+    return accuracy_by_channel, leaderboard
 
 
 def _fmt_scorecard(scorecard: dict[str, object]) -> str:
@@ -282,6 +337,26 @@ def run_comparison_job(config: AppConfig) -> dict:
         }
 
     comparison = compare_channels(channel_payloads, context)
+
+    tracker_db = SignalTrackerDB()
+    history_provider = YFinanceHistoryProvider()
+    accuracy_by_channel: dict[str, dict[str, object]] = {}
+    leaderboard: list[dict[str, object]] = []
+    try:
+        total_tracked = 0
+        for item in channel_payloads.values():
+            json_path_obj = Path(item["json_path"])
+            if json_path_obj.exists():
+                total_tracked += record_signals_from_output(tracker_db, json_path_obj, history_provider=history_provider)
+        if total_tracked:
+            logger.info("Tracked %d new signals", total_tracked)
+        updated = update_price_snapshots(tracker_db, history_provider=history_provider)
+        if updated:
+            logger.info("Updated price snapshots for %d signals", updated)
+        accuracy_by_channel, leaderboard = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
+    except Exception as exc:
+        logger.warning("Signal tracking failed (non-fatal): %s", exc)
+
     compare_json, compare_txt = save_comparison_artifacts(comparison, context)
     dashboard_markdown = None
     try:
@@ -293,33 +368,12 @@ def run_comparison_job(config: AppConfig) -> dict:
         dashboard_markdown = str(generate_dashboard(output_dir, output_dir.parent / "DASHBOARD.md"))
     except Exception as exc:
         logger.warning("Dashboard markdown generation failed: %s", exc)
-    # --- Signal tracking and quality alerts ---
-    try:
-        tracker_db = SignalTrackerDB()
-        total_tracked = 0
-        for slug, item in channel_payloads.items():
-            json_path_obj = Path(item["json_path"])
-            if json_path_obj.exists():
-                total_tracked += record_signals_from_output(tracker_db, json_path_obj)
-        if total_tracked:
-            logger.info("Tracked %d new signals", total_tracked)
-        updated = update_price_snapshots(tracker_db)
-        if updated:
-            logger.info("Updated price snapshots for %d signals", updated)
-    except Exception as exc:
-        logger.warning("Signal tracking failed (non-fatal): %s", exc)
 
     try:
         channel_comparison_data = comparison.get("channels", {})
-        accuracy_by_channel = {}
-        try:
-            for slug in channel_comparison_data:
-                stats = tracker_db.accuracy_report(slug)
-                accuracy_by_channel[slug] = stats.to_dict()
-        except Exception as exc:
-            logger.debug("Accuracy report aggregation skipped: %s", exc)
-        quality_reports = compute_channel_quality(channel_comparison_data, accuracy_by_channel)
-        quality_scores = {r.slug: r.overall_quality_score for r in quality_reports}
+        if not accuracy_by_channel:
+            accuracy_by_channel, leaderboard = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
+        quality_scores = {item["slug"]: item["overall_quality_score"] for item in leaderboard}
         for slug, item in channel_payloads.items():
             ranking_dicts = [s.to_dict() for s in item["ranking"]]
             send_signal_alerts(
@@ -382,6 +436,31 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
         top_skip_reasons = pipeline_summary.get("top_skip_reasons", [])
         lines.append(f"- 상위 스킵 사유: {_fmt_skip_reasons(top_skip_reasons)}")
         lines.append("")
+    signal_accuracy = comparison.get("signal_accuracy", {})
+    overall_accuracy = signal_accuracy.get("overall", {}) if isinstance(signal_accuracy, dict) else {}
+    if overall_accuracy:
+        lines.append("[시그널 정확도]")
+        lines.append(f"- 트래킹 신호 수: {overall_accuracy.get('total_signals', 0)}")
+        lines.append(f"- 5일 표본: {overall_accuracy.get('signals_with_price', 0)}")
+        lines.append(f"- 평균 시그널 점수: {_fmt_scalar(overall_accuracy.get('avg_signal_score'))}")
+        lines.append(f"- 5일 적중률: {_fmt_percentage(overall_accuracy.get('hit_rate_5d'))}")
+        lines.append(f"- 10일 적중률: {_fmt_percentage(overall_accuracy.get('hit_rate_10d'))}")
+        lines.append(f"- 5일 평균수익률: {_fmt_percentage(overall_accuracy.get('avg_return_5d'))}")
+        lines.append(f"- 10일 평균수익률: {_fmt_percentage(overall_accuracy.get('avg_return_10d'))}")
+        lines.append(f"- 1일/3일/20일: {_fmt_window_stats(overall_accuracy.get('window_stats', {}), '1d')} | {_fmt_window_stats(overall_accuracy.get('window_stats', {}), '3d')} | {_fmt_window_stats(overall_accuracy.get('window_stats', {}), '20d')}")
+        lines.append("")
+    channel_leaderboard = signal_accuracy.get("channel_leaderboard", []) if isinstance(signal_accuracy, dict) else []
+    if channel_leaderboard:
+        lines.append("[채널 적중률 리더보드]")
+        for idx, item in enumerate(channel_leaderboard[:10], start=1):
+            lines.append(
+                f"- {idx}. {item.get('display_name', item.get('slug', '-'))}"
+                f" | quality={_fmt_scalar(item.get('overall_quality_score'))}"
+                f" | 5d hit={_fmt_percentage(item.get('hit_rate_5d'))}"
+                f" | 5d avg={_fmt_percentage(item.get('avg_return_5d'))}"
+                f" | actionable={_fmt_ratio(item.get('actionable_ratio'))}"
+            )
+        lines.append("")
     for slug, info in comparison["channels"].items():
         lines.append(f"[{info['display_name']}]")
         lines.append(f"- 채널 slug: {slug}")
@@ -403,6 +482,13 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
         ):
             value = info.get(key, "")
             lines.append(f"- {SUMMARY_LABELS[key]}: {_fmt_summary_value(key, value)}")
+        lines.append(f"- 추적 신호 수: {_fmt_scalar(info.get('tracked_signals', 0))}")
+        lines.append(f"- 5일 표본: {_fmt_scalar(info.get('tracked_signals_5d', 0))}")
+        lines.append(f"- 5일 적중률: {_fmt_percentage(info.get('hit_rate_5d'))}")
+        lines.append(f"- 10일 적중률: {_fmt_percentage(info.get('hit_rate_10d'))}")
+        lines.append(f"- 5일 평균수익률: {_fmt_percentage(info.get('avg_return_5d'))}")
+        lines.append(f"- 10일 평균수익률: {_fmt_percentage(info.get('avg_return_10d'))}")
+        lines.append(f"- 종합 품질 점수: {_fmt_scalar(info.get('overall_quality_score'))}")
         lines.append(f"- 품질 점수표: {_fmt_scorecard(info['quality_scorecard'])}")
         lines.append(f"- 상위 스킵 사유: {_fmt_skip_reasons(info.get('top_skip_reasons', []))}")
         lines.append(f"- 시그널 분포: {_fmt_signal_breakdown(info.get('signal_breakdown', {}))}")

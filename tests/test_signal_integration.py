@@ -63,8 +63,14 @@ def channel_output(tmp_path: Path) -> Path:
 
 def test_end_to_end_track_and_alert(tracker_db: SignalTrackerDB, channel_output: Path):
     """Simulate the scheduler post-run flow: track signals, compute quality, send alerts."""
+    provider = FakeHistoryProvider(
+        {
+            "005930.KS": [HistoricalPricePoint(date="2026-03-15", close=58000.0)],
+            "000660.KS": [HistoricalPricePoint(date="2026-03-18", close=120000.0)],
+        }
+    )
     # Step 1: Record signals from output
-    added = record_signals_from_output(tracker_db, channel_output)
+    added = record_signals_from_output(tracker_db, channel_output, history_provider=provider)
     assert added == 2
     assert len(tracker_db.records) == 2
 
@@ -114,7 +120,13 @@ def test_strategy_config_alert_fields():
 
 def test_tracker_db_survives_reload(tracker_db: SignalTrackerDB, channel_output: Path):
     """Verify signal records persist across DB reloads."""
-    record_signals_from_output(tracker_db, channel_output)
+    provider = FakeHistoryProvider(
+        {
+            "005930.KS": [HistoricalPricePoint(date="2026-03-15", close=58000.0)],
+            "000660.KS": [HistoricalPricePoint(date="2026-03-18", close=120000.0)],
+        }
+    )
+    record_signals_from_output(tracker_db, channel_output, history_provider=provider)
     db2 = SignalTrackerDB(tracker_db.db_path)
     assert len(db2.records) == 2
     assert db2.records[0].ticker == "005930.KS"

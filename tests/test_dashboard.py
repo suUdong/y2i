@@ -16,11 +16,14 @@ from dashboard.data_loader import (
     _load_json,
     build_overview_report,
     extract_actionable_signals,
+    extract_channel_leaderboard,
     extract_cross_video_ranking,
     extract_expert_insights,
     extract_macro_signals,
     extract_per_video,
+    extract_recent_tracked_signals,
     extract_signal_distribution,
+    extract_signal_accuracy_summary,
     extract_type_distribution,
     extract_videos,
     get_available_channels,
@@ -31,6 +34,7 @@ from dashboard.data_loader import (
     load_all_video_titles,
     load_channel_comparison,
     load_integration_report,
+    load_signal_accuracy_summary,
     load_video_titles,
 )
 
@@ -121,6 +125,41 @@ def tmp_output(tmp_path: Path) -> Path:
         "better_ranking_channel": "sampro",
     }
     (tmp_path / "channel_comparison_30d_20260323T053248Z.json").write_text(json.dumps(comparison), encoding="utf-8")
+
+    tracker_data = {
+        "signals": [
+            {
+                "ticker": "005930.KS",
+                "company_name": "Samsung",
+                "channel_slug": "sampro",
+                "signal_date": "2026-03-20",
+                "signal_score": 78.5,
+                "verdict": "BUY",
+                "entry_date": "2026-03-20",
+                "entry_price": 58000.0,
+                "returns": {"1d": 1.2, "3d": 2.5, "5d": 4.0, "10d": 6.0, "20d": None},
+                "recorded_at": "2026-03-23T00:00:00+00:00",
+                "last_updated": "2026-03-23T00:00:00+00:00",
+            },
+            {
+                "ticker": "000660.KS",
+                "company_name": "SK Hynix",
+                "channel_slug": "sampro",
+                "signal_date": "2026-03-18",
+                "signal_score": 55.0,
+                "verdict": "WATCH",
+                "entry_date": "2026-03-18",
+                "entry_price": 120000.0,
+                "returns": {"1d": -0.5, "3d": 1.0, "5d": -2.0, "10d": None, "20d": None},
+                "recorded_at": "2026-03-23T00:00:00+00:00",
+                "last_updated": "2026-03-23T00:00:00+00:00",
+            },
+        ],
+        "updated_at": "2026-03-23T00:00:00+00:00",
+    }
+    tracker_dir = tmp_path / ".omx" / "state"
+    tracker_dir.mkdir(parents=True, exist_ok=True)
+    (tracker_dir / "signal_tracker.json").write_text(json.dumps(tracker_data), encoding="utf-8")
 
     # Video titles
     titles = {
@@ -220,6 +259,8 @@ class TestLoadChannelComparison:
         assert "channels" in comp
         assert "sampro" in comp["channels"]
         assert "pipeline_summary" in comp
+        assert comp["signal_accuracy"]["overall"]["total_signals"] == 2
+        assert comp["channels"]["sampro"]["hit_rate_5d"] == 50.0
         assert comp["channels"]["sampro"]["skipped_videos"] == 1
         assert comp["channels"]["sampro"]["strict_actionable_videos"] == 1
         assert comp["channels"]["sampro"]["latest_published_at"] == "20260321"
@@ -349,6 +390,15 @@ class TestExtractHelpers:
 
     def test_extract_videos_empty(self):
         assert extract_videos({}) == []
+
+    def test_extract_signal_accuracy_helpers(self, tmp_output: Path):
+        comp = load_channel_comparison(tmp_output)
+        accuracy = extract_signal_accuracy_summary(comp)
+        leaderboard = extract_channel_leaderboard(comp)
+        recent = extract_recent_tracked_signals(comp)
+        assert accuracy["overall"]["hit_rate_5d"] == 50.0
+        assert leaderboard[0]["slug"] == "sampro"
+        assert recent[0]["ticker"] == "005930.KS"
 
 
 # ── extract_expert_insights ──────────────────────────────────────────────────
@@ -489,6 +539,13 @@ class TestBuildOverviewReport:
     def test_includes_channel_labels_in_per_video(self, tmp_output: Path):
         report = build_overview_report(tmp_output)
         assert report["per_video"][0]["channel"] in {"Test Channel", "IT God"}
+
+
+class TestLoadSignalAccuracySummary:
+    def test_loads_embedded_or_fallback_tracker_summary(self, tmp_output: Path):
+        summary = load_signal_accuracy_summary(tmp_output, load_channel_comparison(tmp_output))
+        assert summary["overall"]["total_signals"] == 2
+        assert summary["overall"]["window_stats"]["5d"]["tracked"] == 2
 
 
 def test_streamlit_app_runs_without_session_errors(tmp_output: Path, monkeypatch: pytest.MonkeyPatch):

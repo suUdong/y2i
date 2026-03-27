@@ -10,6 +10,12 @@ from typing import Any
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
 
 
+def _tracker_db_path(output_dir: Path) -> Path:
+    primary = output_dir.parent / ".omx" / "state" / "signal_tracker.json"
+    local = output_dir / ".omx" / "state" / "signal_tracker.json"
+    return primary if primary.exists() or not local.exists() else local
+
+
 def _parse_timestamp(value: str) -> datetime | None:
     """Parse compact or ISO-like timestamps to aware UTC datetimes."""
     if not value:
@@ -255,6 +261,26 @@ def load_channel_comparison(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, 
     if merged_channels:
         comparison["channels"] = merged_channels
         comparison["pipeline_summary"] = _build_pipeline_summary_from_channels(merged_channels)
+        signal_accuracy = load_signal_accuracy_summary(output_dir, comparison)
+        if signal_accuracy:
+            comparison["signal_accuracy"] = signal_accuracy
+            by_channel = signal_accuracy.get("by_channel", {})
+            quality_by_slug = {
+                item.get("slug", ""): item
+                for item in signal_accuracy.get("channel_leaderboard", [])
+                if item.get("slug")
+            }
+            for slug, merged in comparison["channels"].items():
+                accuracy = by_channel.get(slug, {})
+                quality = quality_by_slug.get(slug, {})
+                merged["signal_accuracy"] = accuracy
+                merged["overall_quality_score"] = quality.get("overall_quality_score")
+                merged["hit_rate_5d"] = accuracy.get("hit_rate_5d")
+                merged["hit_rate_10d"] = accuracy.get("hit_rate_10d")
+                merged["avg_return_5d"] = accuracy.get("avg_return_5d")
+                merged["avg_return_10d"] = accuracy.get("avg_return_10d")
+                merged["tracked_signals"] = accuracy.get("total_signals", 0)
+                merged["tracked_signals_5d"] = accuracy.get("signals_with_price", 0)
 
     return comparison
 
@@ -312,6 +338,51 @@ def load_video_reports(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[dict[str, 
     return reports
 
 
+def load_signal_accuracy_summary(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    comparison: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    comparison = comparison or {}
+    embedded = comparison.get("signal_accuracy")
+    if isinstance(embedded, dict) and embedded:
+        return embedded
+
+    tracker_path = _tracker_db_path(output_dir)
+    if not tracker_path.exists():
+        return {}
+
+    try:
+        from omx_brainstorm.channel_quality import compute_channel_quality, rank_channels
+        from omx_brainstorm.signal_tracker import SignalTrackerDB
+    except Exception:
+        return {}
+
+    tracker_db = SignalTrackerDB(tracker_path)
+    channels = comparison.get("channels", {}) if isinstance(comparison, dict) else {}
+    if not isinstance(channels, dict):
+        channels = {}
+
+    accuracy_by_channel = {
+        slug: tracker_db.accuracy_report(slug).to_dict()
+        for slug in channels
+    }
+    leaderboard = [
+        report.to_dict()
+        for report in rank_channels(compute_channel_quality(channels, accuracy_by_channel))
+    ]
+    updated_at = max(
+        (record.last_updated for record in tracker_db.records if record.last_updated),
+        default="",
+    )
+    return {
+        "updated_at": updated_at,
+        "overall": tracker_db.accuracy_report().to_dict(),
+        "by_channel": accuracy_by_channel,
+        "recent_signals": tracker_db.recent_records(limit=12),
+        "channel_leaderboard": leaderboard,
+    }
+
+
 # ── Helpers for extracting dashboard-ready data ──────────────────────────────
 
 def extract_type_distribution(report: dict[str, Any]) -> dict[str, int]:
@@ -354,6 +425,20 @@ def extract_macro_signals(videos: list[dict[str, Any]]) -> list[dict[str, Any]]:
             row["source_video"] = v.get("title", v.get("video_id", ""))
             signals.append(row)
     return signals
+
+
+def extract_signal_accuracy_summary(comparison: dict[str, Any]) -> dict[str, Any]:
+    return comparison.get("signal_accuracy", {})
+
+
+def extract_channel_leaderboard(comparison: dict[str, Any]) -> list[dict[str, Any]]:
+    summary = extract_signal_accuracy_summary(comparison)
+    return summary.get("channel_leaderboard", []) if isinstance(summary, dict) else []
+
+
+def extract_recent_tracked_signals(comparison: dict[str, Any]) -> list[dict[str, Any]]:
+    summary = extract_signal_accuracy_summary(comparison)
+    return summary.get("recent_signals", []) if isinstance(summary, dict) else []
 
 
 def get_available_channels(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[str]:

@@ -22,7 +22,8 @@ class SignalRecord:
     signal_date: str  # ISO date when video was published
     signal_score: float  # aggregate_score from ranking
     verdict: str  # aggregate_verdict
-    entry_price: float | None = None  # price on signal_date
+    entry_date: str | None = None  # first trading date on/after signal_date
+    entry_price: float | None = None  # close price used as the tracking baseline
     returns: dict[str, float | None] = field(default_factory=dict)
     # returns keys: "1d", "3d", "5d", "10d", "20d" -> pct return or None if not yet available
     recorded_at: str = ""
@@ -47,6 +48,8 @@ class AccuracyStats:
     avg_return_10d: float | None = None
     best_signal: str | None = None  # ticker of best performing signal
     worst_signal: str | None = None
+    avg_signal_score: float | None = None
+    window_stats: dict[str, dict[str, float | int | None]] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -105,6 +108,9 @@ class SignalTrackerDB:
         today = today or date.today()
         needs_update = []
         for record in self._records:
+            if record.entry_date is None or record.entry_price is None or record.entry_price <= 0:
+                needs_update.append(record)
+                continue
             signal_dt = date.fromisoformat(record.signal_date[:10])
             days_elapsed = (today - signal_dt).days
             for window in TRACKING_WINDOWS:
@@ -130,41 +136,70 @@ class SignalTrackerDB:
         if not filtered:
             return AccuracyStats()
 
+        window_stats: dict[str, dict[str, float | int | None]] = {}
+        for window in TRACKING_WINDOWS:
+            key = f"{window}d"
+            with_window = [r for r in filtered if r.returns.get(key) is not None]
+            if not with_window:
+                window_stats[key] = {
+                    "tracked": 0,
+                    "coverage_pct": 0.0,
+                    "hit_rate": None,
+                    "avg_return": None,
+                }
+                continue
+            hits = sum(1 for r in with_window if (r.returns.get(key) or 0) > 0)
+            avg_return = sum(float(r.returns[key] or 0) for r in with_window) / len(with_window)
+            window_stats[key] = {
+                "tracked": len(with_window),
+                "coverage_pct": round(len(with_window) / len(filtered) * 100, 1),
+                "hit_rate": round(hits / len(with_window) * 100, 1),
+                "avg_return": round(avg_return, 2),
+            }
+
+        hit_rate_5d = window_stats["5d"]["hit_rate"]
+        avg_return_5d = window_stats["5d"]["avg_return"]
+        hit_rate_10d = window_stats["10d"]["hit_rate"]
+        avg_return_10d = window_stats["10d"]["avg_return"]
         with_5d = [r for r in filtered if r.returns.get("5d") is not None]
-        with_10d = [r for r in filtered if r.returns.get("10d") is not None]
-
-        hit_rate_5d = None
-        avg_return_5d = None
-        if with_5d:
-            hits_5d = sum(1 for r in with_5d if (r.returns.get("5d") or 0) > 0)
-            hit_rate_5d = round(hits_5d / len(with_5d) * 100, 1)
-            avg_return_5d = round(sum(r.returns["5d"] for r in with_5d) / len(with_5d), 2)
-
-        hit_rate_10d = None
-        avg_return_10d = None
-        if with_10d:
-            hits_10d = sum(1 for r in with_10d if (r.returns.get("10d") or 0) > 0)
-            hit_rate_10d = round(hits_10d / len(with_10d) * 100, 1)
-            avg_return_10d = round(sum(r.returns["10d"] for r in with_10d) / len(with_10d), 2)
-
         best = max(with_5d, key=lambda r: r.returns.get("5d") or -999) if with_5d else None
         worst = min(with_5d, key=lambda r: r.returns.get("5d") or 999) if with_5d else None
 
         return AccuracyStats(
             total_signals=len(filtered),
-            signals_with_price=len(with_5d),
+            signals_with_price=int(window_stats["5d"]["tracked"]),
             hit_rate_5d=hit_rate_5d,
             hit_rate_10d=hit_rate_10d,
             avg_return_5d=avg_return_5d,
             avg_return_10d=avg_return_10d,
             best_signal=best.ticker if best else None,
             worst_signal=worst.ticker if worst else None,
+            avg_signal_score=round(sum(r.signal_score for r in filtered) / len(filtered), 1) if filtered else None,
+            window_stats=window_stats,
         )
 
+    def recent_records(self, limit: int = 10, channel_slug: str | None = None) -> list[dict[str, Any]]:
+        """Return recent tracked signals, newest signal_date first."""
+        filtered = [r for r in self._records if channel_slug is None or r.channel_slug == channel_slug]
+        filtered.sort(
+            key=lambda r: (
+                r.signal_date,
+                r.signal_score,
+                r.recorded_at,
+                r.ticker,
+            ),
+            reverse=True,
+        )
+        return [r.to_dict() for r in filtered[:limit]]
 
-def record_signals_from_output(db: SignalTrackerDB, output_path: Path) -> int:
+
+def record_signals_from_output(db: SignalTrackerDB, output_path: Path, history_provider: Any = None) -> int:
     """Ingest a channel JSON output file and create SignalRecords for ranked stocks.
     Returns number of new records added."""
+    if history_provider is None:
+        from .backtest import YFinanceHistoryProvider
+        history_provider = YFinanceHistoryProvider()
+
     data = json.loads(output_path.read_text(encoding="utf-8"))
     channel_slug = data.get("channel_slug", "")
     ranking = data.get("cross_video_ranking", [])
@@ -173,14 +208,17 @@ def record_signals_from_output(db: SignalTrackerDB, output_path: Path) -> int:
         signal_date = stock.get("first_signal_at") or stock.get("last_signal_at")
         if not signal_date:
             continue
+        normalized_signal_date = signal_date[:10]
+        entry_point = _fetch_entry_point(history_provider, stock["ticker"], normalized_signal_date)
         record = SignalRecord(
             ticker=stock["ticker"],
             company_name=stock.get("company_name"),
             channel_slug=channel_slug,
-            signal_date=signal_date[:10],
+            signal_date=normalized_signal_date,
             signal_score=float(stock.get("aggregate_score", 0)),
             verdict=stock.get("aggregate_verdict", ""),
-            entry_price=stock.get("latest_price"),
+            entry_date=entry_point.date if entry_point else None,
+            entry_price=entry_point.close if entry_point else None,
         )
         if db.add_record(record):
             added += 1
@@ -197,10 +235,9 @@ def update_price_snapshots(db: SignalTrackerDB, history_provider: Any = None) ->
     records = db.get_records_needing_update()
     updated = 0
     today = date.today()
+    dirty = False
 
     for record in records:
-        if record.entry_price is None or record.entry_price <= 0:
-            continue
         signal_dt = date.fromisoformat(record.signal_date[:10])
         days_elapsed = (today - signal_dt).days
 
@@ -218,6 +255,20 @@ def update_price_snapshots(db: SignalTrackerDB, history_provider: Any = None) ->
         if not history:
             continue
 
+        entry_point = _resolve_entry_point(history, record.signal_date[:10])
+        if entry_point is None or entry_point.close <= 0:
+            continue
+
+        entry_changed = (
+            record.entry_price is None
+            or record.entry_price <= 0
+            or record.entry_date != entry_point.date
+            or abs(record.entry_price - entry_point.close) > 1e-9
+        )
+        if entry_changed:
+            record.entry_date = entry_point.date
+            record.entry_price = entry_point.close
+
         prices_by_day = {}
         for point in history:
             dt = date.fromisoformat(point.date[:10])
@@ -227,7 +278,7 @@ def update_price_snapshots(db: SignalTrackerDB, history_provider: Any = None) ->
         new_returns: dict[str, float | None] = {}
         for window in TRACKING_WINDOWS:
             key = f"{window}d"
-            if record.returns.get(key) is not None:
+            if record.returns.get(key) is not None and not entry_changed:
                 continue
             if days_elapsed < window:
                 continue
@@ -237,11 +288,34 @@ def update_price_snapshots(db: SignalTrackerDB, history_provider: Any = None) ->
                 if offset in prices_by_day:
                     target_price = prices_by_day[offset]
                     break
-            if target_price is not None and record.entry_price > 0:
+            if target_price is not None and record.entry_price and record.entry_price > 0:
                 new_returns[key] = round((target_price - record.entry_price) / record.entry_price * 100, 2)
 
-        if new_returns:
-            db.update_returns(record.ticker, record.channel_slug, record.signal_date, new_returns)
+        if new_returns or entry_changed:
+            if new_returns:
+                record.returns.update(new_returns)
+            record.last_updated = datetime.now(timezone.utc).isoformat()
+            dirty = True
             updated += 1
 
+    if dirty:
+        db._save()
     return updated
+
+
+def _fetch_entry_point(history_provider: Any, ticker: str, signal_date: str) -> Any | None:
+    """Resolve the first available close on/after the signal date."""
+    try:
+        history = history_provider.get_price_history(ticker, signal_date, date.today().isoformat())
+    except Exception as exc:
+        logger.warning("Entry price fetch failed for %s: %s", ticker, exc)
+        return None
+    return _resolve_entry_point(history, signal_date)
+
+
+def _resolve_entry_point(history: Sequence[Any], signal_date: str) -> Any | None:
+    signal_dt = date.fromisoformat(signal_date[:10])
+    for point in sorted(history, key=lambda item: item.date):
+        if date.fromisoformat(point.date[:10]) >= signal_dt:
+            return point
+    return None

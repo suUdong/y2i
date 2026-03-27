@@ -44,6 +44,7 @@ class TestSignalRecord:
             signal_date="2026-03-20",
             signal_score=75.5,
             verdict="BUY",
+            entry_date="2026-03-20",
             entry_price=58000.0,
             returns={"5d": 2.5, "10d": None},
         )
@@ -51,6 +52,7 @@ class TestSignalRecord:
         restored = SignalRecord.from_dict(d)
         assert restored.ticker == "005930.KS"
         assert restored.signal_score == 75.5
+        assert restored.entry_date == "2026-03-20"
         assert restored.returns["5d"] == 2.5
 
 
@@ -100,6 +102,7 @@ class TestSignalTrackerDB:
         record = SignalRecord(
             ticker="005930.KS", company_name="삼성전자", channel_slug="itgod",
             signal_date="2026-03-01", signal_score=75.0, verdict="BUY",
+            entry_date="2026-03-01", entry_price=50000.0,
             returns={"1d": 1.0, "3d": 2.0, "5d": 3.0, "10d": 4.0, "20d": 5.0},
         )
         db.add_record(record)
@@ -133,6 +136,9 @@ class TestSignalTrackerDB:
         assert stats.signals_with_price == 4
         assert stats.hit_rate_5d == 50.0  # 2 out of 4 positive
         assert stats.avg_return_5d == 1.25  # (3-1+5-2)/4
+        assert stats.window_stats["5d"]["tracked"] == 4
+        assert stats.window_stats["10d"]["hit_rate"] == 50.0
+        assert stats.avg_signal_score == 70.0
 
     def test_accuracy_report_channel_filter(self, db: SignalTrackerDB):
         r1 = SignalRecord(ticker="001.KS", company_name="A", channel_slug="itgod",
@@ -173,12 +179,25 @@ class TestRecordSignalsFromOutput:
         }
         output_file = tmp_path / "itgod_30d_test.json"
         output_file.write_text(json.dumps(output_data), encoding="utf-8")
+        provider = FakeHistoryProvider(
+            {
+                "005930.KS": [
+                    HistoricalPricePoint(date="2026-03-15", close=57500.0),
+                    HistoricalPricePoint(date="2026-03-16", close=58000.0),
+                ],
+                "000660.KS": [
+                    HistoricalPricePoint(date="2026-03-18", close=119500.0),
+                    HistoricalPricePoint(date="2026-03-19", close=120500.0),
+                ],
+            }
+        )
 
-        added = record_signals_from_output(db, output_file)
+        added = record_signals_from_output(db, output_file, history_provider=provider)
         assert added == 2
         assert len(db.records) == 2
         assert db.records[0].ticker == "005930.KS"
-        assert db.records[0].entry_price == 58000.0
+        assert db.records[0].entry_date == "2026-03-15"
+        assert db.records[0].entry_price == 57500.0
 
     def test_no_duplicate_ingest(self, db: SignalTrackerDB, tmp_path: Path):
         output_data = {
@@ -190,9 +209,12 @@ class TestRecordSignalsFromOutput:
         }
         output_file = tmp_path / "itgod_30d_test.json"
         output_file.write_text(json.dumps(output_data), encoding="utf-8")
+        provider = FakeHistoryProvider(
+            {"005930.KS": [HistoricalPricePoint(date="2026-03-15", close=57500.0)]}
+        )
 
-        assert record_signals_from_output(db, output_file) == 1
-        assert record_signals_from_output(db, output_file) == 0
+        assert record_signals_from_output(db, output_file, history_provider=provider) == 1
+        assert record_signals_from_output(db, output_file, history_provider=provider) == 0
 
 
 class TestUpdatePriceSnapshots:
@@ -228,6 +250,7 @@ class TestUpdatePriceSnapshots:
 
         assert updated == 1
         r = db.records[0]
+        assert r.entry_date == "2026-03-01"
         assert r.returns["1d"] == 1.0  # (50500-50000)/50000*100
 
     def test_skip_no_entry_price(self, db: SignalTrackerDB):

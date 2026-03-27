@@ -13,11 +13,14 @@ from dashboard.data_loader import (
     DEFAULT_OUTPUT_DIR,
     build_overview_report,
     extract_actionable_signals,
+    extract_channel_leaderboard,
     extract_cross_video_ranking,
     extract_expert_insights,
     extract_macro_signals,
     extract_per_video,
+    extract_recent_tracked_signals,
     extract_signal_distribution,
+    extract_signal_accuracy_summary,
     extract_type_distribution,
     extract_videos,
     format_price,
@@ -757,9 +760,15 @@ def translate_direction(direction: str) -> str:
     return DIRECTION_KR.get(direction, direction or EMPTY_TEXT)
 
 
+def format_percent_metric(value: float | int | None, digits: int = 1) -> str:
+    if value is None:
+        return EMPTY_TEXT
+    return f"{float(value):.{digits}f}%"
+
+
 # -- Build tabs ---------------------------------------------------------------
 
-fixed_tabs = ["요약", "종목 랭킹", "매크로", "전문가"]
+fixed_tabs = ["요약", "종목 랭킹", "정확도", "매크로", "전문가"]
 channel_tab_labels = [channel_names.get(ch, ch) for ch in available_channels]
 tab_labels = fixed_tabs + channel_tab_labels + ["채널 비교", "상태"]
 
@@ -1190,10 +1199,180 @@ with tabs[1]:
         st.info("랭킹 데이터가 없습니다.")
 
 # =============================================================================
-# TAB 2 — 매크로
+# TAB 2 — 정확도
 # =============================================================================
 
 with tabs[2]:
+    st.markdown("#### 시그널 정확도")
+    try:
+        accuracy_comp = load_channel_comparison(OUTPUT_DIR)
+    except Exception as _e:
+        st.error(f"정확도 데이터 로딩 오류: {_e}")
+        accuracy_comp = {}
+
+    accuracy_summary = extract_signal_accuracy_summary(accuracy_comp or {})
+    overall_accuracy = accuracy_summary.get("overall", {}) if isinstance(accuracy_summary, dict) else {}
+    channel_leaderboard = extract_channel_leaderboard(accuracy_comp or {})
+    recent_tracked_signals = extract_recent_tracked_signals(accuracy_comp or {})
+
+    if overall_accuracy:
+        render_metrics_row([
+            ("추적 신호", str(overall_accuracy.get("total_signals", 0))),
+            ("5일 표본", str(overall_accuracy.get("signals_with_price", 0))),
+            ("5일 적중률", format_percent_metric(overall_accuracy.get("hit_rate_5d"))),
+            ("10일 적중률", format_percent_metric(overall_accuracy.get("hit_rate_10d"))),
+            ("5일 평균수익", format_percent_metric(overall_accuracy.get("avg_return_5d"), digits=2)),
+            (
+                "평균 점수",
+                f"{overall_accuracy.get('avg_signal_score', 0):.1f}"
+                if overall_accuracy.get("avg_signal_score") is not None
+                else EMPTY_TEXT,
+            ),
+        ], cols_desktop=6)
+
+        window_stats = overall_accuracy.get("window_stats", {})
+        df_windows = pd.DataFrame(
+            [
+                {
+                    "윈도우": key,
+                    "표본": int((window_stats.get(key, {}) or {}).get("tracked", 0) or 0),
+                    "커버리지": float((window_stats.get(key, {}) or {}).get("coverage_pct", 0) or 0),
+                    "적중률": (window_stats.get(key, {}) or {}).get("hit_rate"),
+                    "평균수익률": (window_stats.get(key, {}) or {}).get("avg_return"),
+                }
+                for key in ["1d", "3d", "5d", "10d", "20d"]
+            ]
+        )
+
+        chart_col_a, chart_col_b = st.columns(2)
+        with chart_col_a:
+            df_hit = df_windows[df_windows["적중률"].notna()].copy()
+            if not df_hit.empty:
+                fig_hit = px.bar(
+                    df_hit,
+                    x="윈도우",
+                    y="적중률",
+                    text="적중률",
+                    title="윈도우별 적중률",
+                    color="적중률",
+                    color_continuous_scale=["#1D4ED8", "#22C55E"],
+                )
+                fig_hit.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+                fig_hit.update_layout(coloraxis_showscale=False)
+                fig_hit.update_yaxes(title="적중률 (%)", range=[0, 100])
+                render_chart(fig_hit, key="accuracy_hit_rate", height=320)
+
+        with chart_col_b:
+            df_return = df_windows[df_windows["평균수익률"].notna()].copy()
+            if not df_return.empty:
+                fig_return = px.bar(
+                    df_return,
+                    x="윈도우",
+                    y="평균수익률",
+                    text="평균수익률",
+                    title="윈도우별 평균수익률",
+                    color="평균수익률",
+                    color_continuous_scale=["#EF4444", "#94A3B8", "#22C55E"],
+                )
+                fig_return.update_traces(texttemplate="%{text:.2f}%", textposition="outside")
+                fig_return.update_layout(coloraxis_showscale=False)
+                fig_return.update_yaxes(title="수익률 (%)", zeroline=True, zerolinecolor="rgba(255,255,255,0.18)")
+                render_chart(fig_return, key="accuracy_returns", height=320)
+
+        st.markdown("##### 채널 적중률 리더보드")
+        if channel_leaderboard:
+            leaderboard_sort = st.selectbox(
+                "정렬 기준",
+                ["종합 품질", "5일 적중률", "10일 적중률", "5일 평균수익률", "추적 신호"],
+                key="accuracy_leaderboard_sort",
+            )
+            by_channel = accuracy_summary.get("by_channel", {}) if isinstance(accuracy_summary, dict) else {}
+            leaderboard_rows = []
+            for idx, item in enumerate(channel_leaderboard, start=1):
+                channel_accuracy = by_channel.get(item.get("slug", ""), {})
+                leaderboard_rows.append({
+                    "순위": idx,
+                    "채널": item.get("display_name", item.get("slug", EMPTY_TEXT)),
+                    "종합 품질": float(item.get("overall_quality_score", 0) or 0),
+                    "5일 적중률": item.get("hit_rate_5d"),
+                    "10일 적중률": item.get("hit_rate_10d"),
+                    "5일 평균수익률": item.get("avg_return_5d"),
+                    "10일 평균수익률": item.get("avg_return_10d"),
+                    "추적 신호": int(channel_accuracy.get("total_signals", 0) or 0),
+                    "5일 표본": int(channel_accuracy.get("signals_with_price", 0) or 0),
+                    "분석 가능 비율": f"{float(item.get('actionable_ratio', 0) or 0):.0%}",
+                })
+            df_leaderboard = pd.DataFrame(leaderboard_rows)
+            sort_map = {
+                "종합 품질": ["종합 품질", "5일 적중률", "채널"],
+                "5일 적중률": ["5일 적중률", "종합 품질", "채널"],
+                "10일 적중률": ["10일 적중률", "종합 품질", "채널"],
+                "5일 평균수익률": ["5일 평균수익률", "종합 품질", "채널"],
+                "추적 신호": ["추적 신호", "종합 품질", "채널"],
+            }
+            df_leaderboard = df_leaderboard.sort_values(sort_map[leaderboard_sort], ascending=[False, False, True], na_position="last")
+
+            display_leaderboard = df_leaderboard.copy()
+            for col in ["5일 적중률", "10일 적중률"]:
+                display_leaderboard[col] = display_leaderboard[col].map(format_percent_metric)
+            for col in ["5일 평균수익률", "10일 평균수익률"]:
+                display_leaderboard[col] = display_leaderboard[col].map(lambda value: format_percent_metric(value, digits=2))
+            display_leaderboard["종합 품질"] = display_leaderboard["종합 품질"].map(lambda value: f"{value:.1f}")
+            st.dataframe(display_leaderboard, use_container_width=True, hide_index=True)
+
+            df_quality_chart = (
+                df_leaderboard[["채널", "종합 품질", "5일 적중률"]]
+                .copy()
+                .head(10)
+                .sort_values("종합 품질", ascending=True)
+            )
+            fig_quality = px.bar(
+                df_quality_chart,
+                x="종합 품질",
+                y="채널",
+                orientation="h",
+                text="5일 적중률",
+                color="5일 적중률",
+                title="채널 종합 품질 / 5일 적중률",
+                color_continuous_scale=["#1D4ED8", "#22C55E"],
+            )
+            if df_quality_chart["5일 적중률"].notna().any():
+                fig_quality.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+            else:
+                fig_quality.update_traces(textposition="none")
+            fig_quality.update_layout(coloraxis_showscale=False)
+            render_chart(fig_quality, key="accuracy_leaderboard_chart", height=360)
+        else:
+            st.info("채널 리더보드 데이터가 없습니다.")
+
+        with st.expander("최근 추적 신호", expanded=False):
+            if recent_tracked_signals:
+                recent_rows = []
+                for item in recent_tracked_signals:
+                    recent_rows.append({
+                        "채널": channel_names.get(item.get("channel_slug", ""), item.get("channel_slug", EMPTY_TEXT)),
+                        "종목": format_ticker_display(item.get("ticker", ""), item.get("company_name", "")),
+                        "시그널일": format_signal_date(item.get("signal_date", "")),
+                        "진입일": format_signal_date(item.get("entry_date", "")),
+                        "판단": translate_verdict(item.get("verdict", "")),
+                        "점수": round(float(item.get("signal_score", 0) or 0), 1),
+                        "1일": format_percent_metric((item.get("returns", {}) or {}).get("1d"), digits=2),
+                        "3일": format_percent_metric((item.get("returns", {}) or {}).get("3d"), digits=2),
+                        "5일": format_percent_metric((item.get("returns", {}) or {}).get("5d"), digits=2),
+                        "10일": format_percent_metric((item.get("returns", {}) or {}).get("10d"), digits=2),
+                        "20일": format_percent_metric((item.get("returns", {}) or {}).get("20d"), digits=2),
+                    })
+                st.dataframe(pd.DataFrame(recent_rows), use_container_width=True, hide_index=True)
+            else:
+                st.info("최근 추적 신호가 없습니다.")
+    else:
+        st.info("시그널 정확도 데이터가 없습니다.")
+
+# =============================================================================
+# TAB 3 — 매크로
+# =============================================================================
+
+with tabs[3]:
     st.markdown("#### 매크로 시그널")
     macro_ch_options = ["전체 (통합)"] + [channel_names.get(ch, ch) for ch in available_channels]
     macro_ch_display = st.selectbox("채널 선택", macro_ch_options, key="macro_ch")
@@ -1331,10 +1510,10 @@ with tabs[2]:
             st.info(f"'{macro_ch_display}' 채널의 매크로 시그널이 없습니다.")
 
 # =============================================================================
-# TAB 3 — 전문가
+# TAB 4 — 전문가
 # =============================================================================
 
-with tabs[3]:
+with tabs[4]:
     st.markdown("#### 전문가 인사이트")
     expert_ch_options = ["전체 (통합)"] + [channel_names.get(ch, ch) for ch in available_channels]
     expert_ch_display = st.selectbox("채널 선택", expert_ch_options, key="expert_ch")
@@ -1740,10 +1919,24 @@ with tabs[-2]:
             )
             row["평가 표본"] = info.get("ranking_eval_positions", 0)
             row["종합 점수"] = f"{overall_score:.1f}"
+            row["품질 종합"] = (
+                f"{float(info.get('overall_quality_score', 0) or 0):.1f}"
+                if info.get("overall_quality_score") is not None
+                else EMPTY_TEXT
+            )
+            row["추적 신호"] = info.get("tracked_signals", 0)
+            row["5일 표본"] = info.get("tracked_signals_5d", 0)
+            row["5일 적중률"] = format_percent_metric(info.get("hit_rate_5d"))
+            row["10일 적중률"] = format_percent_metric(info.get("hit_rate_10d"))
+            row["5일 평균수익률"] = format_percent_metric(info.get("avg_return_5d"), digits=2)
             row["상위 1개 수익률"] = f"{top1_return:.1f}%"
             row["상위 3개 수익률"] = f"{top3_return:.1f}%"
             row["_sort_overall"] = overall_score
+            row["_sort_quality"] = float(info.get("overall_quality_score", 0) or 0)
             row["_sort_actionable_ratio"] = actionable_ratio
+            row["_sort_hit_rate_5d"] = float(info.get("hit_rate_5d", -1) or -1)
+            row["_sort_hit_rate_10d"] = float(info.get("hit_rate_10d", -1) or -1)
+            row["_sort_avg_return_5d"] = float(info.get("avg_return_5d", -999) or -999)
             row["_sort_top1_return"] = top1_return
             row["_sort_top3_return"] = top3_return
             row["_sort_predictive_power"] = predictive_power
@@ -1782,7 +1975,11 @@ with tabs[-2]:
 
         df_comp = pd.DataFrame(rows)
         sort_options = {
+            "품질 종합": "_sort_quality",
             "종합 점수": "_sort_overall",
+            "5일 적중률": "_sort_hit_rate_5d",
+            "10일 적중률": "_sort_hit_rate_10d",
+            "5일 평균수익률": "_sort_avg_return_5d",
             "가능 비율": "_sort_actionable_ratio",
             "상위 3개 수익률": "_sort_top3_return",
             "상위 1개 수익률": "_sort_top1_return",
@@ -1796,7 +1993,11 @@ with tabs[-2]:
             df_comp.drop(
                 columns=[
                     "_sort_overall",
+                    "_sort_quality",
                     "_sort_actionable_ratio",
+                    "_sort_hit_rate_5d",
+                    "_sort_hit_rate_10d",
+                    "_sort_avg_return_5d",
                     "_sort_top1_return",
                     "_sort_top3_return",
                     "_sort_predictive_power",
