@@ -7,15 +7,20 @@ import pytest
 from omx_brainstorm.app_config import NotificationConfig
 from omx_brainstorm.signal_alerts import (
     build_channel_signal_summary,
+    filter_consensus_signals,
     filter_high_confidence_signals,
     filter_high_quality_signals,
     format_analysis_summary,
+    format_consensus_telegram_alert,
     format_daily_leaderboard_summary,
     format_telegram_alert,
     send_daily_leaderboard_alert,
+    send_consensus_signal_alerts,
     send_high_confidence_signal_alerts,
     send_analysis_summary_alert,
     send_signal_alerts,
+    DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION,
+    DEFAULT_CONSENSUS_MIN_SCORE,
     DEFAULT_HIGH_CONFIDENCE_MIN_SCORE,
     DEFAULT_MIN_SCORE,
     DEFAULT_MIN_CHANNEL_QUALITY,
@@ -138,6 +143,17 @@ class TestFilterHighConfidenceSignals:
         assert [item["ticker"] for item in result] == ["005930.KS"]
 
 
+class TestFilterConsensusSignals:
+    def test_requires_multi_channel_score_and_cross_validation(self):
+        signals = [
+            {**_make_stock(score=88.0), "channel_count": 2, "cross_validation_score": 81.0},
+            {**_make_stock(ticker="LOW", score=74.0), "channel_count": 2, "cross_validation_score": 90.0},
+            {**_make_stock(ticker="SOLO", score=91.0), "channel_count": 1, "cross_validation_score": 90.0},
+        ]
+        result = filter_consensus_signals(signals)
+        assert [item["ticker"] for item in result] == ["005930.KS"]
+
+
 class TestSendSignalAlerts:
     def test_no_qualifying_signals(self):
         config = NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123")
@@ -210,6 +226,50 @@ class TestSendHighConfidenceSignalAlerts:
         assert result is False
 
 
+class TestConsensusSignalAlerts:
+    def test_format_consensus_alert(self):
+        msg = format_consensus_telegram_alert([
+            {
+                **_make_stock(score=89.0, verdict="STRONG_BUY"),
+                "channel_count": 3,
+                "cross_validation_score": 84.0,
+                "cross_validation_status": "CONFIRMED",
+                "consensus_strength": "STRONG",
+                "_source_channels_display": ["삼프로TV", "IT의 신"],
+            }
+        ])
+        assert "합의 시그널" in msg
+        assert "3개 채널" in msg
+        assert "강한 합의" in msg
+        assert "84.0" in msg
+
+    @patch("omx_brainstorm.signal_alerts._send_telegram_html")
+    def test_send_consensus_signal_alerts(self, mock_send):
+        mock_send.return_value = True
+        result = send_consensus_signal_alerts(
+            NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123"),
+            [
+                {
+                    **_make_stock(score=91.0, verdict="STRONG_BUY"),
+                    "channel_count": 2,
+                    "cross_validation_score": 82.0,
+                    "cross_validation_status": "CONFIRMED",
+                    "consensus_strength": "MODERATE",
+                }
+            ],
+        )
+        assert result is True
+        msg = mock_send.call_args[0][1]
+        assert f"{DEFAULT_CONSENSUS_MIN_SCORE:g}" in msg
+
+    def test_send_consensus_signal_alerts_returns_false_when_no_match(self):
+        result = send_consensus_signal_alerts(
+            NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123"),
+            [{**_make_stock(score=75.0), "channel_count": 2, "cross_validation_score": DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION - 1}],
+        )
+        assert result is False
+
+
 class TestFormatAnalysisSummary:
     def test_basic_format(self):
         new_videos = {"itgod": ["v1", "v2"], "sampro": ["v3"]}
@@ -225,12 +285,18 @@ class TestFormatAnalysisSummary:
             "aggregate_score": 82.0,
             "aggregate_verdict": "STRONG_BUY",
             "channel_count": 2,
+            "consensus_signal": True,
+            "consensus_strength": "STRONG",
+            "cross_validation_status": "CONFIRMED",
+            "cross_validation_score": 84.0,
             "_source_channels_display": ["IT의 신", "삼프로TV"],
         }]
         msg = format_analysis_summary(new_videos, top_signals=signals)
         assert "삼성전자" in msg
         assert "STRONG_BUY" in msg
         assert "2개 채널 합의" in msg
+        assert "강한 합의" in msg
+        assert "교차검증 완료" in msg
 
     def test_with_channel_names(self):
         new_videos = {"itgod": ["v1"]}

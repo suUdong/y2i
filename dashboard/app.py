@@ -912,6 +912,18 @@ REFERENCE_KIND_KR = {"published_at": "게시", "generated_at": "스냅샷", "unk
 VERDICT_KR = {"BUY": "매수", "SELL": "매도", "HOLD": "보유", "WATCH": "관망", "REJECT": "제외"}
 VERDICT_CSS = {"BUY": "buy", "SELL": "sell", "HOLD": "hold", "WATCH": "watch", "REJECT": "reject"}
 DIRECTION_KR = {"UP": "상승", "DOWN": "하락", "NEUTRAL": "중립", "BULLISH": "강세", "BEARISH": "약세"}
+CONSENSUS_STATUS_KR = {
+    "SINGLE_SOURCE": "단일 채널",
+    "CONFIRMED": "교차검증 완료",
+    "MIXED": "부분 일치",
+    "DIVERGENT": "의견 분산",
+}
+CONSENSUS_STRENGTH_KR = {
+    "SINGLE_SOURCE": "단일 출처",
+    "WEAK": "약한 합의",
+    "MODERATE": "중간 합의",
+    "STRONG": "강한 합의",
+}
 VIDEO_TYPE_KR = {
     "STOCK_PICK": "종목 분석",
     "SECTOR": "섹터 분석",
@@ -1129,6 +1141,14 @@ def translate_direction(direction: str) -> str:
     return DIRECTION_KR.get(direction, direction or EMPTY_TEXT)
 
 
+def translate_consensus_status(status: str) -> str:
+    return CONSENSUS_STATUS_KR.get(status, status or EMPTY_TEXT)
+
+
+def translate_consensus_strength(strength: str) -> str:
+    return CONSENSUS_STRENGTH_KR.get(strength, strength or EMPTY_TEXT)
+
+
 def format_percent_metric(value: float | int | None, digits: int = 1) -> str:
     if value is None:
         return EMPTY_TEXT
@@ -1176,6 +1196,9 @@ with tabs[0]:
             appearances = stock.get("appearances", 0)
             source_channels_display = stock.get("_source_channels_display", [])
             channel_count = stock.get("channel_count", 1)
+            consensus_strength = translate_consensus_strength(str(stock.get("consensus_strength", "")))
+            cross_validation_status = translate_consensus_status(str(stock.get("cross_validation_status", "")))
+            cross_validation_score = float(stock.get("cross_validation_score", 0) or 0)
             source_label = ", ".join(source_channels_display[:3]) if source_channels_display else channel_names.get(stock.get("_source_channel", ""), "")
             if channel_count > 3:
                 source_label += f" 외 {channel_count - 3}개"
@@ -1193,6 +1216,9 @@ with tabs[0]:
                     f'<div class="hero-score" style="color:{score_color};">{score:.0f}</div>'
                     f'<div class="hero-meta">'
                     f'{channel_count}개 채널 &middot; {appearances}회 출현 &middot; {timing_display}'
+                    f'</div>'
+                    f'<div style="font-size:0.72rem;color:#93C5FD;margin-top:2px;">'
+                    f'{consensus_strength} &middot; {cross_validation_status} &middot; XVAL {cross_validation_score:.1f}'
                     f'</div>'
                     f'<div style="font-size:0.7rem;color:#64748B;margin-top:2px;">{source_label}</div>'
                     f'</div>',
@@ -1585,6 +1611,9 @@ with tabs[2]:
                 "점수": round(score, 1),
                 "판단": verdict_label,
                 "합의채널": int(item.get("channel_count", 1) or 1),
+                "합의강도": translate_consensus_strength(str(item.get("consensus_strength", ""))),
+                "교차검증": translate_consensus_status(str(item.get("cross_validation_status", ""))),
+                "XVAL": round(float(item.get("cross_validation_score", 0) or 0), 1),
                 "평균가중치": (
                     f"{float(item.get('channel_weight_avg', 0) or 0):.2f}x"
                     if item.get("channel_count")
@@ -1601,12 +1630,15 @@ with tabs[2]:
                         display,
                         verdict,
                         verdict_label,
+                        item.get("consensus_strength", ""),
+                        item.get("cross_validation_status", ""),
                         timing_display,
                         checked_at,
                         price_label,
                     ]
                 ),
                 "_점수": round(score, 1),
+                "_XVAL": round(float(item.get("cross_validation_score", 0) or 0), 1),
                 "_출현": appearances,
                 "_최근시점": parse_timestamp_string(timing_raw) or datetime.min.replace(tzinfo=timezone.utc),
             })

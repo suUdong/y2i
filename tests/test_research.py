@@ -6,6 +6,7 @@ from omx_brainstorm.research import (
     _normalize_signal_date,
     _signal_strength,
     aggregate_verdict,
+    build_consensus_ranking,
     build_cross_video_ranking,
     render_cross_video_ranking_text,
 )
@@ -169,6 +170,68 @@ def test_build_cross_video_ranking_timestamp_tracking():
     ranking = build_cross_video_ranking([v1, v2])
     assert ranking[0].first_signal_at == "2026-03-01"
     assert ranking[0].last_signal_at == "2026-03-10"
+
+
+def test_build_consensus_ranking_generates_consensus_signal():
+    ranking = build_consensus_ranking(
+        {
+            "sampro": [{
+                "ticker": "NVDA",
+                "company_name": "NVIDIA",
+                "aggregate_score": 88.0,
+                "aggregate_verdict": "STRONG_BUY",
+                "appearances": 2,
+                "total_mentions": 5,
+            }],
+            "itgod": [{
+                "ticker": "NVDA",
+                "company_name": "NVIDIA",
+                "aggregate_score": 82.0,
+                "aggregate_verdict": "BUY",
+                "appearances": 1,
+                "total_mentions": 2,
+            }],
+        },
+        channel_weights={"sampro": 1.25, "itgod": 1.1},
+        channel_names={"sampro": "삼프로TV", "itgod": "IT의 신"},
+    )
+    assert ranking[0]["ticker"] == "NVDA"
+    assert ranking[0]["consensus_signal"] is True
+    assert ranking[0]["signal_kind"] == "CONSENSUS"
+    assert ranking[0]["channel_count"] == 2
+    assert ranking[0]["cross_validation_status"] == "CONFIRMED"
+    assert ranking[0]["consensus_strength"] in {"MODERATE", "STRONG"}
+    assert ranking[0]["aggregate_score"] > ranking[0]["weighted_base_score"]
+    assert ranking[0]["cross_validation_score"] >= 70.0
+
+
+def test_build_consensus_ranking_flags_divergent_channels():
+    ranking = build_consensus_ranking(
+        {
+            "sampro": [{
+                "ticker": "TSLA",
+                "company_name": "Tesla",
+                "aggregate_score": 87.0,
+                "aggregate_verdict": "STRONG_BUY",
+                "appearances": 2,
+                "total_mentions": 4,
+            }],
+            "macroview": [{
+                "ticker": "TSLA",
+                "company_name": "Tesla",
+                "aggregate_score": 48.0,
+                "aggregate_verdict": "REJECT",
+                "appearances": 1,
+                "total_mentions": 1,
+            }],
+        },
+        channel_weights={"sampro": 1.2, "macroview": 1.0},
+    )
+    assert ranking[0]["consensus_signal"] is True
+    assert ranking[0]["cross_validation_status"] == "DIVERGENT"
+    assert ranking[0]["consensus_strength"] == "WEAK"
+    assert ranking[0]["score_spread"] >= 30.0
+    assert ranking[0]["cross_validation_score"] < 66.0
 
 
 # --- render_cross_video_ranking_text ---

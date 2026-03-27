@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
@@ -11,6 +12,14 @@ RANKING_FORMULA = (
     "aggregate_score = avg_signal_strength*0.85 + min(total_mentions*0.35, 8) "
     "+ min(appearances*1.0, 2) + avg_master_variance*0.2"
 )
+CONSENSUS_FORMULA = (
+    "aggregate_score = weighted_base_score + quality_weight_adjustment "
+    "+ consensus_weight_bonus + consensus_density_bonus"
+)
+
+BULLISH_VERDICTS = {"STRONG_BUY", "BUY"}
+CAUTIOUS_VERDICTS = {"WATCH", "HOLD"}
+BEARISH_VERDICTS = {"REJECT", "SELL", "AVOID"}
 
 
 @dataclass(slots=True)
@@ -159,6 +168,8 @@ def build_consensus_ranking(
                     "_source_channels": [],
                     "_channel_scores": {},
                     "_channel_weights": {},
+                    "_channel_verdicts": {},
+                    "_channel_directions": {},
                 },
             )
             bucket["appearances"] += int(item.get("appearances", 0) or 0)
@@ -168,6 +179,9 @@ def build_consensus_ranking(
             bucket["_source_channels"].append(slug)
             bucket["_channel_scores"][slug] = score
             bucket["_channel_weights"][slug] = channel_weight
+            verdict = _normalize_verdict(item.get("aggregate_verdict"))
+            bucket["_channel_verdicts"][slug] = verdict
+            bucket["_channel_directions"][slug] = _verdict_direction(verdict)
             bucket["source_video_titles"].extend(item.get("source_video_titles", []))
 
             if score >= max((value for key, value in bucket["_channel_scores"].items() if key != slug), default=-1.0):
@@ -189,8 +203,18 @@ def build_consensus_ranking(
         channel_count = len(bucket["_source_channels"])
         weight_sum = float(bucket["channel_weight_sum"] or 0.0)
         weighted_base_score = bucket["weighted_score_sum"] / weight_sum if weight_sum > 0 else 0.0
-        consensus_bonus = min(15.0, max(0, channel_count - 1) * 5.0)
         quality_adjustment = max(-10.0, min(10.0, (weight_sum - channel_count) * 6.0))
+        cross_validation = _cross_validate_channel_signals(
+            bucket["_channel_scores"],
+            bucket["_channel_weights"],
+            bucket["_channel_verdicts"],
+            bucket["_channel_directions"],
+        )
+        consensus_bonus = _consensus_weight_bonus(
+            channel_count,
+            cross_validation["status"],
+            cross_validation["score"],
+        )
         density_bonus = min(4.0, max(0, bucket["appearances"] - channel_count) * 0.75)
         aggregate_score = min(100.0, max(0.0, weighted_base_score + consensus_bonus + quality_adjustment + density_bonus))
 
@@ -212,6 +236,16 @@ def build_consensus_ranking(
                 "_source_channels": bucket["_source_channels"],
                 "_source_channels_display": [channel_names.get(slug, slug) for slug in bucket["_source_channels"]],
                 "channel_count": channel_count,
+                "consensus_signal": channel_count > 1,
+                "signal_kind": "CONSENSUS" if channel_count > 1 else "SINGLE_SOURCE",
+                "consensus_strength": cross_validation["consensus_strength"],
+                "cross_validation_status": cross_validation["status"],
+                "cross_validation_score": cross_validation["score"],
+                "cross_validation_majority_ratio": cross_validation["majority_ratio"],
+                "verdict_alignment_ratio": cross_validation["verdict_alignment_ratio"],
+                "score_spread": cross_validation["score_spread"],
+                "majority_direction": cross_validation["majority_direction"],
+                "majority_verdict": cross_validation["majority_verdict"],
                 "channel_weight_sum": round(weight_sum, 3),
                 "channel_weight_avg": round(weight_sum / channel_count, 3) if channel_count else 0.0,
                 "weighted_base_score": round(weighted_base_score, 1),
@@ -220,6 +254,7 @@ def build_consensus_ranking(
                 "consensus_density_bonus": round(density_bonus, 1),
                 "channel_scores": bucket["_channel_scores"],
                 "channel_weights": bucket["_channel_weights"],
+                "channel_verdicts": bucket["_channel_verdicts"],
             }
         )
 
@@ -265,6 +300,116 @@ def render_cross_video_ranking_text(ranking: list[RankedStock]) -> str:
     return "\n".join(lines)
 
 
+def _normalize_verdict(value: object) -> str:
+    verdict = str(value or "").strip().upper()
+    return verdict or "WATCH"
+
+
+def _verdict_direction(verdict: str) -> str:
+    normalized = _normalize_verdict(verdict)
+    if normalized in BULLISH_VERDICTS:
+        return "BULLISH"
+    if normalized in BEARISH_VERDICTS:
+        return "BEARISH"
+    return "CAUTIOUS"
+
+
+def _cross_validate_channel_signals(
+    channel_scores: dict[str, float],
+    channel_weights: dict[str, float],
+    channel_verdicts: dict[str, str],
+    channel_directions: dict[str, str],
+) -> dict[str, Any]:
+    channel_count = len(channel_scores)
+    if channel_count < 2:
+        verdict = next(iter(channel_verdicts.values()), "WATCH")
+        return {
+            "status": "SINGLE_SOURCE",
+            "score": 0.0,
+            "majority_ratio": 1.0 if channel_count else 0.0,
+            "verdict_alignment_ratio": 1.0 if channel_count else 0.0,
+            "score_spread": 0.0,
+            "majority_direction": next(iter(channel_directions.values()), "CAUTIOUS"),
+            "majority_verdict": verdict,
+            "consensus_strength": "SINGLE_SOURCE",
+        }
+
+    weight_sum = max(0.001, sum(float(value or 0.0) for value in channel_weights.values()))
+    direction_totals: dict[str, float] = defaultdict(float)
+    verdict_totals: dict[str, float] = defaultdict(float)
+    for slug, weight in channel_weights.items():
+        direction_totals[channel_directions.get(slug, "CAUTIOUS")] += float(weight or 0.0)
+        verdict_totals[channel_verdicts.get(slug, "WATCH")] += float(weight or 0.0)
+
+    majority_direction, majority_weight = sorted(
+        direction_totals.items(),
+        key=lambda item: (-item[1], item[0]),
+    )[0]
+    majority_verdict, majority_verdict_weight = sorted(
+        verdict_totals.items(),
+        key=lambda item: (-item[1], item[0]),
+    )[0]
+    majority_ratio = majority_weight / weight_sum
+    verdict_alignment_ratio = majority_verdict_weight / weight_sum
+
+    scores = [float(score or 0.0) for score in channel_scores.values()]
+    score_spread = max(scores) - min(scores) if scores else 0.0
+    score_alignment = max(0.0, 1.0 - min(score_spread, 40.0) / 40.0)
+
+    avg_weight = weight_sum / channel_count if channel_count else 0.0
+    quality_support = _clamp((avg_weight - 0.4) / 1.1, 0.0, 1.0)
+    cross_validation_score = 100.0 * (
+        0.45 * majority_ratio
+        + 0.25 * verdict_alignment_ratio
+        + 0.20 * score_alignment
+        + 0.10 * quality_support
+    )
+    cross_validation_score = round(_clamp(cross_validation_score, 0.0, 100.0), 1)
+
+    if majority_ratio >= 0.74 and verdict_alignment_ratio >= 0.5 and score_spread <= 18.0:
+        status = "CONFIRMED"
+    elif majority_ratio >= 0.55 and score_spread <= 28.0:
+        status = "MIXED"
+    else:
+        status = "DIVERGENT"
+
+    if status == "CONFIRMED" and cross_validation_score >= 82.0:
+        consensus_strength = "STRONG"
+    elif cross_validation_score >= 66.0:
+        consensus_strength = "MODERATE"
+    else:
+        consensus_strength = "WEAK"
+
+    return {
+        "status": status,
+        "score": cross_validation_score,
+        "majority_ratio": round(majority_ratio, 3),
+        "verdict_alignment_ratio": round(verdict_alignment_ratio, 3),
+        "score_spread": round(score_spread, 1),
+        "majority_direction": majority_direction,
+        "majority_verdict": majority_verdict,
+        "consensus_strength": consensus_strength,
+    }
+
+
+def _consensus_weight_bonus(
+    channel_count: int,
+    cross_validation_status: str,
+    cross_validation_score: float,
+) -> float:
+    if channel_count < 2:
+        return 0.0
+
+    base_bonus = min(18.0, max(0, channel_count - 1) * 6.5)
+    if cross_validation_status == "CONFIRMED":
+        verification_bonus = min(8.0, max(0.0, cross_validation_score - 60.0) * 0.18)
+    elif cross_validation_status == "MIXED":
+        verification_bonus = min(4.0, max(0.0, cross_validation_score - 55.0) * 0.08)
+    else:
+        verification_bonus = 0.0
+    return round(base_bonus + verification_bonus, 1)
+
+
 def aggregate_verdict(score: float) -> str:
     """Map aggregate ranking scores into human-readable verdict buckets."""
     if score >= 80:
@@ -307,6 +452,10 @@ def _normalize_signal_date(value: str | None) -> str | None:
     if len(value) == 8 and value.isdigit():
         return f"{value[:4]}-{value[4:6]}-{value[6:8]}"
     return value[:10]
+
+
+def _clamp(value: float, lower: float, upper: float) -> float:
+    return max(lower, min(upper, value))
 
 
 def _parse_ts(value: str) -> datetime:

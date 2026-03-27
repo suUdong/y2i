@@ -20,6 +20,7 @@ from omx_brainstorm.master_engine import validate_cross_stock_master_quality
 from omx_brainstorm.research import build_consensus_ranking, build_cross_video_ranking
 from omx_brainstorm.signal_alerts import (
     build_channel_signal_summary,
+    send_consensus_signal_alerts,
     send_high_confidence_signal_alerts,
 )
 from omx_brainstorm.signal_tracker import SignalTrackerDB, record_signals_from_output, update_price_snapshots
@@ -78,6 +79,20 @@ SIGNAL_CLASS_LABELS = {
     "NON_EQUITY": "비주식",
     "NOISE": "노이즈",
     "UNKNOWN": "미분류",
+}
+
+CONSENSUS_STATUS_LABELS = {
+    "SINGLE_SOURCE": "단일 채널",
+    "CONFIRMED": "교차검증 완료",
+    "MIXED": "부분 일치",
+    "DIVERGENT": "의견 분산",
+}
+
+CONSENSUS_STRENGTH_LABELS = {
+    "SINGLE_SOURCE": "단일 출처",
+    "WEAK": "약한 합의",
+    "MODERATE": "중간 합의",
+    "STRONG": "강한 합의",
 }
 
 
@@ -366,6 +381,15 @@ def run_comparison_job(config: AppConfig) -> dict:
     except Exception as exc:
         logger.warning("Signal tracking failed (non-fatal): %s", exc)
 
+    telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
+    if not accuracy_by_channel:
+        try:
+            accuracy_by_channel, leaderboard = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
+            telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
+        except Exception as exc:
+            logger.warning("Signal accuracy enrichment retry failed (non-fatal): %s", exc)
+    comparison["consensus_signals"] = telegram_payload.get("analysis_summary", {}).get("consensus_signals", [])
+
     compare_json, compare_txt = save_comparison_artifacts(comparison, context)
     dashboard_markdown = None
     try:
@@ -378,12 +402,7 @@ def run_comparison_job(config: AppConfig) -> dict:
     except Exception as exc:
         logger.warning("Dashboard markdown generation failed: %s", exc)
 
-    telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
-
     try:
-        if not accuracy_by_channel:
-            accuracy_by_channel, leaderboard = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
-            telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
         quality_scores = {item["slug"]: item["overall_quality_score"] for item in leaderboard}
         dynamic_weights = {item["slug"]: float(item.get("weight_multiplier", 1.0) or 1.0) for item in leaderboard}
         for slug, item in channel_payloads.items():
@@ -398,6 +417,10 @@ def run_comparison_job(config: AppConfig) -> dict:
                 min_channel_quality=config.strategy.signal_alert_min_channel_quality,
                 weight_multipliers=dynamic_weights,
             )
+        send_consensus_signal_alerts(
+            config.notifications,
+            telegram_payload.get("analysis_summary", {}).get("consensus_signals", []),
+        )
     except Exception as exc:
         logger.warning("High-confidence signal alerts failed (non-fatal): %s", exc)
 
@@ -442,12 +465,14 @@ def build_telegram_payload(
         channel_weights=channel_weights,
         channel_names={slug: item.get("display_name", slug) for slug, item in channel_payloads.items()},
     )
+    consensus_signals = [item for item in top_signals if item.get("consensus_signal")]
     channel_signal_summaries.sort(key=lambda item: item.get("channel_name", ""))
     return {
         "generated_at": context.run_id,
         "analysis_summary": {
             "channel_signal_summaries": channel_signal_summaries,
             "top_signals": top_signals[:5],
+            "consensus_signals": consensus_signals[:5],
         },
         "daily_leaderboard": leaderboard[:5],
     }
@@ -529,6 +554,20 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
                 f" | 5d hit={_fmt_percentage(item.get('hit_rate_5d'))}"
                 f" | 5d avg={_fmt_percentage(item.get('avg_return_5d'))}"
                 f" | actionable={_fmt_ratio(item.get('actionable_ratio'))}"
+            )
+        lines.append("")
+    consensus_signals = comparison.get("consensus_signals", [])
+    if consensus_signals:
+        lines.append("[합의 시그널]")
+        for idx, item in enumerate(consensus_signals[:10], start=1):
+            display_name = item.get("company_name") or item.get("ticker", "-")
+            lines.append(
+                f"- {idx}. {display_name} ({item.get('ticker', '-')})"
+                f" | score={_fmt_scalar(item.get('aggregate_score'))}"
+                f" | strength={CONSENSUS_STRENGTH_LABELS.get(str(item.get('consensus_strength')), item.get('consensus_strength'))}"
+                f" | cross_validation={CONSENSUS_STATUS_LABELS.get(str(item.get('cross_validation_status')), item.get('cross_validation_status'))}"
+                f" | xval={_fmt_scalar(item.get('cross_validation_score'))}"
+                f" | channels={_fmt_scalar(item.get('channel_count'))}"
             )
         lines.append("")
     for slug, info in comparison["channels"].items():

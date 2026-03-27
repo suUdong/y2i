@@ -75,6 +75,17 @@ def test_save_comparison_artifacts_writes_human_readable_labels(tmp_path):
             "latest_reference_kind": "generated_at",
             "top_skip_reasons": [{"reason": "근거 부족", "count": 5}],
         },
+        "consensus_signals": [
+            {
+                "ticker": "NVDA",
+                "company_name": "NVIDIA",
+                "aggregate_score": 90.5,
+                "consensus_strength": "STRONG",
+                "cross_validation_status": "CONFIRMED",
+                "cross_validation_score": 86.0,
+                "channel_count": 2,
+            }
+        ],
         "channels": {
             "sampro": {
                 "display_name": "삼프로TV",
@@ -127,6 +138,9 @@ def test_save_comparison_artifacts_writes_human_readable_labels(tmp_path):
     assert "- 품질 점수표: 종합 55" in txt
     assert "- 시그널 분포: 엄격 액션 6 | 노이즈 9" in txt
     assert "- 최신 기준 시각: 2026-03-26 00:00 UTC" in txt
+    assert "[합의 시그널]" in txt
+    assert "NVIDIA (NVDA)" in txt
+    assert "강한 합의" in txt
     assert "[삼프로TV]" in txt
     assert "- 채널 slug: sampro" in txt
 
@@ -173,3 +187,41 @@ def test_build_telegram_payload_includes_channel_summaries_and_leaderboard(tmp_p
     assert summaries[1]["signals"][0]["ticker"] == "NVDA"
     assert payload["analysis_summary"]["top_signals"][0]["ticker"] == "NVDA"
     assert payload["analysis_summary"]["top_signals"][0]["channel_count"] == 1
+    assert payload["analysis_summary"]["consensus_signals"] == []
+
+
+def test_build_telegram_payload_exposes_consensus_signals(tmp_path):
+    class RankedStockStub:
+        def __init__(self, ticker: str, company_name: str, score: float, verdict: str):
+            self.ticker = ticker
+            self.company_name = company_name
+            self.aggregate_score = score
+            self.aggregate_verdict = verdict
+
+        def to_dict(self):
+            return {
+                "ticker": self.ticker,
+                "company_name": self.company_name,
+                "aggregate_score": self.aggregate_score,
+                "aggregate_verdict": self.aggregate_verdict,
+                "total_mentions": 2,
+                "appearances": 1,
+            }
+
+    payload = build_telegram_payload(
+        {
+            "sampro": {"display_name": "삼프로TV", "ranking": [RankedStockStub("NVDA", "NVIDIA", 89.0, "STRONG_BUY")]},
+            "itgod": {"display_name": "IT의 신", "ranking": [RankedStockStub("NVDA", "NVIDIA", 83.0, "BUY")]},
+        },
+        [
+            {"slug": "sampro", "display_name": "삼프로TV", "overall_quality_score": 77.5, "weight_multiplier": 1.2},
+            {"slug": "itgod", "display_name": "IT의 신", "overall_quality_score": 71.2, "weight_multiplier": 1.05},
+        ],
+        RunContext(run_id="20260327T141500Z", today="2026-03-27", output_dir=tmp_path, window_days=30),
+    )
+
+    consensus = payload["analysis_summary"]["consensus_signals"]
+    assert consensus[0]["ticker"] == "NVDA"
+    assert consensus[0]["consensus_signal"] is True
+    assert consensus[0]["cross_validation_status"] == "CONFIRMED"
+    assert consensus[0]["cross_validation_score"] >= 70.0

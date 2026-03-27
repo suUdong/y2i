@@ -12,11 +12,25 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_MIN_SCORE = 68.0
 DEFAULT_HIGH_CONFIDENCE_MIN_SCORE = 82.0
+DEFAULT_CONSENSUS_MIN_SCORE = 78.0
+DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION = 65.0
 DEFAULT_MIN_CHANNEL_QUALITY = 50.0
 MAX_SIGNALS_PER_MESSAGE = 10
 MAX_CHANNEL_SUMMARY_SIGNALS = 3
 MAX_LEADERBOARD_ROWS = 5
 HIGH_CONFIDENCE_VERDICTS = {"BUY", "STRONG_BUY"}
+CONSENSUS_STATUS_LABELS = {
+    "SINGLE_SOURCE": "단일 채널",
+    "CONFIRMED": "교차검증 완료",
+    "MIXED": "부분 일치",
+    "DIVERGENT": "의견 분산",
+}
+CONSENSUS_STRENGTH_LABELS = {
+    "SINGLE_SOURCE": "단일 출처",
+    "WEAK": "약한 합의",
+    "MODERATE": "중간 합의",
+    "STRONG": "강한 합의",
+}
 
 
 def filter_high_quality_signals(
@@ -189,6 +203,26 @@ def filter_high_confidence_signals(
     ]
 
 
+def filter_consensus_signals(
+    ranked_stocks: Sequence[dict[str, Any]],
+    *,
+    min_score: float = DEFAULT_CONSENSUS_MIN_SCORE,
+    min_cross_validation_score: float = DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION,
+    min_channel_count: int = 2,
+) -> list[dict[str, Any]]:
+    """Return only explicit multi-channel consensus signals."""
+    signals: list[dict[str, Any]] = []
+    for stock in ranked_stocks:
+        if int(stock.get("channel_count", 0) or 0) < min_channel_count:
+            continue
+        if float(stock.get("aggregate_score", 0) or 0) < min_score:
+            continue
+        if float(stock.get("cross_validation_score", 0) or 0) < min_cross_validation_score:
+            continue
+        signals.append(stock)
+    return signals
+
+
 def send_signal_alerts(
     config: NotificationConfig,
     ranked_stocks: list[dict[str, Any]],
@@ -296,6 +330,47 @@ def _send_telegram_html(config: NotificationConfig, text: str) -> bool:
         return False
 
 
+def format_consensus_telegram_alert(
+    signals: Sequence[dict[str, Any]],
+    *,
+    title: str = "🤝 Y2I 합의 시그널 알림",
+    footer_threshold: float = DEFAULT_CONSENSUS_MIN_SCORE,
+) -> str:
+    """Format a dedicated consensus-signal Telegram alert."""
+    if not signals:
+        return ""
+
+    lines = [
+        f"<b>{html.escape(title)}</b>",
+        "",
+    ]
+    for idx, stock in enumerate(signals[:MAX_SIGNALS_PER_MESSAGE], start=1):
+        label = stock.get("company_name") or stock.get("ticker", "")
+        ticker = stock.get("ticker", "")
+        score = float(stock.get("aggregate_score", 0) or 0)
+        channel_count = int(stock.get("channel_count", 0) or 0)
+        xval_score = float(stock.get("cross_validation_score", 0) or 0)
+        strength = CONSENSUS_STRENGTH_LABELS.get(str(stock.get("consensus_strength", "")), str(stock.get("consensus_strength", "")))
+        status = CONSENSUS_STATUS_LABELS.get(str(stock.get("cross_validation_status", "")), str(stock.get("cross_validation_status", "")))
+        channels = ", ".join(str(item) for item in stock.get("_source_channels_display", [])[:3] if item)
+        if ticker and label and ticker != label:
+            heading = f"{label} ({ticker})"
+        else:
+            heading = label or ticker
+
+        lines.append(f"<b>{idx}. {html.escape(str(heading))}</b>")
+        lines.append(
+            f"   🤝 {channel_count}개 채널 | 점수 <b>{score:.1f}</b> | "
+            f"{html.escape(str(strength))} | {html.escape(str(status))} | XVAL <b>{xval_score:.1f}</b>"
+        )
+        if channels:
+            lines.append(f"   📺 {html.escape(channels)}")
+        lines.append("")
+
+    lines.append(f"<i>총 {len(signals)}개 합의 시그널 | aggregate_score ≥ {footer_threshold:g}</i>")
+    return "\n".join(lines)
+
+
 def format_analysis_summary(
     new_videos: dict[str, list[str]],
     trigger: str = "",
@@ -340,7 +415,8 @@ def format_analysis_summary(
 
     if top_signals:
         lines.append("")
-        lines.append("<b>🏆 주요 시그널</b>")
+        header = "<b>🤝 합의 시그널</b>" if any(bool(sig.get("consensus_signal")) for sig in top_signals) else "<b>🏆 주요 시그널</b>"
+        lines.append(header)
         for sig in top_signals[:5]:
             name = html.escape(sig.get("company_name") or sig.get("ticker", ""))
             score = float(sig.get("aggregate_score", 0))
@@ -358,7 +434,13 @@ def format_analysis_summary(
                 if joined:
                     suffix = f" 외 {channel_count - 3}" if channel_count > 3 else ""
                     support_channels = f" [{html.escape(joined + suffix)}]"
-            lines.append(f"  • {name}{support_channels} — {verdict} ({score:.1f}{support_label})")
+            consensus_meta = ""
+            if sig.get("consensus_signal"):
+                status = CONSENSUS_STATUS_LABELS.get(str(sig.get("cross_validation_status", "")), str(sig.get("cross_validation_status", "")))
+                strength = CONSENSUS_STRENGTH_LABELS.get(str(sig.get("consensus_strength", "")), str(sig.get("consensus_strength", "")))
+                xval = float(sig.get("cross_validation_score", 0) or 0)
+                consensus_meta = f" | {html.escape(str(strength))} | {html.escape(str(status))} | XVAL {xval:.1f}"
+            lines.append(f"  • {name}{support_channels} — {verdict} ({score:.1f}{support_label}{consensus_meta})")
 
     return "\n".join(lines)
 
@@ -428,6 +510,28 @@ def send_analysis_summary_alert(
         channel_names=channel_names,
         channel_signal_summaries=channel_signal_summaries,
     )
+    return _send_telegram_html(config, message)
+
+
+def send_consensus_signal_alerts(
+    config: NotificationConfig,
+    ranked_stocks: Sequence[dict[str, Any]],
+    *,
+    min_score: float = DEFAULT_CONSENSUS_MIN_SCORE,
+    min_cross_validation_score: float = DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION,
+) -> bool:
+    """Send a dedicated consensus-signal Telegram alert when strong agreement exists."""
+    signals = filter_consensus_signals(
+        ranked_stocks,
+        min_score=min_score,
+        min_cross_validation_score=min_cross_validation_score,
+    )
+    if not signals:
+        logger.info("No consensus signals to alert")
+        return False
+    message = format_consensus_telegram_alert(signals, footer_threshold=min_score)
+    if not message:
+        return False
     return _send_telegram_html(config, message)
 
 
