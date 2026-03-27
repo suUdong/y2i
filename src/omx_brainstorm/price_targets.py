@@ -109,16 +109,21 @@ def aggregate_price_targets(
     prices = [float(item["target_price"]) for item in normalized_targets]
     target_price = round(mean(prices), 4)
     resolved_currency = currency or next((item.get("currency") for item in normalized_targets if item.get("currency")), None)
-    direction = next((str(item.get("direction")) for item in normalized_targets if item.get("direction")), "UP")
-    if latest_price is not None:
-        direction = "UP" if target_price >= float(latest_price) else "DOWN"
+    direction = next((str(item.get("direction")) for item in normalized_targets if item.get("direction")), "")
+    if not direction:
+        direction = "UP" if latest_price is None or target_price >= float(latest_price) else "DOWN"
 
     status = "PENDING"
     current_vs_target_pct = None
     if latest_price is not None and latest_price > 0:
-        current_vs_target_pct = round((target_price - float(latest_price)) / float(latest_price) * 100, 2)
-        if (direction == "UP" and float(latest_price) >= target_price) or (direction == "DOWN" and float(latest_price) <= target_price):
+        latest_price_value = float(latest_price)
+        if direction == "DOWN":
+            current_vs_target_pct = round((latest_price_value - target_price) / latest_price_value * 100, 2)
+        else:
+            current_vs_target_pct = round((target_price - latest_price_value) / latest_price_value * 100, 2)
+        if (direction == "UP" and latest_price_value >= target_price) or (direction == "DOWN" and latest_price_value <= target_price):
             status = "HIT"
+            current_vs_target_pct = 0.0
 
     return {
         "target_price": target_price,

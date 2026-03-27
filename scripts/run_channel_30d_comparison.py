@@ -209,7 +209,7 @@ def enrich_comparison_with_signal_accuracy(
         "overall": overall_accuracy,
         "by_channel": accuracy_by_channel,
         "recent_signals": tracker_db.recent_records(limit=12),
-        "recent_targets": [item for item in tracker_db.recent_records(limit=20) if item.get("price_target")],
+        "recent_targets": tracker_db.recent_records(limit=20, target_only=True),
         "channel_leaderboard": leaderboard,
     }
     return accuracy_by_channel, leaderboard
@@ -420,7 +420,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         )
         send_high_accuracy_target_alerts(
             config.notifications,
-            tracker_db.recent_records(limit=30),
+            tracker_db.recent_records(limit=30, target_only=True),
             accuracy_by_channel=accuracy_by_channel,
             channel_names={slug: item["display_name"] for slug, item in channel_payloads.items()},
         )

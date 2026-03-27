@@ -344,7 +344,7 @@ def filter_high_accuracy_targets(
         if float(channel_stats.get("target_hit_rate", 0) or 0) < min_channel_target_hit_rate:
             continue
         progress = record.get("target_progress_pct")
-        hit = bool(record.get("target_hit"))
+        hit = _record_target_hit(record)
         if not hit and (progress is None or float(progress) < min_target_progress_pct):
             continue
         enriched = dict(record)
@@ -353,7 +353,7 @@ def filter_high_accuracy_targets(
     return sorted(
         filtered,
         key=lambda item: (
-            not bool(item.get("target_hit")),
+            not _record_target_hit(item),
             -(float(item.get("target_progress_pct", 0) or 0)),
             -(float(item.get("signal_score", 0) or 0)),
             str(item.get("ticker", "")),
@@ -393,7 +393,7 @@ def format_high_accuracy_target_alert(
         )
         progress = record.get("target_progress_pct")
         hit_rate = record.get("channel_target_hit_rate")
-        status = "달성" if record.get("target_hit") else "진행중"
+        status = "달성" if _record_target_hit(record) else "진행중"
         meta_parts = [status]
         if progress is not None:
             meta_parts.append(f"진행률 {float(progress):.1f}%")
@@ -433,6 +433,10 @@ def send_high_accuracy_target_alerts(
     if not message:
         return False
     return _send_telegram_html(config, message)
+
+
+def _record_target_hit(record: dict[str, Any]) -> bool:
+    return bool(record.get("target_hit") or record.get("target_hit_date"))
 
 
 def _send_telegram_html(config: NotificationConfig, text: str) -> bool:

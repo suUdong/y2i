@@ -278,6 +278,19 @@ class TestHighAccuracyTargets:
         assert result is True
         assert "IT의 신" in mock_send.call_args[0][1]
 
+    def test_filter_high_accuracy_targets_accepts_legacy_hit_date(self):
+        records = [
+            {
+                **_make_target_record(progress=10.0, hit=False),
+                "target_hit_date": "2026-03-08",
+            }
+        ]
+        accuracy = {"itgod": {"target_count": 3, "target_hit_rate": 70.0}}
+        result = filter_high_accuracy_targets(records, accuracy_by_channel=accuracy)
+        assert [item["ticker"] for item in result] == ["NVDA"]
+        msg = format_high_accuracy_target_alert(result, channel_names={"itgod": "IT의 신"})
+        assert "달성" in msg
+
 
 class TestConsensusSignalAlerts:
     def test_format_consensus_alert(self):

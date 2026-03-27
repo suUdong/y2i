@@ -15,6 +15,7 @@ from omx_brainstorm.signal_tracker import (
     TRACKING_WINDOWS,
 )
 from omx_brainstorm.backtest import HistoricalPricePoint
+from omx_brainstorm.price_targets import aggregate_price_targets
 
 
 class FakeHistoryProvider:
@@ -67,6 +68,22 @@ class TestSignalRecord:
         assert restored.price_path[-1]["return_pct"] == 2.07
         assert restored.price_target["target_price"] == 62000.0
         assert restored.target_progress_pct == 57.14
+
+    def test_roundtrip_promotes_legacy_target_hit_date(self):
+        restored = SignalRecord.from_dict(
+            {
+                "ticker": "NVDA",
+                "company_name": "NVIDIA",
+                "channel_slug": "itgod",
+                "signal_date": "2026-03-20",
+                "signal_score": 80.0,
+                "verdict": "BUY",
+                "price_target": {"target_price": 150.0, "currency": "USD"},
+                "target_hit": False,
+                "target_hit_date": "2026-03-21",
+            }
+        )
+        assert restored.target_hit is True
 
 
 class TestSignalTrackerDB:
@@ -121,6 +138,19 @@ class TestSignalTrackerDB:
         db.add_record(record)
         needs = db.get_records_needing_update(today=date(2026, 3, 25))
         assert len(needs) == 0
+
+    def test_target_records_continue_refreshing_after_return_windows_are_filled(self, db: SignalTrackerDB):
+        record = SignalRecord(
+            ticker="NVDA", company_name="NVIDIA", channel_slug="itgod",
+            signal_date="2026-03-01", signal_score=88.0, verdict="BUY",
+            entry_date="2026-03-01", entry_price=100.0,
+            latest_price=120.0, latest_price_date="2026-03-05",
+            price_target={"target_price": 150.0, "currency": "USD"},
+            returns={"1d": 1.0, "3d": 2.0, "5d": 3.0, "10d": 4.0, "20d": 5.0},
+        )
+        db.add_record(record)
+        needs = db.get_records_needing_update(today=date(2026, 3, 25))
+        assert len(needs) == 1
 
     def test_update_returns(self, db: SignalTrackerDB):
         record = SignalRecord(
@@ -193,6 +223,63 @@ class TestSignalTrackerDB:
         assert stats.hit_rate_3d is None
         assert stats.avg_return_3d is None
         assert stats.signals_with_price_3d == 0
+
+    def test_accuracy_report_treats_legacy_target_hit_date_as_hit(self, db: SignalTrackerDB):
+        db.add_record(
+            SignalRecord.from_dict(
+                {
+                    "ticker": "NVDA",
+                    "company_name": "NVIDIA",
+                    "channel_slug": "itgod",
+                    "signal_date": "2026-03-01",
+                    "signal_score": 88.0,
+                    "verdict": "BUY",
+                    "price_target": {"target_price": 150.0, "currency": "USD"},
+                    "target_hit": False,
+                    "target_hit_date": "2026-03-08",
+                }
+            )
+        )
+        stats = db.accuracy_report("itgod")
+        assert stats.target_count == 1
+        assert stats.target_hits == 1
+        assert stats.pending_targets == 0
+        assert stats.target_hit_rate == 100.0
+
+    def test_recent_records_target_only_filters_before_limit(self, db: SignalTrackerDB):
+        db.add_record(
+            SignalRecord(
+                ticker="NO_TARGET", company_name="NoTarget", channel_slug="itgod",
+                signal_date="2026-03-03", signal_score=80.0, verdict="BUY",
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="WITH_TARGET", company_name="WithTarget", channel_slug="itgod",
+                signal_date="2026-03-02", signal_score=82.0, verdict="BUY",
+                price_target={"target_price": 150.0, "currency": "USD"},
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="OLDER_TARGET", company_name="OlderTarget", channel_slug="itgod",
+                signal_date="2026-03-01", signal_score=79.0, verdict="BUY",
+                price_target={"target_price": 120.0, "currency": "USD"},
+            )
+        )
+        recent = db.recent_records(limit=2, target_only=True)
+        assert [item["ticker"] for item in recent] == ["WITH_TARGET", "OLDER_TARGET"]
+
+
+def test_aggregate_price_targets_preserves_bearish_direction_for_hit_detection():
+    summary = aggregate_price_targets(
+        [{"target_price": 90.0, "currency": "USD", "direction": "DOWN"}],
+        latest_price=85.0,
+        currency="USD",
+    )
+    assert summary["direction"] == "DOWN"
+    assert summary["status"] == "HIT"
+    assert summary["current_vs_target_pct"] == 0.0
 
 
 class TestRecordSignalsFromOutput:
@@ -330,6 +417,137 @@ class TestUpdatePriceSnapshots:
         tracked = db.records[0]
         assert tracked.target_progress_pct == 100.0
         assert tracked.target_hit is True
+        assert tracked.target_hit_date == "2026-03-08"
+
+    def test_update_price_snapshots_refreshes_target_even_after_returns_are_full(self, db: SignalTrackerDB):
+        record = SignalRecord(
+            ticker="NVDA", company_name="NVIDIA", channel_slug="itgod",
+            signal_date="2026-03-01", signal_score=88.0, verdict="BUY",
+            entry_date="2026-03-01", entry_price=100.0,
+            price_target={"target_price": 150.0, "currency": "USD"},
+            returns={"1d": 1.0, "3d": 2.0, "5d": 3.0, "10d": 4.0, "20d": 5.0},
+        )
+        db.add_record(record)
+        provider = FakeHistoryProvider(
+            {
+                "NVDA": [
+                    HistoricalPricePoint(date="2026-03-01", close=100.0),
+                    HistoricalPricePoint(date="2026-03-08", close=150.0),
+                ]
+            }
+        )
+
+        import omx_brainstorm.signal_tracker as mod
+        try:
+            mod.date = type("MockDate", (), {"today": staticmethod(lambda: date(2026, 3, 25)), "fromisoformat": date.fromisoformat})()
+            updated = update_price_snapshots(db, history_provider=provider)
+        finally:
+            mod.date = date
+
+        assert updated == 1
+        tracked = db.records[0]
+        assert tracked.latest_price == 150.0
+        assert tracked.target_hit is True
+
+    def test_update_price_snapshots_clamps_bearish_target_metrics(self, db: SignalTrackerDB):
+        record = SignalRecord(
+            ticker="NVDA", company_name="NVIDIA", channel_slug="itgod",
+            signal_date="2026-03-01", signal_score=70.0, verdict="WATCH",
+            entry_price=100.0,
+            price_target={"target_price": 90.0, "currency": "USD"},
+            returns={"1d": None, "3d": None, "5d": None, "10d": None, "20d": None},
+        )
+        db.add_record(record)
+        provider = FakeHistoryProvider(
+            {
+                "NVDA": [
+                    HistoricalPricePoint(date="2026-03-01", close=100.0),
+                    HistoricalPricePoint(date="2026-03-08", close=85.0),
+                ]
+            }
+        )
+
+        import omx_brainstorm.signal_tracker as mod
+        try:
+            mod.date = type("MockDate", (), {"today": staticmethod(lambda: date(2026, 3, 25)), "fromisoformat": date.fromisoformat})()
+            updated = update_price_snapshots(db, history_provider=provider)
+        finally:
+            mod.date = date
+
+        assert updated == 1
+        tracked = db.records[0]
+        assert tracked.target_hit is True
+        assert tracked.target_progress_pct == 100.0
+        assert tracked.target_distance_pct == 0.0
+
+    def test_update_price_snapshots_preserves_ever_hit_state_after_pullback(self, db: SignalTrackerDB):
+        record = SignalRecord(
+            ticker="NVDA", company_name="NVIDIA", channel_slug="itgod",
+            signal_date="2026-03-01", signal_score=90.0, verdict="BUY",
+            entry_price=100.0,
+            price_target={"target_price": 150.0, "currency": "USD"},
+            target_hit=True,
+            target_hit_date="2026-03-08",
+            returns={"1d": 1.0, "3d": 2.0, "5d": 3.0, "10d": 4.0, "20d": 5.0},
+        )
+        db.add_record(record)
+        provider = FakeHistoryProvider(
+            {
+                "NVDA": [
+                    HistoricalPricePoint(date="2026-03-01", close=100.0),
+                    HistoricalPricePoint(date="2026-03-08", close=150.0),
+                    HistoricalPricePoint(date="2026-03-10", close=145.0),
+                ]
+            }
+        )
+
+        import omx_brainstorm.signal_tracker as mod
+        try:
+            mod.date = type("MockDate", (), {"today": staticmethod(lambda: date(2026, 3, 25)), "fromisoformat": date.fromisoformat})()
+            updated = update_price_snapshots(db, history_provider=provider)
+        finally:
+            mod.date = date
+
+        assert updated == 1
+        tracked = db.records[0]
+        assert tracked.latest_price == 145.0
+        assert tracked.target_hit is True
+        assert tracked.target_progress_pct == 100.0
+        assert tracked.target_distance_pct == 0.0
+        assert tracked.target_hit_date == "2026-03-08"
+
+    def test_update_price_snapshots_preserves_legacy_hit_date_only_state(self, db: SignalTrackerDB):
+        record = SignalRecord(
+            ticker="NVDA", company_name="NVIDIA", channel_slug="itgod",
+            signal_date="2026-03-01", signal_score=90.0, verdict="BUY",
+            entry_price=100.0,
+            price_target={"target_price": 150.0, "currency": "USD"},
+            target_hit=False,
+            target_hit_date="2026-03-08",
+            returns={"1d": 1.0, "3d": 2.0, "5d": 3.0, "10d": 4.0, "20d": 5.0},
+        )
+        db.add_record(record)
+        provider = FakeHistoryProvider(
+            {
+                "NVDA": [
+                    HistoricalPricePoint(date="2026-03-01", close=100.0),
+                    HistoricalPricePoint(date="2026-03-08", close=150.0),
+                    HistoricalPricePoint(date="2026-03-10", close=145.0),
+                ]
+            }
+        )
+
+        import omx_brainstorm.signal_tracker as mod
+        try:
+            mod.date = type("MockDate", (), {"today": staticmethod(lambda: date(2026, 3, 25)), "fromisoformat": date.fromisoformat})()
+            updated = update_price_snapshots(db, history_provider=provider)
+        finally:
+            mod.date = date
+
+        assert updated == 1
+        tracked = db.records[0]
+        assert tracked.target_hit is True
+        assert tracked.target_progress_pct == 100.0
         assert tracked.target_hit_date == "2026-03-08"
 
     def test_skip_no_entry_price(self, db: SignalTrackerDB):
