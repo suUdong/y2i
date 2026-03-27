@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
+TRACKING_WINDOWS = (1, 3, 5, 10, 20)
 
 
 def _tracker_db_path(output_dir: Path) -> Path:
@@ -383,6 +384,189 @@ def load_signal_accuracy_summary(
     }
 
 
+def load_tracker_records(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[dict[str, Any]]:
+    tracker_path = _tracker_db_path(output_dir)
+    payload = _load_json(tracker_path)
+    if not isinstance(payload, dict):
+        return []
+    signals = payload.get("signals", [])
+    if not isinstance(signals, list):
+        return []
+    return [item for item in signals if isinstance(item, dict)]
+
+
+def build_signal_timeline(record: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return chart-ready signal price points with a backward-compatible fallback."""
+    price_path = record.get("price_path", [])
+    if isinstance(price_path, list) and price_path:
+        normalized_points: list[dict[str, Any]] = []
+        for point in sorted(price_path, key=lambda item: item.get("date", "")):
+            if not isinstance(point, dict):
+                continue
+            point_date = str(point.get("date", ""))
+            close = point.get("close")
+            if not point_date or close is None:
+                continue
+            normalized_points.append(
+                {
+                    "date": point_date,
+                    "close": float(close),
+                    "return_pct": point.get("return_pct"),
+                    "days_from_signal": point.get("days_from_signal"),
+                    "days_from_entry": point.get("days_from_entry"),
+                    "source": "price_path",
+                }
+            )
+        if normalized_points:
+            return normalized_points
+
+    entry_price = record.get("entry_price")
+    if entry_price is None:
+        return []
+
+    base_date_text = str(record.get("entry_date") or record.get("signal_date") or "")[:10]
+    if not base_date_text:
+        return []
+
+    try:
+        base_date = date.fromisoformat(base_date_text)
+    except ValueError:
+        return []
+
+    signal_date_text = str(record.get("signal_date") or base_date_text)[:10]
+    try:
+        signal_dt = date.fromisoformat(signal_date_text)
+    except ValueError:
+        signal_dt = base_date
+
+    timeline = [
+        {
+            "date": base_date.isoformat(),
+            "close": float(entry_price),
+            "return_pct": 0.0,
+            "days_from_signal": (base_date - signal_dt).days,
+            "days_from_entry": 0,
+            "source": "returns_fallback",
+        }
+    ]
+    returns = record.get("returns", {})
+    if not isinstance(returns, dict):
+        returns = {}
+
+    for window in TRACKING_WINDOWS:
+        return_pct = returns.get(f"{window}d")
+        if return_pct is None:
+            continue
+        close = float(entry_price) * (1 + float(return_pct) / 100.0)
+        point_date = base_date + timedelta(days=window)
+        timeline.append(
+            {
+                "date": point_date.isoformat(),
+                "close": round(close, 4),
+                "return_pct": float(return_pct),
+                "days_from_signal": (point_date - signal_dt).days,
+                "days_from_entry": window,
+                "source": "returns_fallback",
+            }
+        )
+
+    return timeline
+
+
+def get_signal_chart_records(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    limit: int = 24,
+) -> list[dict[str, Any]]:
+    channel_names = get_channel_display_names(output_dir)
+    chart_records: list[dict[str, Any]] = []
+
+    for record in load_tracker_records(output_dir):
+        timeline = build_signal_timeline(record)
+        if not timeline:
+            continue
+        latest_point = timeline[-1]
+        ticker = str(record.get("ticker", ""))
+        company_name = str(record.get("company_name") or "")
+        chart_records.append(
+            {
+                **record,
+                "record_key": f"{ticker}|{record.get('channel_slug', '')}|{record.get('signal_date', '')}",
+                "channel_display": channel_names.get(str(record.get("channel_slug", "")), str(record.get("channel_slug", ""))),
+                "ticker_display": format_ticker_display(ticker, company_name),
+                "timeline": timeline,
+                "latest_return_pct": latest_point.get("return_pct"),
+                "latest_close": latest_point.get("close"),
+            }
+        )
+
+    chart_records.sort(
+        key=lambda item: (
+            _parse_timestamp(str(item.get("signal_date", ""))[:10] or "") or datetime.min.replace(tzinfo=timezone.utc),
+            float(item.get("signal_score", 0) or 0),
+            item.get("recorded_at", ""),
+            item.get("ticker", ""),
+        ),
+        reverse=True,
+    )
+    return chart_records[:limit]
+
+
+def build_live_feed_events(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    hours: int = 48,
+    limit: int = 40,
+) -> list[dict[str, Any]]:
+    channel_names = get_channel_display_names(output_dir)
+    events: list[dict[str, Any]] = []
+
+    for record in get_signal_chart_records(output_dir, limit=max(limit, 24)):
+        timestamp = (
+            _parse_timestamp(str(record.get("last_updated", "")))
+            or _parse_timestamp(str(record.get("recorded_at", "")))
+            or _parse_timestamp(str(record.get("signal_date", ""))[:10])
+            or datetime.min.replace(tzinfo=timezone.utc)
+        )
+        return_5d = (record.get("returns", {}) or {}).get("5d") if isinstance(record.get("returns"), dict) else None
+        events.append(
+            {
+                "event_type": "signal_update",
+                "timestamp": timestamp.isoformat(),
+                "channel_slug": record.get("channel_slug", ""),
+                "channel_display": record.get("channel_display", channel_names.get(str(record.get("channel_slug", "")), str(record.get("channel_slug", "")))),
+                "headline": record.get("ticker_display", format_ticker_display(str(record.get("ticker", "")), str(record.get("company_name") or ""))),
+                "summary": f"{record.get('verdict', 'WATCH')} · 점수 {float(record.get('signal_score', 0) or 0):.1f}",
+                "detail": (
+                    f"진입 {format_price(record.get('entry_price'))}"
+                    + (f" · 5일 {float(return_5d):+.2f}%" if return_5d is not None else "")
+                ),
+                "signal_class": "TRACKED",
+                "score": float(record.get("signal_score", 0) or 0),
+            }
+        )
+
+    for video in get_recent_videos(output_dir, hours=hours):
+        published = _parse_timestamp(str(video.get("published_at", "")) or "")
+        updated = video.get("_updated_at")
+        timestamp = published or updated or datetime.min.replace(tzinfo=timezone.utc)
+        score = float(video.get("signal_score", 0) or 0)
+        events.append(
+            {
+                "event_type": "video_analysis",
+                "timestamp": timestamp.isoformat() if isinstance(timestamp, datetime) else str(timestamp),
+                "channel_slug": video.get("_channel", ""),
+                "channel_display": channel_names.get(str(video.get("_channel", "")), str(video.get("_channel", ""))),
+                "headline": video.get("title", ""),
+                "summary": f"{translate_signal_class(video.get('video_signal_class', 'UNKNOWN'))} · 점수 {score:.0f}",
+                "detail": first_non_empty(video.get("skip_reason"), video.get("reason"), translate_video_type(video.get("video_type", ""))),
+                "signal_class": video.get("video_signal_class", "UNKNOWN"),
+                "score": score,
+            }
+        )
+
+    events.sort(key=lambda item: item.get("timestamp", ""), reverse=True)
+    return events[:limit]
+
+
 # ── Helpers for extracting dashboard-ready data ──────────────────────────────
 
 def extract_type_distribution(report: dict[str, Any]) -> dict[str, int]:
@@ -710,6 +894,8 @@ def get_live_feed_data(
     return {
         "recent_videos": recent_videos,
         "recent_signals": recent_signals,
+        "feed_events": build_live_feed_events(output_dir, hours=hours),
+        "signal_chart_records": get_signal_chart_records(output_dir),
         "last_update": last_update.isoformat() if last_update else None,
     }
 
@@ -732,6 +918,35 @@ def format_price(price: float | None, currency: str = "KRW") -> str:
     if currency == "KRW":
         return f"₩{price:,.0f}"
     return f"${price:,.2f}"
+
+
+def first_non_empty(*values: str | None) -> str:
+    for value in values:
+        if value:
+            return str(value)
+    return ""
+
+
+def translate_signal_class(signal_class: str) -> str:
+    return {
+        "ACTIONABLE": "엄격 액션",
+        "SECTOR_ONLY": "섹터 참고",
+        "LOW_SIGNAL": "저신호",
+        "NON_EQUITY": "비주식",
+        "NOISE": "노이즈",
+        "TRACKED": "추적 시그널",
+    }.get(signal_class or "UNKNOWN", signal_class or "미분류")
+
+
+def translate_video_type(video_type: str) -> str:
+    return {
+        "STOCK_PICK": "종목 분석",
+        "SECTOR": "섹터 분석",
+        "MACRO": "매크로",
+        "EXPERT_INTERVIEW": "전문가 인터뷰",
+        "MARKET_REVIEW": "시황 리뷰",
+        "OTHER": "기타",
+    }.get(video_type or "OTHER", video_type or "기타")
 
 
 def get_channel_display_names(

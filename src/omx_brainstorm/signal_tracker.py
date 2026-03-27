@@ -26,6 +26,9 @@ class SignalRecord:
     entry_price: float | None = None  # close price used as the tracking baseline
     returns: dict[str, float | None] = field(default_factory=dict)
     # returns keys: "1d", "3d", "5d", "10d", "20d" -> pct return or None if not yet available
+    latest_price: float | None = None
+    latest_price_date: str | None = None
+    price_path: list[dict[str, Any]] = field(default_factory=list)
     recorded_at: str = ""
     last_updated: str = ""
 
@@ -269,6 +272,19 @@ def update_price_snapshots(db: SignalTrackerDB, history_provider: Any = None) ->
             record.entry_date = entry_point.date
             record.entry_price = entry_point.close
 
+        price_path = _build_price_path(
+            history,
+            record.signal_date[:10],
+            record.entry_date or entry_point.date,
+            record.entry_price or entry_point.close,
+        )
+        latest_path_point = price_path[-1] if price_path else None
+        path_changed = (
+            price_path != record.price_path
+            or record.latest_price != (latest_path_point.get("close") if latest_path_point else None)
+            or record.latest_price_date != (latest_path_point.get("date") if latest_path_point else None)
+        )
+
         prices_by_day = {}
         for point in history:
             dt = date.fromisoformat(point.date[:10])
@@ -291,7 +307,13 @@ def update_price_snapshots(db: SignalTrackerDB, history_provider: Any = None) ->
             if target_price is not None and record.entry_price and record.entry_price > 0:
                 new_returns[key] = round((target_price - record.entry_price) / record.entry_price * 100, 2)
 
-        if new_returns or entry_changed:
+        if path_changed:
+            record.price_path = price_path
+            if latest_path_point:
+                record.latest_price = float(latest_path_point["close"])
+                record.latest_price_date = str(latest_path_point["date"])
+
+        if new_returns or entry_changed or path_changed:
             if new_returns:
                 record.returns.update(new_returns)
             record.last_updated = datetime.now(timezone.utc).isoformat()
@@ -319,3 +341,36 @@ def _resolve_entry_point(history: Sequence[Any], signal_date: str) -> Any | None
         if date.fromisoformat(point.date[:10]) >= signal_dt:
             return point
     return None
+
+
+def _build_price_path(
+    history: Sequence[Any],
+    signal_date: str,
+    entry_date: str,
+    entry_price: float,
+) -> list[dict[str, Any]]:
+    signal_dt = date.fromisoformat(signal_date[:10])
+    entry_dt = date.fromisoformat(entry_date[:10])
+    path: list[dict[str, Any]] = []
+
+    for point in sorted(history, key=lambda item: item.date):
+        point_dt = date.fromisoformat(point.date[:10])
+        if point_dt < signal_dt:
+            continue
+        close = float(point.close)
+        if close <= 0:
+            continue
+        return_pct = None
+        if entry_price > 0 and point_dt >= entry_dt:
+            return_pct = round((close - entry_price) / entry_price * 100, 2)
+        path.append(
+            {
+                "date": point.date[:10],
+                "close": round(close, 4),
+                "days_from_signal": (point_dt - signal_dt).days,
+                "days_from_entry": (point_dt - entry_dt).days,
+                "return_pct": return_pct,
+            }
+        )
+
+    return path

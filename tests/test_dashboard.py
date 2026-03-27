@@ -14,7 +14,9 @@ import dashboard.data_loader as data_loader_module
 from dashboard.data_loader import (
     _latest_file,
     _load_json,
+    build_live_feed_events,
     build_overview_report,
+    build_signal_timeline,
     extract_actionable_signals,
     extract_channel_leaderboard,
     extract_cross_video_ranking,
@@ -31,11 +33,13 @@ from dashboard.data_loader import (
     get_live_feed_data,
     get_pipeline_activity,
     get_recent_videos,
+    get_signal_chart_records,
     load_30d_results,
     load_all_video_titles,
     load_channel_comparison,
     load_integration_report,
     load_signal_accuracy_summary,
+    load_tracker_records,
     load_video_titles,
 )
 
@@ -138,6 +142,13 @@ def tmp_output(tmp_path: Path) -> Path:
                 "verdict": "BUY",
                 "entry_date": "2026-03-20",
                 "entry_price": 58000.0,
+                "latest_price": 60320.0,
+                "latest_price_date": "2026-03-25",
+                "price_path": [
+                    {"date": "2026-03-20", "close": 58000.0, "days_from_signal": 0, "days_from_entry": 0, "return_pct": 0.0},
+                    {"date": "2026-03-21", "close": 58696.0, "days_from_signal": 1, "days_from_entry": 1, "return_pct": 1.2},
+                    {"date": "2026-03-25", "close": 60320.0, "days_from_signal": 5, "days_from_entry": 5, "return_pct": 4.0},
+                ],
                 "returns": {"1d": 1.2, "3d": 2.5, "5d": 4.0, "10d": 6.0, "20d": None},
                 "recorded_at": "2026-03-23T00:00:00+00:00",
                 "last_updated": "2026-03-23T00:00:00+00:00",
@@ -549,11 +560,46 @@ class TestLoadSignalAccuracySummary:
         assert summary["overall"]["window_stats"]["5d"]["tracked"] == 2
 
 
+class TestTrackerDerivedLoaders:
+    def test_load_tracker_records(self, tmp_output: Path):
+        records = load_tracker_records(tmp_output)
+        assert len(records) == 2
+        assert records[0]["ticker"] == "005930.KS"
+
+    def test_build_signal_timeline_prefers_price_path(self, tmp_output: Path):
+        record = load_tracker_records(tmp_output)[0]
+        timeline = build_signal_timeline(record)
+        assert len(timeline) == 3
+        assert timeline[-1]["close"] == 60320.0
+        assert timeline[-1]["source"] == "price_path"
+
+    def test_build_signal_timeline_falls_back_to_returns(self, tmp_output: Path):
+        record = load_tracker_records(tmp_output)[1]
+        timeline = build_signal_timeline(record)
+        assert timeline[0]["close"] == 120000.0
+        assert timeline[-1]["return_pct"] == -2.0
+        assert timeline[-1]["source"] == "returns_fallback"
+
+    def test_get_signal_chart_records(self, tmp_output: Path):
+        records = get_signal_chart_records(tmp_output)
+        assert records[0]["record_key"].startswith("005930.KS|sampro|")
+        assert records[0]["channel_display"] == "Test Channel"
+        assert records[0]["timeline"]
+
+    def test_build_live_feed_events(self, tmp_output: Path):
+        events = build_live_feed_events(tmp_output, hours=9999, limit=20)
+        assert any(event["event_type"] == "video_analysis" for event in events)
+        assert any(event["event_type"] == "signal_update" for event in events)
+        assert events[0]["channel_display"] in {"Test Channel", "IT God"}
+
+
 class TestGetLiveFeedData:
     def test_returns_expected_keys(self, tmp_output: Path):
         data = get_live_feed_data(tmp_output, hours=9999)
         assert "recent_videos" in data
         assert "recent_signals" in data
+        assert "feed_events" in data
+        assert "signal_chart_records" in data
         assert "last_update" in data
 
     def test_recent_videos_is_list(self, tmp_output: Path):

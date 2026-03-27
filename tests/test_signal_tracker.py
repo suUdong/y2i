@@ -46,6 +46,12 @@ class TestSignalRecord:
             verdict="BUY",
             entry_date="2026-03-20",
             entry_price=58000.0,
+            latest_price=59200.0,
+            latest_price_date="2026-03-25",
+            price_path=[
+                {"date": "2026-03-20", "close": 58000.0, "days_from_signal": 0, "days_from_entry": 0, "return_pct": 0.0},
+                {"date": "2026-03-25", "close": 59200.0, "days_from_signal": 5, "days_from_entry": 5, "return_pct": 2.07},
+            ],
             returns={"5d": 2.5, "10d": None},
         )
         d = record.to_dict()
@@ -54,6 +60,8 @@ class TestSignalRecord:
         assert restored.signal_score == 75.5
         assert restored.entry_date == "2026-03-20"
         assert restored.returns["5d"] == 2.5
+        assert restored.latest_price == 59200.0
+        assert restored.price_path[-1]["return_pct"] == 2.07
 
 
 class TestSignalTrackerDB:
@@ -252,6 +260,10 @@ class TestUpdatePriceSnapshots:
         r = db.records[0]
         assert r.entry_date == "2026-03-01"
         assert r.returns["1d"] == 1.0  # (50500-50000)/50000*100
+        assert r.latest_price == 53000.0
+        assert r.latest_price_date == "2026-03-21"
+        assert r.price_path[0]["date"] == "2026-03-01"
+        assert r.price_path[-1]["return_pct"] == 6.0
 
     def test_skip_no_entry_price(self, db: SignalTrackerDB):
         record = SignalRecord(

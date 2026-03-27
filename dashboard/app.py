@@ -28,6 +28,7 @@ from dashboard.data_loader import (
     get_all_rankings,
     get_available_channels,
     get_channel_display_names,
+    get_signal_chart_records,
     get_last_update_time,
     get_live_feed_data,
     get_pipeline_activity,
@@ -275,6 +276,186 @@ header[data-testid="stHeader"] {
     flex-wrap: wrap;
     gap: 6px;
 }
+.hero-shell {
+    background:
+        radial-gradient(circle at top right, rgba(34,197,94,0.22), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(59,130,246,0.18), transparent 28%),
+        linear-gradient(135deg, rgba(15,23,42,0.96) 0%, rgba(30,41,59,0.94) 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 1.35rem;
+    margin: 0.25rem 0 1rem;
+}
+.hero-kicker {
+    color: #22C55E;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+.hero-title {
+    color: #F8FAFC;
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-top: 0.15rem;
+}
+.hero-copy {
+    color: #CBD5E1;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin-top: 0.55rem;
+    max-width: 72ch;
+}
+.hero-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 0.95rem;
+}
+.hero-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 999px;
+    padding: 7px 12px;
+    color: #E2E8F0;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+.hero-chip strong {
+    color: #F8FAFC;
+    font-size: 0.86rem;
+}
+.section-kicker {
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.7rem;
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+}
+.podium-card {
+    background: linear-gradient(180deg, rgba(30,41,59,0.95) 0%, rgba(15,23,42,0.95) 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 1rem 1rem 1.1rem;
+    min-height: 180px;
+    position: relative;
+    overflow: hidden;
+}
+.podium-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 45%);
+    pointer-events: none;
+}
+.podium-rank {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #94A3B8;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.podium-rank-1 { color: #F8FAFC; }
+.podium-rank-2 { color: #CBD5E1; }
+.podium-rank-3 { color: #FBBF24; }
+.podium-name {
+    color: #F8FAFC;
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin-top: 0.35rem;
+}
+.podium-score {
+    color: #22C55E;
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    margin-top: 0.65rem;
+}
+.podium-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 0.8rem;
+}
+.podium-meta-item {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 0.6rem 0.75rem;
+}
+.podium-meta-label {
+    color: #64748B;
+    font-size: 0.67rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+}
+.podium-meta-value {
+    color: #F8FAFC;
+    font-size: 0.92rem;
+    font-weight: 700;
+    margin-top: 0.2rem;
+}
+.feed-card {
+    background: linear-gradient(180deg, rgba(15,23,42,0.96) 0%, rgba(30,41,59,0.94) 100%);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 1rem 1.05rem;
+    margin-bottom: 0.75rem;
+}
+.feed-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 0.4rem;
+}
+.feed-card-type {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #22C55E;
+}
+.feed-card-time {
+    color: #64748B;
+    font-size: 0.74rem;
+    font-family: monospace;
+}
+.feed-card-title {
+    color: #F8FAFC;
+    font-size: 0.95rem;
+    font-weight: 750;
+    line-height: 1.45;
+}
+.feed-card-summary {
+    color: #CBD5E1;
+    font-size: 0.82rem;
+    margin-top: 0.35rem;
+}
+.feed-card-detail {
+    color: #94A3B8;
+    font-size: 0.78rem;
+    margin-top: 0.28rem;
+    line-height: 1.5;
+}
+.feed-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0.7rem;
+}
+.feed-chip {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 999px;
+    color: #CBD5E1;
+    font-size: 0.72rem;
+    padding: 4px 9px;
+}
 .ticker-chip {
     background: rgba(34,197,94,0.12);
     color: #22C55E;
@@ -437,6 +618,18 @@ header[data-testid="stHeader"] {
 
 /* -- Galaxy Z Fold7 cover screen (375px) ------------------------------- */
 @media (max-width: 600px) {
+    .hero-title {
+        font-size: 1.35rem;
+    }
+    .hero-copy {
+        font-size: 0.84rem;
+    }
+    .hero-shell {
+        padding: 1rem;
+    }
+    .podium-card {
+        min-height: auto;
+    }
     /* KPI 값 축소 */
     [data-testid="stMetricValue"] {
         font-size: 1.4rem !important;
@@ -557,6 +750,43 @@ if not available_channels:
     st.stop()
 
 channel_names = get_channel_display_names(OUTPUT_DIR)
+comparison_snapshot = load_channel_comparison(OUTPUT_DIR)
+accuracy_snapshot = extract_signal_accuracy_summary(comparison_snapshot or {})
+pipeline_summary = comparison_snapshot.get("pipeline_summary", {}) if isinstance(comparison_snapshot, dict) else {}
+overall_accuracy_snapshot = accuracy_snapshot.get("overall", {}) if isinstance(accuracy_snapshot, dict) else {}
+
+hero_hit_rate = overall_accuracy_snapshot.get("hit_rate_5d")
+hero_hit_rate_text = "미제공" if hero_hit_rate is None else f"{float(hero_hit_rate):.1f}%"
+
+freshness_text = "업데이트 정보 없음"
+if last_update:
+    age_minutes = int((datetime.now(tz=timezone.utc) - last_update).total_seconds() // 60)
+    freshness_text = "방금 반영" if age_minutes < 5 else f"{age_minutes}분 전 반영"
+
+hero_chips = [
+    ("채널", str(len(available_channels))),
+    ("분석 영상", str(pipeline_summary.get("total_videos", 0) or 0)),
+    ("액션 시그널", str(pipeline_summary.get("strict_actionable_videos", 0) or 0)),
+    ("추적 신호", str(overall_accuracy_snapshot.get("total_signals", 0) or 0)),
+    ("5일 적중률", hero_hit_rate_text),
+    ("갱신", freshness_text),
+]
+hero_chip_html = "".join(
+    f'<span class="hero-chip">{label} <strong>{value}</strong></span>'
+    for label, value in hero_chips
+)
+st.markdown(
+    f'<div class="hero-shell">'
+    f'<div class="hero-kicker">Signal Intelligence Dashboard</div>'
+    f'<div class="hero-title">채널 성과, 시그널 추적, 실시간 분석 흐름을 한 화면에서 검증</div>'
+    f'<div class="hero-copy">'
+    f'채널별 적중률과 수익률, 개별 시그널의 가격 추적, 최근 분석 활동을 함께 보도록 대시보드를 정리했습니다. '
+    f'상단 요약에서 전체 상태를 확인하고, 정확도 탭에서 채널 품질과 시그널 후속 흐름을 바로 검증할 수 있습니다.'
+    f'</div>'
+    f'<div class="hero-chip-row">{hero_chip_html}</div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 # -- Plotly theme helper -----------------------------------------------------
 
@@ -631,6 +861,55 @@ def render_metrics_row(metrics: list[tuple[str, str]], cols_desktop: int = 4) ->
     cols = st.columns(col_count)
     for i, (label, value) in enumerate(metrics):
         cols[i % col_count].metric(label, value)
+
+
+def render_podium_cards(rows: list[dict[str, object]]) -> None:
+    if not rows:
+        return
+    cols = st.columns(min(len(rows), 3))
+    for idx, row in enumerate(rows[:3], start=1):
+        with cols[idx - 1]:
+            st.markdown(
+                f'<div class="podium-card">'
+                f'<div class="podium-rank podium-rank-{idx}">Top {idx}</div>'
+                f'<div class="podium-name">{row.get("채널", EMPTY_TEXT)}</div>'
+                f'<div class="podium-score">{float(row.get("종합 품질", 0) or 0):.1f}</div>'
+                f'<div class="podium-meta">'
+                f'<div class="podium-meta-item"><div class="podium-meta-label">5일 적중률</div><div class="podium-meta-value">{format_percent_metric(row.get("5일 적중률"))}</div></div>'
+                f'<div class="podium-meta-item"><div class="podium-meta-label">5일 평균수익률</div><div class="podium-meta-value">{format_percent_metric(row.get("5일 평균수익률"), digits=2)}</div></div>'
+                f'<div class="podium-meta-item"><div class="podium-meta-label">추적 신호</div><div class="podium-meta-value">{int(row.get("추적 신호", 0) or 0)}</div></div>'
+                f'<div class="podium-meta-item"><div class="podium-meta-label">표본</div><div class="podium-meta-value">{int(row.get("5일 표본", 0) or 0)}</div></div>'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+
+def render_feed_card(event: dict[str, object]) -> None:
+    event_type = str(event.get("event_type", "video_analysis"))
+    event_label = "신호 업데이트" if event_type == "signal_update" else "영상 분석"
+    timestamp = format_signal_datetime(str(event.get("timestamp", "")))
+    signal_class = str(event.get("signal_class", "UNKNOWN"))
+    score = float(event.get("score", 0) or 0)
+    chips = [
+        str(event.get("channel_display", EMPTY_TEXT)),
+        translate_signal_class(signal_class),
+        f"점수 {score:.1f}" if score else "점수 미제공",
+    ]
+    chip_html = "".join(f'<span class="feed-chip">{chip}</span>' for chip in chips if chip)
+    st.markdown(
+        f'<div class="feed-card">'
+        f'<div class="feed-card-head">'
+        f'<div class="feed-card-type">{event_label}</div>'
+        f'<div class="feed-card-time">{timestamp}</div>'
+        f'</div>'
+        f'<div class="feed-card-title">{event.get("headline", EMPTY_TEXT)}</div>'
+        f'<div class="feed-card-summary">{event.get("summary", EMPTY_TEXT)}</div>'
+        f'<div class="feed-card-detail">{event.get("detail", EMPTY_TEXT) or EMPTY_TEXT}</div>'
+        f'<div class="feed-chip-row">{chip_html}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def signal_badge(signal_class: str) -> str:
@@ -763,6 +1042,8 @@ def translate_direction(direction: str) -> str:
 
 def format_percent_metric(value: float | int | None, digits: int = 1) -> str:
     if value is None:
+        return EMPTY_TEXT
+    if pd.isna(value):
         return EMPTY_TEXT
     return f"{float(value):.{digits}f}%"
 
@@ -1076,56 +1357,84 @@ with tabs[1]:
         live_data = get_live_feed_data(OUTPUT_DIR, hours=48)
     except Exception as _e:
         st.error(f"실시간 피드 로딩 오류: {_e}")
-        live_data = {"recent_videos": [], "recent_signals": [], "last_update": None}
+        live_data = {"recent_videos": [], "recent_signals": [], "feed_events": [], "last_update": None}
 
     if live_data.get("last_update"):
-        st.caption(f"마지막 업데이트: {live_data['last_update']}")
+        st.caption(f"마지막 업데이트: {format_signal_datetime(str(live_data['last_update']))}")
 
-    # -- Recent tracked signals --
+    feed_events = live_data.get("feed_events", [])
     live_signals = live_data.get("recent_signals", [])
-    if live_signals:
-        st.markdown("##### 최근 추적 시그널")
-        for sig in live_signals[:12]:
-            ticker = sig.get("ticker", "")
-            company = sig.get("company_name", "")
-            display = format_ticker_display(ticker, company)
-            verdict = sig.get("verdict", "")
-            score = sig.get("signal_score", 0)
-            entry_price = sig.get("entry_price")
-            returns = sig.get("returns", {})
-            ret_5d = returns.get("5d")
-            ret_str = f" | 5일 수익률: {ret_5d:+.2f}%" if ret_5d is not None else ""
-            entry_str = f" | 진입가: {format_price(entry_price)}" if entry_price else ""
-            verdict_emoji = {"STRONG_BUY": "🟢", "BUY": "🔵", "WATCH": "🟡"}.get(verdict, "⚪")
-            st.markdown(
-                f'<div class="omx-card" style="padding:10px;margin-bottom:6px;">'
-                f"{verdict_emoji} <b>{display}</b> — {verdict} ({score:.1f}){entry_str}{ret_str}"
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-    else:
-        st.info("추적 시그널이 없습니다.")
-
-    # -- Recent analyzed videos --
     live_videos = live_data.get("recent_videos", [])
-    if live_videos:
-        st.markdown("##### 최근 분석 영상")
-        for vid in live_videos[:20]:
-            title = vid.get("title", "")
-            channel = vid.get("_channel", "")
-            ch_display = channel_names.get(channel, channel)
-            signal_class = vid.get("video_signal_class", vid.get("signal_class", ""))
-            published = vid.get("published_at", "")
-            class_emoji = {"ACTIONABLE": "🟢", "SECTOR_ONLY": "🔵", "LOW_SIGNAL": "🟡"}.get(signal_class, "⚪")
-            st.markdown(
-                f'<div class="omx-card" style="padding:8px;margin-bottom:4px;">'
-                f"{class_emoji} <b>{ch_display}</b> — {title}"
-                f'<span style="color:#94A3B8;font-size:0.8em;"> | {published} | {signal_class}</span>'
-                f"</div>",
-                unsafe_allow_html=True,
-            )
+
+    render_metrics_row([
+        ("피드 이벤트", str(len(feed_events))),
+        ("최근 분석 영상", str(len(live_videos))),
+        ("추적 시그널", str(len(live_signals))),
+    ], cols_desktop=3)
+
+    feed_controls = st.columns([1, 1])
+    with feed_controls[0]:
+        feed_type = st.selectbox("이벤트 유형", ["전체", "영상 분석", "신호 업데이트"], key="feed_type")
+    with feed_controls[1]:
+        feed_channel_options = ["전체"] + sorted({str(item.get("channel_display", "")) for item in feed_events if item.get("channel_display")})
+        feed_channel = st.selectbox("채널 필터", feed_channel_options, key="feed_channel")
+
+    filtered_events = []
+    for event in feed_events:
+        event_type = event.get("event_type", "")
+        if feed_type == "영상 분석" and event_type != "video_analysis":
+            continue
+        if feed_type == "신호 업데이트" and event_type != "signal_update":
+            continue
+        if feed_channel != "전체" and event.get("channel_display") != feed_channel:
+            continue
+        filtered_events.append(event)
+
+    if filtered_events:
+        st.markdown('<div class="section-kicker">Unified Feed</div>', unsafe_allow_html=True)
+        for event in filtered_events:
+            render_feed_card(event)
     else:
-        st.info("최근 48시간 내 분석된 영상이 없습니다.")
+        st.info("선택한 조건에 맞는 실시간 이벤트가 없습니다.")
+
+    with st.expander("원본 리스트 보기", expanded=False):
+        raw_col_a, raw_col_b = st.columns(2)
+        with raw_col_a:
+            st.markdown("##### 최근 추적 시그널")
+            if live_signals:
+                recent_rows = []
+                for sig in live_signals[:12]:
+                    recent_rows.append(
+                        {
+                            "채널": channel_names.get(sig.get("channel_slug", ""), sig.get("channel_slug", EMPTY_TEXT)),
+                            "종목": format_ticker_display(sig.get("ticker", ""), sig.get("company_name", "")),
+                            "판단": translate_verdict(sig.get("verdict", "")),
+                            "신호일": format_signal_date(sig.get("signal_date", "")),
+                            "5일": format_percent_metric((sig.get("returns", {}) or {}).get("5d"), digits=2),
+                            "10일": format_percent_metric((sig.get("returns", {}) or {}).get("10d"), digits=2),
+                        }
+                    )
+                st.dataframe(pd.DataFrame(recent_rows), use_container_width=True, hide_index=True)
+            else:
+                st.info("추적 시그널이 없습니다.")
+
+        with raw_col_b:
+            st.markdown("##### 최근 분석 영상")
+            if live_videos:
+                recent_video_rows = []
+                for vid in live_videos[:16]:
+                    recent_video_rows.append(
+                        {
+                            "채널": channel_names.get(vid.get("_channel", ""), vid.get("_channel", EMPTY_TEXT)),
+                            "제목": vid.get("title", EMPTY_TEXT),
+                            "시그널": translate_signal_class(vid.get("video_signal_class", "UNKNOWN")),
+                            "점수": round(float(vid.get("signal_score", 0) or 0), 1),
+                            "게시일": format_signal_date(vid.get("published_at", "")),
+                        }
+                    )
+                st.dataframe(pd.DataFrame(recent_video_rows), use_container_width=True, hide_index=True)
+            else:
+                st.info("최근 48시간 내 분석된 영상이 없습니다.")
 
 # =============================================================================
 # TAB 2 — 종목 랭킹
@@ -1292,6 +1601,24 @@ with tabs[3]:
             ),
         ], cols_desktop=6)
 
+        if channel_leaderboard:
+            st.markdown('<div class="section-kicker">Leaderboard Leaders</div>', unsafe_allow_html=True)
+            leaderboard_preview = []
+            by_channel_preview = accuracy_summary.get("by_channel", {}) if isinstance(accuracy_summary, dict) else {}
+            for item in channel_leaderboard[:3]:
+                channel_accuracy = by_channel_preview.get(item.get("slug", ""), {})
+                leaderboard_preview.append(
+                    {
+                        "채널": item.get("display_name", item.get("slug", EMPTY_TEXT)),
+                        "종합 품질": float(item.get("overall_quality_score", 0) or 0),
+                        "5일 적중률": item.get("hit_rate_5d"),
+                        "5일 평균수익률": item.get("avg_return_5d"),
+                        "추적 신호": int(channel_accuracy.get("total_signals", 0) or 0),
+                        "5일 표본": int(channel_accuracy.get("signals_with_price", 0) or 0),
+                    }
+                )
+            render_podium_cards(leaderboard_preview)
+
         window_stats = overall_accuracy.get("window_stats", {})
         df_windows = pd.DataFrame(
             [
@@ -1404,8 +1731,95 @@ with tabs[3]:
                 fig_quality.update_traces(textposition="none")
             fig_quality.update_layout(coloraxis_showscale=False)
             render_chart(fig_quality, key="accuracy_leaderboard_chart", height=360)
+
+            scatter_rows = df_leaderboard.dropna(subset=["5일 적중률", "5일 평균수익률"]).copy()
+            if not scatter_rows.empty:
+                st.markdown("##### 채널 성과 포지셔닝")
+                fig_scatter = px.scatter(
+                    scatter_rows,
+                    x="5일 적중률",
+                    y="5일 평균수익률",
+                    size="추적 신호",
+                    color="종합 품질",
+                    hover_name="채널",
+                    text="채널",
+                    color_continuous_scale=["#1D4ED8", "#06B6D4", "#22C55E"],
+                )
+                fig_scatter.update_traces(
+                    textposition="top center",
+                    marker=dict(line=dict(color="rgba(248,250,252,0.15)", width=1)),
+                    hovertemplate="%{hovertext}<br>5일 적중률 %{x:.1f}%<br>5일 평균수익률 %{y:.2f}%<br>추적 신호 %{marker.size:.0f}<extra></extra>",
+                )
+                fig_scatter.update_xaxes(title="5일 적중률 (%)", range=[0, 100])
+                fig_scatter.update_yaxes(title="5일 평균수익률 (%)", zeroline=True, zerolinecolor="rgba(255,255,255,0.18)")
+                render_chart(fig_scatter, key="accuracy_positioning", height=360)
         else:
             st.info("채널 리더보드 데이터가 없습니다.")
+
+        signal_chart_records = get_signal_chart_records(OUTPUT_DIR)
+        st.markdown("##### 시그널 → 주가 추적")
+        if signal_chart_records:
+            selected_signal_label = st.selectbox(
+                "추적 시그널 선택",
+                [
+                    f"{item['channel_display']} · {item['ticker_display']} · {format_signal_date(item.get('signal_date', ''))}"
+                    for item in signal_chart_records
+                ],
+                key="accuracy_signal_chart_picker",
+            )
+            selected_signal = next(
+                (
+                    item
+                    for item in signal_chart_records
+                    if f"{item['channel_display']} · {item['ticker_display']} · {format_signal_date(item.get('signal_date', ''))}" == selected_signal_label
+                ),
+                signal_chart_records[0],
+            )
+            selected_timeline = selected_signal.get("timeline", [])
+            if selected_timeline:
+                df_timeline = pd.DataFrame(selected_timeline)
+                baseline_close = float(df_timeline.iloc[0]["close"]) if not df_timeline.empty else 0.0
+                if baseline_close > 0:
+                    df_timeline["기준가 지수"] = df_timeline["close"].astype(float) / baseline_close * 100.0
+                else:
+                    df_timeline["기준가 지수"] = 100.0
+                df_timeline["날짜"] = pd.to_datetime(df_timeline["date"])
+                df_timeline["수익률"] = pd.to_numeric(df_timeline["return_pct"], errors="coerce")
+                line_color = "#22C55E" if (selected_signal.get("latest_return_pct") or 0) >= 0 else "#EF4444"
+
+                selected_metrics = st.columns(5)
+                selected_metrics[0].metric("채널", str(selected_signal.get("channel_display", EMPTY_TEXT)))
+                selected_metrics[1].metric("판단", translate_verdict(str(selected_signal.get("verdict", ""))))
+                selected_metrics[2].metric("신호 점수", f"{float(selected_signal.get('signal_score', 0) or 0):.1f}")
+                selected_metrics[3].metric("진입가", format_price(selected_signal.get("entry_price")))
+                selected_metrics[4].metric("최신 수익률", format_percent_metric(selected_signal.get("latest_return_pct"), digits=2))
+
+                fig_signal = go.Figure()
+                fig_signal.add_trace(
+                    go.Scatter(
+                        x=df_timeline["날짜"],
+                        y=df_timeline["기준가 지수"],
+                        mode="lines+markers",
+                        name="기준가 지수",
+                        line=dict(color=line_color, width=3),
+                        marker=dict(size=7, color=line_color),
+                        customdata=df_timeline[["close", "수익률"]].values,
+                        hovertemplate="날짜 %{x|%Y-%m-%d}<br>기준가 지수 %{y:.2f}<br>종가 %{customdata[0]:,.2f}<br>수익률 %{customdata[1]:+.2f}%<extra></extra>",
+                    )
+                )
+                fig_signal.add_hline(y=100, line_dash="dot", line_color="rgba(255,255,255,0.24)")
+                fig_signal.update_yaxes(title="기준가 지수 (진입가=100)")
+                fig_signal.update_xaxes(title="날짜")
+                render_chart(fig_signal, key="signal_tracking_chart", height=360)
+
+                timeline_table = df_timeline[["date", "close", "수익률"]].copy()
+                timeline_table.columns = ["날짜", "종가", "수익률"]
+                timeline_table["날짜"] = timeline_table["날짜"].map(format_signal_date)
+                timeline_table["종가"] = timeline_table["종가"].map(lambda value: format_price(float(value)))
+                timeline_table["수익률"] = timeline_table["수익률"].map(lambda value: format_percent_metric(value, digits=2))
+                st.dataframe(timeline_table, use_container_width=True, hide_index=True)
+        else:
+            st.info("차트로 볼 수 있는 추적 시그널이 없습니다.")
 
         with st.expander("최근 추적 신호", expanded=False):
             if recent_tracked_signals:
