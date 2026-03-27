@@ -156,17 +156,78 @@ def test_run_scheduler_iteration_triggers_and_updates_state(monkeypatch, tmp_pat
 
     class Proc:
         returncode = 0
-        stdout = json.dumps({"channels": {"sampro": {"json_path": str(artifact_path), "txt_path": str(tmp_path / "sampro_30d_test.txt")}}})
+        stdout = json.dumps({
+            "channels": {"sampro": {"json_path": str(artifact_path), "txt_path": str(tmp_path / "sampro_30d_test.txt")}},
+            "telegram": {
+                "generated_at": "20260327T010500Z",
+                "analysis_summary": {
+                    "channel_signal_summaries": [
+                        {"channel_slug": "sampro", "channel_name": "Sampro", "signals": [{"ticker": "NVDA", "signal_summary": "BUY | 점수 88.0"}]}
+                    ],
+                    "top_signals": [{"ticker": "NVDA", "company_name": "NVIDIA", "aggregate_score": 88.0, "aggregate_verdict": "BUY", "channel_name": "Sampro"}],
+                },
+                "daily_leaderboard": [{"slug": "sampro", "display_name": "Sampro", "overall_quality_score": 77.2}],
+            },
+        })
         stderr = ""
 
     monkeypatch.setattr("omx_brainstorm.scheduler.subprocess.run", lambda *a, **k: Proc())
     monkeypatch.setattr("omx_brainstorm.scheduler.notify_all", lambda *a, **k: {"telegram": False, "discord": False})
+    analysis_calls = []
+    leaderboard_calls = []
+    monkeypatch.setattr("omx_brainstorm.scheduler.send_analysis_summary_alert", lambda *a, **k: analysis_calls.append((a, k)) or True)
+    monkeypatch.setattr("omx_brainstorm.scheduler.send_daily_leaderboard_alert", lambda *a, **k: leaderboard_calls.append((a, k)) or True)
     result = run_scheduler_iteration(config, resolver=Resolver(), now=datetime(2026, 3, 27, 1, 5, tzinfo=timezone.utc))
     state = json.loads(state_path.read_text(encoding="utf-8"))
     assert result["ran"] is True
     assert result["reason"] == "daily_and_new_videos"
     assert state["channels"]["sampro"]["processed_video_ids"] == ["vid-new"]
     assert state["last_daily_run_local_date"] == "2026-03-27"
+    assert len(analysis_calls) == 1
+    assert len(leaderboard_calls) == 1
+
+
+def test_run_scheduler_iteration_skips_daily_leaderboard_on_new_video_only(monkeypatch, tmp_path):
+    state_path = tmp_path / "scheduler_state.json"
+    health_path = tmp_path / "health.json"
+    monkeypatch.setattr("omx_brainstorm.scheduler.HEALTH_PATH", health_path)
+
+    config = AppConfig(
+        config_path=str(tmp_path / "config.toml"),
+        channels=[ChannelConfig(slug="sampro", display_name="Sampro", url="https://youtube.com/@sampro")],
+        schedule=ScheduleConfig(enabled=True, daily_time="23:59", timezone="Asia/Seoul", poll_video_limit=3, state_path=str(state_path)),
+        notifications=NotificationConfig(),
+    )
+
+    class Resolver:
+        def resolve_channel_videos(self, channel_url, limit):
+            return [VideoInput(video_id="vid-new", title="New", url="u", published_at="20260327")]
+
+    artifact_path = tmp_path / "sampro_30d_test.json"
+    artifact_path.write_text(json.dumps({"videos": [{"video_id": "vid-new"}]}), encoding="utf-8")
+
+    class Proc:
+        returncode = 0
+        stdout = json.dumps({
+            "channels": {"sampro": {"json_path": str(artifact_path), "txt_path": str(tmp_path / "sampro_30d_test.txt")}},
+            "telegram": {
+                "generated_at": "20260327T010500Z",
+                "analysis_summary": {"channel_signal_summaries": [], "top_signals": []},
+                "daily_leaderboard": [{"slug": "sampro", "display_name": "Sampro", "overall_quality_score": 77.2}],
+            },
+        })
+        stderr = ""
+
+    monkeypatch.setattr("omx_brainstorm.scheduler.subprocess.run", lambda *a, **k: Proc())
+    monkeypatch.setattr("omx_brainstorm.scheduler.notify_all", lambda *a, **k: {"telegram": False, "discord": False})
+    leaderboard_calls = []
+    monkeypatch.setattr("omx_brainstorm.scheduler.send_analysis_summary_alert", lambda *a, **k: True)
+    monkeypatch.setattr("omx_brainstorm.scheduler.send_daily_leaderboard_alert", lambda *a, **k: leaderboard_calls.append((a, k)) or True)
+
+    state_path.write_text(json.dumps({"channels": {"sampro": {"processed_video_ids": []}}}), encoding="utf-8")
+    run_scheduler_iteration(config, resolver=Resolver(), now=datetime(2026, 3, 27, 1, 5, tzinfo=timezone.utc))
+
+    assert leaderboard_calls == []
 
 
 def test_processed_ids_from_payload_reads_channel_artifacts(tmp_path):

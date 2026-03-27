@@ -24,6 +24,7 @@ class StrategyConfig:
     paper_trade_capital: float = 10_000.0
     signal_alert_min_score: float = 68.0
     signal_alert_min_channel_quality: float = 50.0
+    high_confidence_min_score: float = 82.0
 
 
 @dataclass(slots=True)
@@ -121,6 +122,7 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
             paper_trade_capital=float(os.getenv("OMX_PAPER_TRADE_CAPITAL", strategy_payload.get("paper_trade_capital", 10_000.0))),
             signal_alert_min_score=float(os.getenv("OMX_SIGNAL_ALERT_MIN_SCORE", strategy_payload.get("signal_alert_min_score", 68.0))),
             signal_alert_min_channel_quality=float(os.getenv("OMX_SIGNAL_ALERT_MIN_CHANNEL_QUALITY", strategy_payload.get("signal_alert_min_channel_quality", 50.0))),
+            high_confidence_min_score=float(os.getenv("OMX_HIGH_CONFIDENCE_MIN_SCORE", strategy_payload.get("high_confidence_min_score", 82.0))),
         ),
         notifications=NotificationConfig(
             telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", notifications_payload.get("telegram_bot_token")),

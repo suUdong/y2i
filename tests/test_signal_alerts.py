@@ -6,11 +6,17 @@ import pytest
 
 from omx_brainstorm.app_config import NotificationConfig
 from omx_brainstorm.signal_alerts import (
+    build_channel_signal_summary,
+    filter_high_confidence_signals,
     filter_high_quality_signals,
     format_analysis_summary,
+    format_daily_leaderboard_summary,
     format_telegram_alert,
+    send_daily_leaderboard_alert,
+    send_high_confidence_signal_alerts,
     send_analysis_summary_alert,
     send_signal_alerts,
+    DEFAULT_HIGH_CONFIDENCE_MIN_SCORE,
     DEFAULT_MIN_SCORE,
     DEFAULT_MIN_CHANNEL_QUALITY,
 )
@@ -105,6 +111,32 @@ class TestFormatTelegramAlert:
         msg = format_telegram_alert(signals)
         assert "📺" not in msg
 
+    def test_custom_title_and_footer_threshold(self):
+        msg = format_telegram_alert([_make_stock()], title="🚨 Y2I 고신뢰 시그널 알림", footer_threshold=82.0)
+        assert "고신뢰" in msg
+        assert "82" in msg
+
+
+class TestBuildChannelSignalSummary:
+    def test_builds_per_channel_summary(self):
+        signals = [_make_stock(score=81.0)]
+        summary = build_channel_signal_summary(signals, channel_slug="itgod", channel_name="IT의 신")
+        assert summary["channel_slug"] == "itgod"
+        assert summary["channel_name"] == "IT의 신"
+        assert summary["signals"][0]["ticker"] == "005930.KS"
+        assert "점수 81.0" in summary["signals"][0]["signal_summary"]
+
+
+class TestFilterHighConfidenceSignals:
+    def test_requires_higher_score_and_actionable_verdict(self):
+        signals = [
+            _make_stock(score=85.0, verdict="BUY"),
+            _make_stock(ticker="WATCH", score=90.0, verdict="WATCH"),
+            _make_stock(ticker="LOW", score=75.0, verdict="BUY"),
+        ]
+        result = filter_high_confidence_signals(signals)
+        assert [item["ticker"] for item in result] == ["005930.KS"]
+
 
 class TestSendSignalAlerts:
     def test_no_qualifying_signals(self):
@@ -157,6 +189,27 @@ class TestSendSignalAlerts:
         assert result is True
 
 
+class TestSendHighConfidenceSignalAlerts:
+    @patch("omx_brainstorm.signal_alerts._send_telegram_html")
+    def test_sends_only_high_confidence_signals(self, mock_send):
+        mock_send.return_value = True
+        config = NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123")
+        signals = [
+            _make_stock(score=85.0, verdict="STRONG_BUY"),
+            _make_stock(ticker="LOW", score=76.0, verdict="BUY"),
+        ]
+        result = send_high_confidence_signal_alerts(config, signals, channel_name="Test")
+        assert result is True
+        msg = mock_send.call_args[0][1]
+        assert "고신뢰" in msg
+        assert f"{DEFAULT_HIGH_CONFIDENCE_MIN_SCORE:g}" in msg
+        assert "LOW" not in msg
+
+    def test_missing_credentials_returns_false(self):
+        result = send_high_confidence_signal_alerts(NotificationConfig(), [_make_stock(score=90.0)])
+        assert result is False
+
+
 class TestFormatAnalysisSummary:
     def test_basic_format(self):
         new_videos = {"itgod": ["v1", "v2"], "sampro": ["v3"]}
@@ -177,6 +230,27 @@ class TestFormatAnalysisSummary:
         msg = format_analysis_summary(new_videos, channel_names={"itgod": "IT의 신"})
         assert "IT의 신" in msg
 
+    def test_with_channel_signal_summaries(self):
+        summaries = [
+            {
+                "channel_slug": "itgod",
+                "channel_name": "IT의 신",
+                "signals": [
+                    {
+                        "ticker": "NVDA",
+                        "company_name": "NVIDIA",
+                        "aggregate_score": 88.0,
+                        "aggregate_verdict": "BUY",
+                        "signal_summary": "BUY | 점수 88.0 | 언급 4회",
+                    }
+                ],
+            }
+        ]
+        msg = format_analysis_summary({}, trigger="daily", channel_signal_summaries=summaries)
+        assert "IT의 신" in msg
+        assert "NVDA" in msg
+        assert "점수 88.0" in msg
+
     def test_empty_videos_returns_header(self):
         msg = format_analysis_summary({}, trigger="daily")
         assert "0" in msg
@@ -189,7 +263,7 @@ class TestFormatAnalysisSummary:
 
 
 class TestSendAnalysisSummaryAlert:
-    def test_empty_videos_returns_false(self):
+    def test_empty_payload_returns_false(self):
         config = NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123")
         assert send_analysis_summary_alert(config, {}) is False
 
@@ -201,7 +275,40 @@ class TestSendAnalysisSummaryAlert:
         assert result is True
         mock_send.assert_called_once()
 
+    @patch("omx_brainstorm.signal_alerts._send_telegram_html")
+    def test_sends_when_channel_summaries_present_without_new_videos(self, mock_send):
+        mock_send.return_value = True
+        config = NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123")
+        result = send_analysis_summary_alert(
+            config,
+            {},
+            trigger="daily",
+            channel_signal_summaries=[{"channel_slug": "itgod", "channel_name": "IT의 신", "signals": []}],
+        )
+        assert result is True
+        mock_send.assert_called_once()
+
     def test_missing_credentials_returns_false(self):
         config = NotificationConfig()
         result = send_analysis_summary_alert(config, {"itgod": ["v1"]})
         assert result is False
+
+
+class TestDailyLeaderboardSummary:
+    def test_formats_leaderboard(self):
+        leaderboard = [
+            {"slug": "sampro", "display_name": "삼프로TV", "overall_quality_score": 77.2, "hit_rate_5d": 66.0, "avg_return_5d": 3.2, "actionable_ratio": 0.55},
+            {"slug": "itgod", "display_name": "IT의 신", "overall_quality_score": 71.0, "actionable_ratio": 0.41},
+        ]
+        msg = format_daily_leaderboard_summary(leaderboard, generated_at="20260327T140000Z")
+        assert "일일 채널 리더보드" in msg
+        assert "삼프로TV" in msg
+        assert "77.2" in msg
+        assert "66.0%" in msg
+
+    @patch("omx_brainstorm.signal_alerts._send_telegram_html")
+    def test_send_daily_leaderboard_alert(self, mock_send):
+        mock_send.return_value = True
+        config = NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123")
+        leaderboard = [{"slug": "sampro", "display_name": "삼프로TV", "overall_quality_score": 77.2}]
+        assert send_daily_leaderboard_alert(config, leaderboard, generated_at="20260327T140000Z") is True

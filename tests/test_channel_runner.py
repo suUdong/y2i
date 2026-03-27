@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from scripts.run_channel_30d_comparison import (
+    build_telegram_payload,
     quality_scorecard,
     recent_feed_video_ids,
     run_comparison_job,
@@ -128,3 +129,46 @@ def test_save_comparison_artifacts_writes_human_readable_labels(tmp_path):
     assert "- 최신 기준 시각: 2026-03-26 00:00 UTC" in txt
     assert "[삼프로TV]" in txt
     assert "- 채널 slug: sampro" in txt
+
+
+def test_build_telegram_payload_includes_channel_summaries_and_leaderboard(tmp_path):
+    class RankedStockStub:
+        def __init__(self, ticker: str, company_name: str, score: float, verdict: str):
+            self.ticker = ticker
+            self.company_name = company_name
+            self.aggregate_score = score
+            self.aggregate_verdict = verdict
+
+        def to_dict(self):
+            return {
+                "ticker": self.ticker,
+                "company_name": self.company_name,
+                "aggregate_score": self.aggregate_score,
+                "aggregate_verdict": self.aggregate_verdict,
+                "total_mentions": 2,
+            }
+
+    channel_payloads = {
+        "sampro": {
+            "display_name": "삼프로TV",
+            "ranking": [RankedStockStub("NVDA", "NVIDIA", 88.0, "BUY")],
+        },
+        "itgod": {
+            "display_name": "IT의 신",
+            "ranking": [RankedStockStub("TSLA", "Tesla", 81.0, "WATCH")],
+        },
+    }
+    leaderboard = [
+        {"slug": "sampro", "display_name": "삼프로TV", "overall_quality_score": 77.5},
+        {"slug": "itgod", "display_name": "IT의 신", "overall_quality_score": 71.2},
+    ]
+    context = RunContext(run_id="20260327T140000Z", today="2026-03-27", output_dir=tmp_path, window_days=30)
+
+    payload = build_telegram_payload(channel_payloads, leaderboard, context)
+
+    assert payload["generated_at"] == "20260327T140000Z"
+    assert payload["daily_leaderboard"][0]["slug"] == "sampro"
+    summaries = payload["analysis_summary"]["channel_signal_summaries"]
+    assert summaries[0]["channel_name"] == "IT의 신"
+    assert summaries[1]["signals"][0]["ticker"] == "NVDA"
+    assert payload["analysis_summary"]["top_signals"][0]["ticker"] == "NVDA"

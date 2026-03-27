@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 from .app_config import AppConfig
 from .notifications import notify_all
-from .signal_alerts import send_analysis_summary_alert
+from .signal_alerts import send_analysis_summary_alert, send_daily_leaderboard_alert
 from .youtube import YoutubeResolver
 from .utils import write_json, read_json
 
@@ -187,6 +187,8 @@ def run_scheduler_iteration(
     exit_code, payload = _run_scheduled_job_result(config, script_path=script_path)
     if exit_code == 0:
         processed_ids = processed_ids_from_payload(payload)
+        telegram_payload = payload.get("telegram", {}) if isinstance(payload, dict) else {}
+        analysis_summary = telegram_payload.get("analysis_summary", {}) if isinstance(telegram_payload, dict) else {}
         if processed_ids:
             mark_channels_processed(state, processed_ids, now=now)
         else:
@@ -194,17 +196,27 @@ def run_scheduler_iteration(
         if should_run_daily:
             localized_now = now.astimezone(ZoneInfo(config.schedule.timezone))
             state["last_daily_run_local_date"] = localized_now.date().isoformat()
-        if new_ids_by_channel:
-            channel_names = {ch.slug: ch.display_name for ch in config.channels}
+        channel_names = {ch.slug: ch.display_name for ch in config.channels}
+        try:
+            send_analysis_summary_alert(
+                config.notifications,
+                new_ids_by_channel,
+                trigger=trigger,
+                top_signals=analysis_summary.get("top_signals"),
+                channel_names=channel_names,
+                channel_signal_summaries=analysis_summary.get("channel_signal_summaries"),
+            )
+        except Exception as exc:
+            logger.warning("Analysis summary alert failed: %s", exc)
+        if should_run_daily:
             try:
-                send_analysis_summary_alert(
+                send_daily_leaderboard_alert(
                     config.notifications,
-                    new_ids_by_channel,
-                    trigger=trigger,
-                    channel_names=channel_names,
+                    telegram_payload.get("daily_leaderboard", []),
+                    generated_at=str(telegram_payload.get("generated_at", "")),
                 )
             except Exception as exc:
-                logger.warning("Analysis summary alert failed: %s", exc)
+                logger.warning("Daily leaderboard alert failed: %s", exc)
     else:
         state["last_failed_trigger_at"] = now.isoformat()
 

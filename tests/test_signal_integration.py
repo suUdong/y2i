@@ -116,6 +116,7 @@ def test_strategy_config_alert_fields():
     config = StrategyConfig()
     assert config.signal_alert_min_score == 68.0
     assert config.signal_alert_min_channel_quality == 50.0
+    assert config.high_confidence_min_score == 82.0
 
 
 def test_tracker_db_survives_reload(tracker_db: SignalTrackerDB, channel_output: Path):

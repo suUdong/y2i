@@ -18,7 +18,10 @@ from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic
 from omx_brainstorm.logging_utils import configure_logging
 from omx_brainstorm.master_engine import validate_cross_stock_master_quality
 from omx_brainstorm.research import build_cross_video_ranking
-from omx_brainstorm.signal_alerts import send_signal_alerts
+from omx_brainstorm.signal_alerts import (
+    build_channel_signal_summary,
+    send_high_confidence_signal_alerts,
+)
 from omx_brainstorm.signal_tracker import SignalTrackerDB, record_signals_from_output, update_price_snapshots
 from omx_brainstorm.transcript_cache import TranscriptCache
 from omx_brainstorm.youtube import ChannelRegistry, TranscriptFetcher, YoutubeResolver
@@ -369,10 +372,12 @@ def run_comparison_job(config: AppConfig) -> dict:
     except Exception as exc:
         logger.warning("Dashboard markdown generation failed: %s", exc)
 
+    telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
+
     try:
-        channel_comparison_data = comparison.get("channels", {})
         if not accuracy_by_channel:
             accuracy_by_channel, leaderboard = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
+            telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
         quality_scores = {item["slug"]: item["overall_quality_score"] for item in leaderboard}
         ranked_reports = rank_channels(compute_channel_quality(
             comparison.get("channels", {}),
@@ -381,27 +386,66 @@ def run_comparison_job(config: AppConfig) -> dict:
         dynamic_weights = compute_dynamic_weights(ranked_reports)
         for slug, item in channel_payloads.items():
             ranking_dicts = [s.to_dict() for s in item["ranking"]]
-            send_signal_alerts(
+            send_high_confidence_signal_alerts(
                 config.notifications,
                 ranking_dicts,
                 channel_name=item["display_name"],
                 channel_slug=slug,
                 channel_quality_scores=quality_scores,
-                min_score=config.strategy.signal_alert_min_score,
+                min_score=config.strategy.high_confidence_min_score,
                 min_channel_quality=config.strategy.signal_alert_min_channel_quality,
                 weight_multipliers=dynamic_weights,
             )
     except Exception as exc:
-        logger.warning("Signal alerts failed (non-fatal): %s", exc)
+        logger.warning("High-confidence signal alerts failed (non-fatal): %s", exc)
 
     payload = {
         "channels": {slug: {"json_path": item["json_path"], "txt_path": item["txt_path"]} for slug, item in channel_payloads.items()},
         "comparison_json": str(compare_json),
         "comparison_txt": str(compare_txt),
         "dashboard_markdown": dashboard_markdown,
+        "telegram": telegram_payload,
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return payload
+
+
+def build_telegram_payload(
+    channel_payloads: dict[str, dict],
+    leaderboard: list[dict[str, object]],
+    context: RunContext,
+) -> dict[str, object]:
+    """Build a compact payload for scheduler-side Telegram notifications."""
+    channel_signal_summaries: list[dict[str, object]] = []
+    top_signals: list[dict[str, object]] = []
+
+    for slug, item in channel_payloads.items():
+        ranking_dicts = [stock.to_dict() for stock in item.get("ranking", [])]
+        summary = build_channel_signal_summary(
+            ranking_dicts,
+            channel_slug=slug,
+            channel_name=item.get("display_name", slug),
+        )
+        channel_signal_summaries.append(summary)
+        for signal in summary.get("signals", []):
+            top_signals.append(
+                {
+                    **signal,
+                    "channel_slug": slug,
+                    "channel_name": item.get("display_name", slug),
+                }
+            )
+
+    top_signals.sort(key=lambda item: float(item.get("aggregate_score", 0)), reverse=True)
+    channel_signal_summaries.sort(key=lambda item: item.get("channel_name", ""))
+    return {
+        "generated_at": context.run_id,
+        "analysis_summary": {
+            "channel_signal_summaries": channel_signal_summaries,
+            "top_signals": top_signals[:5],
+        },
+        "daily_leaderboard": leaderboard[:5],
+    }
 
 
 def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Path, Path]:
