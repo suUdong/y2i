@@ -11,6 +11,7 @@ from .backtest import BacktestEngine, BacktestIdea
 from .backtest_automation import run_backtest_for_artifact
 from .logging_utils import configure_logging
 from .scheduler import run_scheduled_job, run_scheduler_forever
+from .signal_backtest import run_signal_backtest_workflow
 from .signal_tracker import SignalTrackerDB, build_signal_accuracy_summary, save_signal_accuracy_report
 from .pipeline import OMXPipeline
 from .youtube import ChannelRegistry, YoutubeResolver
@@ -69,6 +70,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_accuracy = sub.add_parser("signal-accuracy-report", help="Generate a tracked signal accuracy report")
     p_accuracy.add_argument("--tracker-db", default=".omx/state/signal_tracker.json")
     p_accuracy.add_argument("--top-tickers", type=int, default=20)
+
+    p_backtest_report = sub.add_parser("signal-backtest-report", help="Backfill recent signals and generate a lookback backtest report")
+    p_backtest_report.add_argument("--config", default="config.toml")
+    p_backtest_report.add_argument("--tracker-db", default=".omx/state/signal_backtest_tracker.json")
+    p_backtest_report.add_argument("--lookback-days", type=int, default=90)
+    p_backtest_report.add_argument("--top-filters", type=int, default=10)
+    p_backtest_report.add_argument("--min-filter-sample", type=int, default=3)
 
     p_all = sub.add_parser("analyze-all", help="Analyze all enabled channels from config")
     p_all.add_argument("--config", default="config.toml")
@@ -216,6 +224,25 @@ def main() -> None:
                 "channel_count": len(summary.get("by_channel", {})),
                 "ticker_count": len(summary.get("by_ticker", {})),
             }, ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "signal-backtest-report":
+            config = load_app_config(args.config)
+            configure_logging(
+                verbose=args.verbose,
+                json_logs=config.logging.json,
+                log_dir=config.logging.log_dir,
+                retention_days=config.logging.retention_days,
+            )
+            payload = run_signal_backtest_workflow(
+                config_path=args.config,
+                tracker_db_path=args.tracker_db,
+                output_dir=args.output_dir,
+                lookback_days=args.lookback_days,
+                top_filters=args.top_filters,
+                min_filter_sample=args.min_filter_sample,
+            )
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
             return
 
         if args.command == "analyze-channel-30d":

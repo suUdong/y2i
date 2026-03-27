@@ -10,8 +10,12 @@ from omx_brainstorm.signal_tracker import (
     SignalRecord,
     SignalTrackerDB,
     AccuracyStats,
+    build_signal_backtest_summary,
     build_signal_accuracy_summary,
     record_signals_from_output,
+    record_signals_from_ranking,
+    record_signals_from_rows,
+    save_signal_backtest_report,
     save_signal_accuracy_report,
     update_price_snapshots,
     TRACKING_WINDOWS,
@@ -307,6 +311,117 @@ class TestSignalTrackerDB:
         assert "종목 리더보드" in text
         assert "삼성전자" in text
 
+    def test_build_signal_backtest_summary_filters_by_lookback(self, db: SignalTrackerDB):
+        db.add_record(
+            SignalRecord(
+                ticker="OLD", company_name="Old", channel_slug="itgod",
+                signal_date="2025-12-01", signal_score=60.0, verdict="BUY",
+                returns={"1d": 1.0, "3d": 2.0, "5d": 3.0, "10d": None, "20d": None},
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="NEW", company_name="New", channel_slug="itgod",
+                signal_date="2026-03-20", signal_score=78.0, verdict="BUY",
+                returns={"1d": 1.0, "3d": 1.5, "5d": 2.0, "10d": None, "20d": None},
+            )
+        )
+        summary = build_signal_backtest_summary(db, lookback_days=30, as_of=date(2026, 3, 28))
+        assert summary["overall"]["total_signals"] == 1
+        assert summary["signals"][0]["ticker"] == "NEW"
+        assert summary["start_date"] == "2026-02-27"
+
+    def test_build_signal_backtest_summary_ranks_channels_by_5d_roi(self, db: SignalTrackerDB):
+        db.add_record(
+            SignalRecord(
+                ticker="A", company_name="A", channel_slug="itgod",
+                signal_date="2026-03-20", signal_score=82.0, verdict="BUY",
+                returns={"1d": 2.0, "3d": 3.0, "5d": 4.0, "10d": None, "20d": None},
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="B", company_name="B", channel_slug="sampro",
+                signal_date="2026-03-21", signal_score=75.0, verdict="BUY",
+                returns={"1d": -1.0, "3d": 0.5, "5d": 1.0, "10d": None, "20d": None},
+            )
+        )
+        summary = build_signal_backtest_summary(
+            db,
+            lookback_days=30,
+            as_of=date(2026, 3, 28),
+            channel_metadata={
+                "itgod": {"display_name": "IT의 신", "overall_quality_score": 66.0},
+                "sampro": {"display_name": "삼프로TV", "overall_quality_score": 55.0},
+            },
+        )
+        leaderboard = summary["channel_roi_leaderboard"]
+        assert leaderboard[0]["slug"] == "itgod"
+        assert leaderboard[0]["compounded_directional_roi_5d"] == 4.0
+        assert leaderboard[1]["slug"] == "sampro"
+
+    def test_build_signal_backtest_summary_recommends_filters(self, db: SignalTrackerDB):
+        db.add_record(
+            SignalRecord(
+                ticker="HIGH1", company_name="High1", channel_slug="itgod",
+                signal_date="2026-03-20", signal_score=82.0, verdict="BUY",
+                price_target={"target_price": 120.0, "currency": "USD"},
+                returns={"1d": 1.0, "3d": 2.0, "5d": 6.0, "10d": None, "20d": None},
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="HIGH2", company_name="High2", channel_slug="itgod",
+                signal_date="2026-03-21", signal_score=85.0, verdict="SELL",
+                price_target={"target_price": 90.0, "currency": "USD"},
+                returns={"1d": -1.0, "3d": -2.0, "5d": -4.0, "10d": None, "20d": None},
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="LOW", company_name="Low", channel_slug="sampro",
+                signal_date="2026-03-22", signal_score=60.0, verdict="WATCH",
+                returns={"1d": -0.5, "3d": -1.0, "5d": -2.0, "10d": None, "20d": None},
+            )
+        )
+        summary = build_signal_backtest_summary(
+            db,
+            lookback_days=30,
+            as_of=date(2026, 3, 28),
+            channel_metadata={
+                "itgod": {"display_name": "IT의 신", "overall_quality_score": 70.0},
+                "sampro": {"display_name": "삼프로TV", "overall_quality_score": 45.0},
+            },
+            top_filters=5,
+            min_filter_sample=1,
+        )
+        labels = [item["label"] for item in summary["filter_recommendations"]]
+        assert any("channel_quality>=55" in label for label in labels)
+        assert summary["filter_recommendations"][0]["signals_with_price_5d"] >= 1
+
+    def test_save_signal_backtest_report(self, db: SignalTrackerDB, tmp_path: Path):
+        db.add_record(
+            SignalRecord(
+                ticker="NVDA", company_name="NVIDIA", channel_slug="itgod",
+                signal_date="2026-03-20", signal_score=80.0, verdict="BUY",
+                returns={"1d": 1.0, "3d": 2.0, "5d": 4.0, "10d": None, "20d": None},
+            )
+        )
+        summary = build_signal_backtest_summary(
+            db,
+            lookback_days=30,
+            as_of=date(2026, 3, 28),
+            channel_metadata={"itgod": {"display_name": "IT의 신", "overall_quality_score": 65.0}},
+            min_filter_sample=1,
+        )
+        json_path, txt_path = save_signal_backtest_report(summary, tmp_path, "20260327T230000Z")
+        payload = json.loads(json_path.read_text(encoding="utf-8"))
+        text = txt_path.read_text(encoding="utf-8")
+        assert payload["overall"]["total_signals"] == 1
+        assert payload["channel_roi_leaderboard"][0]["slug"] == "itgod"
+        assert "채널 ROI 리포트" in text
+        assert "최적 필터 조건" in text
+
     def test_recent_records_target_only_filters_before_limit(self, db: SignalTrackerDB):
         db.add_record(
             SignalRecord(
@@ -344,6 +459,56 @@ def test_aggregate_price_targets_preserves_bearish_direction_for_hit_detection()
 
 
 class TestRecordSignalsFromOutput:
+    def test_ingest_per_video_rows_payload(self, db: SignalTrackerDB):
+        provider = FakeHistoryProvider(
+            {
+                "NVDA": [HistoricalPricePoint(date="2026-03-15", close=101.0)],
+                "AAPL": [HistoricalPricePoint(date="2026-03-16", close=202.0)],
+            }
+        )
+        added = record_signals_from_rows(
+            db,
+            "itgod",
+            [
+                {
+                    "video_id": "abc123",
+                    "title": "엔비디아 분석",
+                    "published_at": "20260315",
+                    "signal_score": 76.0,
+                    "stocks": [
+                        {"ticker": "NVDA", "company_name": "NVIDIA", "signal_strength_score": 88.0, "final_verdict": "BUY"},
+                        {"ticker": "AAPL", "company_name": "Apple", "signal_strength_score": 73.0, "final_verdict": "WATCH"},
+                    ],
+                }
+            ],
+            history_provider=provider,
+        )
+        assert added == 2
+        assert db.records[0].source_video_id == "abc123"
+        assert db.records[0].signal_date == "2026-03-15"
+
+    def test_ingest_channel_ranking_payload(self, db: SignalTrackerDB):
+        provider = FakeHistoryProvider(
+            {"NVDA": [HistoricalPricePoint(date="2026-03-15", close=101.0)]}
+        )
+        added = record_signals_from_ranking(
+            db,
+            "itgod",
+            [
+                {
+                    "ticker": "NVDA",
+                    "company_name": "NVIDIA",
+                    "aggregate_score": 80.0,
+                    "aggregate_verdict": "BUY",
+                    "first_signal_at": "2026-03-15",
+                }
+            ],
+            history_provider=provider,
+        )
+        assert added == 1
+        assert db.records[0].ticker == "NVDA"
+        assert db.records[0].entry_price == 101.0
+
     def test_ingest_channel_output(self, db: SignalTrackerDB, tmp_path: Path):
         output_data = {
             "channel_slug": "itgod",

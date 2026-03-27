@@ -124,6 +124,8 @@ def analyze_video_heuristic(
     analysis_text, transcript_language, evidence_source, cached_entry = resolve_transcript_text(video, cache, fetcher, logger)
     signal = assess_video_signal(video.title, analysis_text, description=video.description or "", tags=video.tags)
     video_type = VideoType(signal.video_type)
+    cached_video = (cached_entry or {}).get("video", {}) if isinstance(cached_entry, dict) else {}
+    published_at = video.published_at or cached_video.get("published_at")
 
     # VideoType-based enrichment
     macro_insights_data = []
@@ -144,7 +146,7 @@ def analyze_video_heuristic(
         "video_id": video.video_id,
         "title": video.title,
         "url": video.url,
-        "published_at": video.published_at,
+        "published_at": published_at,
         "description": _compact_text(video.description or "", max_chars=description_max_chars),
         "tags": _compact_tags(video.tags, max_items=max_tags),
         "video_type": video_type.value,

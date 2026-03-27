@@ -48,6 +48,7 @@ omx-brainstorm analyze-channel "https://www.youtube.com/@lucky_tv/videos" --limi
 omx-brainstorm backtest-ranked output/itgod_30d_*.json --start-date 2026-03-01 --end-date 2026-03-23
 omx-brainstorm backtest-artifact output/itgod_30d_20260323T005353Z.json
 omx-brainstorm run-comparison --config config.toml
+omx-brainstorm signal-backtest-report --config config.toml --lookback-days 90
 omx-brainstorm run-scheduler --config config.toml --once
 omx-brainstorm run-healthcheck
 ```
@@ -125,6 +126,13 @@ python scripts/run_backtest_report.py output/itgod_30d_20260323T005353Z.json
 ```
 
 이 모듈은 저장된 `cross_video_ranking`을 읽고, `first_signal_at` 이후 수익률을 계산한다.
+
+최근 90일 전수 시그널 백테스트 + 채널 ROI + 필터 추천:
+```bash
+omx-brainstorm signal-backtest-report --config config.toml --lookback-days 90
+```
+
+이 명령은 enabled 채널의 영상별 stock mention을 다시 스캔해 전수 backtest tracker(`.omx/state/signal_backtest_tracker.json`)를 백필하고, 1/3/5일 수익률 기반 리포트를 `output/signal_backtest_report_*.json|txt`로 저장한다.
 
 ## 아키텍처
 - [youtube.py](/home/wdsr88/workspace/y2i/src/omx_brainstorm/youtube.py): 채널/영상 해상도, 자막 fetch

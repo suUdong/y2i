@@ -1,6 +1,7 @@
 """Tests for CLI subcommands: analyze-video, analyze-channel, list-channels, healthcheck, analyze-all."""
 import json
 import sys
+import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -211,7 +212,11 @@ def test_cli_signal_accuracy_report(monkeypatch, tmp_path, capsys):
             }
         ]
     }), encoding="utf-8")
-    monkeypatch.setattr("dashboard.data_loader.load_channel_comparison", lambda *_: {"channels": {"itgod": {"display_name": "IT의 신", "actionable_ratio": 0.4, "quality_scorecard": {"overall": 61.0}}}})
+    fake_dashboard = types.ModuleType("dashboard")
+    fake_loader = types.ModuleType("dashboard.data_loader")
+    fake_loader.load_channel_comparison = lambda *_: {"channels": {"itgod": {"display_name": "IT의 신", "actionable_ratio": 0.4, "quality_scorecard": {"overall": 61.0}}}}
+    monkeypatch.setitem(sys.modules, "dashboard", fake_dashboard)
+    monkeypatch.setitem(sys.modules, "dashboard.data_loader", fake_loader)
     monkeypatch.setattr(sys, "argv", [
         "omx-brainstorm", "--output-dir", str(tmp_path),
         "signal-accuracy-report", "--tracker-db", str(tracker_path),
@@ -223,6 +228,43 @@ def test_cli_signal_accuracy_report(monkeypatch, tmp_path, capsys):
     assert output["ticker_count"] == 1
     assert Path(output["json_path"]).exists()
     assert Path(output["txt_path"]).exists()
+
+
+def test_cli_signal_backtest_report(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(
+        "omx_brainstorm.cli.run_signal_backtest_workflow",
+        lambda **_: {
+            "generated_at": "20260327T230000Z",
+            "tracker_db": str(tmp_path / "tracker.json"),
+            "lookback_days": 90,
+            "json_path": str(tmp_path / "signal_backtest_report.json"),
+            "txt_path": str(tmp_path / "signal_backtest_report.txt"),
+            "total_signals": 12,
+            "channel_count": 4,
+            "top_filter_count": 3,
+            "backfill": {"new_records": 8},
+        },
+    )
+    config_path = tmp_path / "config.toml"
+    config_path.write_text("""
+[app]
+provider = "mock"
+
+[logging]
+json = false
+log_dir = "logs"
+retention_days = 7
+""", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", [
+        "omx-brainstorm", "--output-dir", str(tmp_path),
+        "signal-backtest-report", "--config", str(config_path),
+    ])
+
+    main()
+    output = json.loads(capsys.readouterr().out)
+    assert output["lookback_days"] == 90
+    assert output["total_signals"] == 12
+    assert output["backfill"]["new_records"] == 8
 
 
 def test_cli_error_exits_with_code_1(monkeypatch, tmp_path):

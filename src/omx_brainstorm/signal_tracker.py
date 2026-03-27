@@ -4,7 +4,7 @@ import json
 import logging
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -23,6 +23,8 @@ class SignalRecord:
     signal_date: str  # ISO date when video was published
     signal_score: float  # aggregate_score from ranking
     verdict: str  # aggregate_verdict
+    source_video_id: str | None = None
+    source_title: str | None = None
     entry_date: str | None = None  # first trading date on/after signal_date
     entry_price: float | None = None  # close price used as the tracking baseline
     returns: dict[str, float | None] = field(default_factory=dict)
@@ -112,15 +114,15 @@ class SignalTrackerDB:
     def records(self) -> list[SignalRecord]:
         return list(self._records)
 
-    def _record_key(self, ticker: str, channel_slug: str, signal_date: str) -> str:
-        return f"{ticker}|{channel_slug}|{signal_date}"
+    def _record_key(self, ticker: str, channel_slug: str, signal_date: str, source_video_id: str | None = None) -> str:
+        return f"{ticker}|{channel_slug}|{signal_date}|{source_video_id or ''}"
 
     def _existing_keys(self) -> set[str]:
-        return {self._record_key(r.ticker, r.channel_slug, r.signal_date) for r in self._records}
+        return {self._record_key(r.ticker, r.channel_slug, r.signal_date, r.source_video_id) for r in self._records}
 
     def add_record(self, record: SignalRecord) -> bool:
         """Add a signal record if not already tracked. Returns True if added."""
-        key = self._record_key(record.ticker, record.channel_slug, record.signal_date)
+        key = self._record_key(record.ticker, record.channel_slug, record.signal_date, record.source_video_id)
         if key in self._existing_keys():
             return False
         now = datetime.now(timezone.utc).isoformat()
@@ -235,28 +237,93 @@ def record_signals_from_output(db: SignalTrackerDB, output_path: Path, history_p
         history_provider = YFinanceHistoryProvider()
 
     data = json.loads(output_path.read_text(encoding="utf-8"))
-    channel_slug = data.get("channel_slug", "")
-    ranking = data.get("cross_video_ranking", [])
+    return record_signals_from_ranking(
+        db,
+        channel_slug=str(data.get("channel_slug", "")),
+        ranking=data.get("cross_video_ranking", []),
+        history_provider=history_provider,
+    )
+
+
+def record_signals_from_ranking(
+    db: SignalTrackerDB,
+    channel_slug: str,
+    ranking: Sequence[Any],
+    history_provider: Any = None,
+) -> int:
+    """Create SignalRecords directly from ranking objects or dict payloads."""
+    if history_provider is None:
+        from .backtest import YFinanceHistoryProvider
+        history_provider = YFinanceHistoryProvider()
+
     added = 0
     for stock in ranking:
-        signal_date = stock.get("first_signal_at") or stock.get("last_signal_at")
-        if not signal_date:
+        if hasattr(stock, "to_dict"):
+            payload = dict(stock.to_dict())
+        elif isinstance(stock, dict):
+            payload = dict(stock)
+        else:
             continue
-        normalized_signal_date = signal_date[:10]
-        entry_point = _fetch_entry_point(history_provider, stock["ticker"], normalized_signal_date)
+        ticker = str(payload.get("ticker") or "").strip()
+        signal_date = _normalize_signal_date(payload.get("first_signal_at") or payload.get("signal_date") or payload.get("last_signal_at"))
+        if not ticker or not signal_date:
+            continue
+        entry_point = _fetch_entry_point(history_provider, ticker, signal_date)
         record = SignalRecord(
-            ticker=stock["ticker"],
-            company_name=stock.get("company_name"),
+            ticker=ticker,
+            company_name=payload.get("company_name"),
             channel_slug=channel_slug,
-            signal_date=normalized_signal_date,
-            signal_score=float(stock.get("aggregate_score", 0)),
-            verdict=stock.get("aggregate_verdict", ""),
+            signal_date=signal_date,
+            signal_score=float(payload.get("aggregate_score", payload.get("signal_score", 0)) or 0),
+            verdict=str(payload.get("aggregate_verdict", payload.get("verdict", "")) or ""),
             entry_date=entry_point.date if entry_point else None,
             entry_price=entry_point.close if entry_point else None,
-            price_target=dict(stock.get("price_target") or {}) or None,
+            price_target=dict(payload.get("price_target") or {}) or None,
         )
         if db.add_record(record):
             added += 1
+    return added
+
+
+def record_signals_from_rows(
+    db: SignalTrackerDB,
+    channel_slug: str,
+    rows: Sequence[dict[str, Any]],
+    history_provider: Any = None,
+) -> int:
+    """Create SignalRecords from per-video heuristic rows for exhaustive backtests."""
+    if history_provider is None:
+        from .backtest import YFinanceHistoryProvider
+        history_provider = YFinanceHistoryProvider()
+
+    added = 0
+    for row in rows:
+        signal_date = _normalize_signal_date(row.get("published_at") or row.get("signal_date"))
+        if not signal_date:
+            continue
+        source_video_id = str(row.get("video_id") or "").strip() or None
+        source_title = str(row.get("title") or "").strip() or None
+        row_signal_score = float(row.get("signal_score", 0) or 0)
+        for stock in row.get("stocks", []) or []:
+            ticker = str(stock.get("ticker") or "").strip()
+            if not ticker:
+                continue
+            entry_point = _fetch_entry_point(history_provider, ticker, signal_date)
+            record = SignalRecord(
+                ticker=ticker,
+                company_name=stock.get("company_name"),
+                channel_slug=channel_slug,
+                signal_date=signal_date,
+                source_video_id=source_video_id,
+                source_title=source_title,
+                signal_score=float(stock.get("signal_strength_score", stock.get("final_score", row_signal_score)) or row_signal_score),
+                verdict=str(stock.get("final_verdict", stock.get("basic_signal_verdict", row.get("video_signal_class", ""))) or ""),
+                entry_date=entry_point.date if entry_point else None,
+                entry_price=entry_point.close if entry_point else None,
+                price_target=dict(stock.get("price_target") or {}) or None,
+            )
+            if db.add_record(record):
+                added += 1
     return added
 
 
@@ -562,6 +629,88 @@ def build_signal_accuracy_summary(
     }
 
 
+def build_signal_backtest_summary(
+    db: SignalTrackerDB,
+    *,
+    lookback_days: int = 90,
+    as_of: date | None = None,
+    channel_metadata: dict[str, dict[str, Any]] | None = None,
+    top_filters: int = 10,
+    min_filter_sample: int = 3,
+) -> dict[str, Any]:
+    """Build a lookback-bounded signal backtest summary from tracked signals."""
+    as_of = as_of or date.today()
+    channel_metadata = channel_metadata or {}
+    start_date = as_of - timedelta(days=max(0, int(lookback_days) - 1))
+    filtered = [
+        record
+        for record in db.records
+        if _record_within_window(record, start_date=start_date, end_date=as_of)
+    ]
+    filtered.sort(
+        key=lambda record: (
+            record.signal_date,
+            record.signal_score,
+            record.channel_slug,
+            record.ticker,
+        ),
+        reverse=True,
+    )
+
+    overall = _build_accuracy_stats(filtered).to_dict()
+    overall.update(_build_roi_fields(filtered))
+
+    by_channel: dict[str, dict[str, Any]] = {}
+    channel_roi_leaderboard: list[dict[str, Any]] = []
+    channel_slugs = sorted({record.channel_slug for record in filtered if record.channel_slug})
+    for slug in channel_slugs:
+        records = [record for record in filtered if record.channel_slug == slug]
+        stats = _build_accuracy_stats(records).to_dict()
+        stats.update(_build_roi_fields(records))
+        metadata = dict(channel_metadata.get(slug, {}) or {})
+        entry = {
+            "slug": slug,
+            "display_name": metadata.get("display_name", slug),
+            "actionable_ratio": metadata.get("actionable_ratio"),
+            "overall_quality_score": _channel_quality_value(metadata),
+            "weight_multiplier": metadata.get("weight_multiplier"),
+            "videos_seen": metadata.get("total_videos"),
+            "videos_analyzed": metadata.get("analyzed_videos"),
+            **stats,
+        }
+        by_channel[slug] = entry
+        channel_roi_leaderboard.append(entry)
+    channel_roi_leaderboard.sort(
+        key=lambda item: (
+            -(float(item.get("compounded_directional_roi_5d")) if item.get("compounded_directional_roi_5d") is not None else -999.0),
+            -(float(item.get("avg_directional_return_5d")) if item.get("avg_directional_return_5d") is not None else -999.0),
+            -(float(item.get("hit_rate_5d")) if item.get("hit_rate_5d") is not None else -999.0),
+            -int(item.get("signals_with_price_5d", 0) or 0),
+            str(item.get("slug", "")),
+        )
+    )
+
+    signals = [_signal_record_to_backtest_row(record, channel_metadata=channel_metadata, as_of=as_of) for record in filtered]
+    filter_recommendations = _optimize_signal_filters(
+        filtered,
+        channel_metadata=channel_metadata,
+        top_filters=top_filters,
+        min_filter_sample=min_filter_sample,
+    )
+
+    return {
+        "as_of": as_of.isoformat(),
+        "start_date": start_date.isoformat(),
+        "lookback_days": int(lookback_days),
+        "overall": overall,
+        "by_channel": by_channel,
+        "channel_roi_leaderboard": channel_roi_leaderboard,
+        "filter_recommendations": filter_recommendations,
+        "signals": signals,
+        "recent_signals": signals[:20],
+    }
+
+
 def save_signal_accuracy_report(summary: dict[str, Any], output_dir: Path, run_id: str) -> tuple[Path, Path]:
     """Persist the signal accuracy summary as JSON and text."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -575,6 +724,24 @@ def save_signal_accuracy_report(summary: dict[str, Any], output_dir: Path, run_i
     }
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     txt_path.write_text(render_signal_accuracy_report_text(payload), encoding="utf-8")
+    summary.clear()
+    summary.update(payload)
+    return json_path, txt_path
+
+
+def save_signal_backtest_report(summary: dict[str, Any], output_dir: Path, run_id: str) -> tuple[Path, Path]:
+    """Persist the lookback-bounded signal backtest summary as JSON and text."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / f"signal_backtest_report_{run_id}.json"
+    txt_path = output_dir / f"signal_backtest_report_{run_id}.txt"
+    payload = dict(summary)
+    payload.setdefault("generated_at", run_id)
+    payload["report_files"] = {
+        "json_path": str(json_path),
+        "txt_path": str(txt_path),
+    }
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    txt_path.write_text(render_signal_backtest_report_text(payload), encoding="utf-8")
     summary.clear()
     summary.update(payload)
     return json_path, txt_path
@@ -646,6 +813,83 @@ def render_signal_accuracy_report_text(summary: dict[str, Any]) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+def render_signal_backtest_report_text(summary: dict[str, Any]) -> str:
+    """Render a human-readable lookback backtest report."""
+    overall = summary.get("overall", {}) if isinstance(summary, dict) else {}
+    lines = [
+        f"시그널 백테스트 리포트 ({summary.get('generated_at', summary.get('as_of', '-'))})",
+        f"평가 기준일: {summary.get('as_of', '-')}",
+        f"룩백 기간: {summary.get('lookback_days', '-')}일",
+        f"평가 시작일: {summary.get('start_date', '-')}",
+        "",
+        "[전체 성과]",
+        f"- 시그널 수: {int(overall.get('total_signals', 0) or 0)}",
+        f"- 1일/3일/5일 표본: {int(overall.get('signals_with_price_1d', 0) or 0)} / {int(overall.get('signals_with_price_3d', 0) or 0)} / {int(overall.get('signals_with_price_5d', 0) or 0)}",
+        f"- 1일 적중률: {_fmt_pct(overall.get('hit_rate_1d'))}",
+        f"- 3일 적중률: {_fmt_pct(overall.get('hit_rate_3d'))}",
+        f"- 5일 적중률: {_fmt_pct(overall.get('hit_rate_5d'))}",
+        f"- 1일 평균수익률: {_fmt_pct(overall.get('avg_return_1d'))}",
+        f"- 3일 평균수익률: {_fmt_pct(overall.get('avg_return_3d'))}",
+        f"- 5일 평균수익률: {_fmt_pct(overall.get('avg_return_5d'))}",
+        f"- 1일 방향수익률: {_fmt_pct(overall.get('avg_directional_return_1d'))}",
+        f"- 3일 방향수익률: {_fmt_pct(overall.get('avg_directional_return_3d'))}",
+        f"- 5일 방향수익률: {_fmt_pct(overall.get('avg_directional_return_5d'))}",
+        f"- 1일 복리 ROI: {_fmt_pct(overall.get('compounded_directional_roi_1d'))}",
+        f"- 3일 복리 ROI: {_fmt_pct(overall.get('compounded_directional_roi_3d'))}",
+        f"- 5일 복리 ROI: {_fmt_pct(overall.get('compounded_directional_roi_5d'))}",
+        "",
+        "[채널 ROI 리포트]",
+    ]
+
+    channel_rows = summary.get("channel_roi_leaderboard", []) if isinstance(summary, dict) else []
+    if channel_rows:
+        for idx, item in enumerate(channel_rows[:15], start=1):
+            lines.append(
+                f"- {idx}. {item.get('display_name', item.get('slug', '-'))}"
+                f" | 5d ROI {_fmt_pct(item.get('compounded_directional_roi_5d'))}"
+                f" | 5d 방향수익률 {_fmt_pct(item.get('avg_directional_return_5d'))}"
+                f" | 5d 적중률 {_fmt_pct(item.get('hit_rate_5d'))}"
+                f" | 표본 {int(item.get('signals_with_price_5d', 0) or 0)}"
+                f" | 품질 {_fmt_scalar(item.get('overall_quality_score'))}"
+            )
+    else:
+        lines.append("- 채널 데이터 없음")
+
+    lines.extend(["", "[최적 필터 조건]"])
+    filters = summary.get("filter_recommendations", []) if isinstance(summary, dict) else []
+    if filters:
+        for idx, item in enumerate(filters[:10], start=1):
+            lines.append(
+                f"- {idx}. {item.get('label', '-')}"
+                f" | 5d ROI {_fmt_pct(item.get('compounded_directional_roi_5d'))}"
+                f" | 5d 방향수익률 {_fmt_pct(item.get('avg_directional_return_5d'))}"
+                f" | 5d 적중률 {_fmt_pct(item.get('hit_rate_5d'))}"
+                f" | 5d 표본 {int(item.get('signals_with_price_5d', 0) or 0)}"
+                f" | 전체 표본 {int(item.get('total_signals', 0) or 0)}"
+            )
+    else:
+        lines.append("- 추천할 필터 없음")
+
+    lines.extend(["", "[최근 시그널 샘플]"])
+    recent = summary.get("recent_signals", []) if isinstance(summary, dict) else []
+    if recent:
+        for item in recent[:15]:
+            lines.append(
+                f"- {item.get('signal_date', '-')}"
+                f" | {item.get('channel_slug', '-')}"
+                f" | {item.get('ticker', '-')}"
+                f" | score {_fmt_scalar(item.get('signal_score'))}"
+                f" | verdict {item.get('verdict', '-')}"
+                f" | 1d {_fmt_pct(item.get('returns', {}).get('1d'))}"
+                f" | 3d {_fmt_pct(item.get('returns', {}).get('3d'))}"
+                f" | 5d {_fmt_pct(item.get('returns', {}).get('5d'))}"
+            )
+    else:
+        lines.append("- 시그널 없음")
+
+    return "\n".join(lines).strip() + "\n"
+
+
 def _fmt_pct(value: object) -> str:
     if value is None or value == "":
         return "미제공"
@@ -658,6 +902,212 @@ def _fmt_scalar(value: object) -> str:
     if isinstance(value, float):
         return f"{value:.2f}".rstrip("0").rstrip(".")
     return str(value)
+
+
+def _record_within_window(record: SignalRecord, *, start_date: date, end_date: date) -> bool:
+    try:
+        signal_dt = date.fromisoformat(record.signal_date[:10])
+    except ValueError:
+        return False
+    return start_date <= signal_dt <= end_date
+
+
+def _channel_quality_value(metadata: dict[str, Any]) -> float | None:
+    raw = metadata.get("overall_quality_score")
+    if raw is None:
+        raw = (metadata.get("quality_scorecard", {}) or {}).get("overall")
+    try:
+        return float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _build_roi_fields(records: list[SignalRecord]) -> dict[str, float | None]:
+    return {
+        "compounded_directional_roi_1d": _compounded_directional_roi(records, "1d"),
+        "compounded_directional_roi_3d": _compounded_directional_roi(records, "3d"),
+        "compounded_directional_roi_5d": _compounded_directional_roi(records, "5d"),
+    }
+
+
+def _compounded_directional_roi(records: list[SignalRecord], window_key: str) -> float | None:
+    values = [float(value) for value in (_directional_return(record, window_key) for record in records) if value is not None]
+    if not values:
+        return None
+    capital = 1.0
+    for value in values:
+        capital *= 1.0 + value / 100.0
+    return round((capital - 1.0) * 100.0, 2)
+
+
+def _signal_record_to_backtest_row(
+    record: SignalRecord,
+    *,
+    channel_metadata: dict[str, dict[str, Any]],
+    as_of: date,
+) -> dict[str, Any]:
+    metadata = dict(channel_metadata.get(record.channel_slug, {}) or {})
+    try:
+        signal_dt = date.fromisoformat(record.signal_date[:10])
+        signal_age_days = (as_of - signal_dt).days
+    except ValueError:
+        signal_age_days = None
+    return {
+        "ticker": record.ticker,
+        "company_name": record.company_name,
+        "channel_slug": record.channel_slug,
+        "channel_display_name": metadata.get("display_name", record.channel_slug),
+        "channel_quality_score": _channel_quality_value(metadata),
+        "signal_date": record.signal_date,
+        "signal_age_days": signal_age_days,
+        "signal_score": record.signal_score,
+        "verdict": record.verdict,
+        "source_video_id": record.source_video_id,
+        "source_title": record.source_title,
+        "has_price_target": _target_price_from_record(record) is not None,
+        "returns": {
+            "1d": record.returns.get("1d"),
+            "3d": record.returns.get("3d"),
+            "5d": record.returns.get("5d"),
+        },
+        "directional_returns": {
+            "1d": _directional_return(record, "1d"),
+            "3d": _directional_return(record, "3d"),
+            "5d": _directional_return(record, "5d"),
+        },
+        "entry_date": record.entry_date,
+        "entry_price": record.entry_price,
+        "latest_price": record.latest_price,
+        "latest_price_date": record.latest_price_date,
+    }
+
+
+def _optimize_signal_filters(
+    records: list[SignalRecord],
+    *,
+    channel_metadata: dict[str, dict[str, Any]],
+    top_filters: int,
+    min_filter_sample: int,
+) -> list[dict[str, Any]]:
+    recommendations: list[dict[str, Any]] = []
+    score_thresholds = [None, 65.0, 70.0, 75.0, 80.0]
+    channel_quality_thresholds = [None, 55.0, 60.0, 70.0]
+    for min_signal_score in score_thresholds:
+        for min_channel_quality in channel_quality_thresholds:
+            for require_conviction in (False, True):
+                for require_price_target in (False, True):
+                    if (
+                        min_signal_score is None
+                        and min_channel_quality is None
+                        and not require_conviction
+                        and not require_price_target
+                    ):
+                        continue
+                    filtered = [
+                        record
+                        for record in records
+                        if _record_matches_filter(
+                            record,
+                            channel_metadata=channel_metadata,
+                            min_signal_score=min_signal_score,
+                            min_channel_quality=min_channel_quality,
+                            require_conviction=require_conviction,
+                            require_price_target=require_price_target,
+                        )
+                    ]
+                    stats = _build_accuracy_stats(filtered).to_dict()
+                    mature_sample = int(stats.get("signals_with_price_5d", 0) or 0)
+                    if mature_sample < min_filter_sample:
+                        continue
+                    recommendations.append(
+                        {
+                            "label": _filter_label(
+                                min_signal_score=min_signal_score,
+                                min_channel_quality=min_channel_quality,
+                                require_conviction=require_conviction,
+                                require_price_target=require_price_target,
+                            ),
+                            "conditions": {
+                                "min_signal_score": min_signal_score,
+                                "min_channel_quality": min_channel_quality,
+                                "require_conviction": require_conviction,
+                                "require_price_target": require_price_target,
+                            },
+                            **stats,
+                            **_build_roi_fields(filtered),
+                        }
+                    )
+    recommendations.sort(
+        key=lambda item: (
+            -(float(item.get("compounded_directional_roi_5d")) if item.get("compounded_directional_roi_5d") is not None else -999.0),
+            -(float(item.get("avg_directional_return_5d")) if item.get("avg_directional_return_5d") is not None else -999.0),
+            -(float(item.get("hit_rate_5d")) if item.get("hit_rate_5d") is not None else -999.0),
+            -int(item.get("signals_with_price_5d", 0) or 0),
+            str(item.get("label", "")),
+        )
+    )
+    return recommendations[:top_filters]
+
+
+def _record_matches_filter(
+    record: SignalRecord,
+    *,
+    channel_metadata: dict[str, dict[str, Any]],
+    min_signal_score: float | None,
+    min_channel_quality: float | None,
+    require_conviction: bool,
+    require_price_target: bool,
+) -> bool:
+    if min_signal_score is not None and float(record.signal_score) < float(min_signal_score):
+        return False
+    if min_channel_quality is not None:
+        metadata = dict(channel_metadata.get(record.channel_slug, {}) or {})
+        channel_quality = _channel_quality_value(metadata)
+        if channel_quality is None or channel_quality < float(min_channel_quality):
+            return False
+    if require_conviction:
+        normalized = str(record.verdict or "").strip().upper()
+        if normalized in {"", "WATCH", "HOLD", "NEUTRAL", "REJECT"}:
+            return False
+    if require_price_target and _target_price_from_record(record) is None:
+        return False
+    return True
+
+
+def _filter_label(
+    *,
+    min_signal_score: float | None,
+    min_channel_quality: float | None,
+    require_conviction: bool,
+    require_price_target: bool,
+) -> str:
+    parts: list[str] = []
+    if min_signal_score is not None:
+        parts.append(f"signal_score>={min_signal_score:.0f}")
+    if min_channel_quality is not None:
+        parts.append(f"channel_quality>={min_channel_quality:.0f}")
+    if require_conviction:
+        parts.append("conviction_only")
+    if require_price_target:
+        parts.append("has_price_target")
+    return " AND ".join(parts) if parts else "baseline"
+
+
+def _normalize_signal_date(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y%m%d", "%Y%m%dT%H%M%SZ"):
+        try:
+            return datetime.strptime(text[: len(fmt.replace("%", "").replace("-", ""))] if fmt == "%Y%m%d" else text, fmt).date().isoformat()
+        except ValueError:
+            continue
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).date().isoformat()
+    except ValueError:
+        return None
 
 
 def _update_target_tracking(record: SignalRecord, *, latest_price: float | None, latest_price_date: str | None) -> None:
