@@ -492,12 +492,9 @@ class TestBuildOverviewReport:
 
 
 def test_streamlit_app_runs_without_session_errors(tmp_output: Path, monkeypatch: pytest.MonkeyPatch):
-    token = "test-dashboard-token"
-    monkeypatch.setenv("DASHBOARD_TOKEN", token)
     monkeypatch.setattr(data_loader_module, "DEFAULT_OUTPUT_DIR", tmp_output)
 
     at = AppTest.from_file("dashboard/app.py", default_timeout=60)
-    at.query_params["token"] = token
     at.run(timeout=60)
 
     assert not at.exception

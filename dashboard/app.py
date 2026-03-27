@@ -1,7 +1,6 @@
 """Y2I 투자 시그널 대시보드 — 한국어, 다크 테마, 모바일 최적화."""
 from __future__ import annotations
 
-import os
 from datetime import datetime, timedelta, timezone
 
 import streamlit as st
@@ -520,14 +519,6 @@ header[data-testid="stHeader"] {
 }
 </style>
 """, unsafe_allow_html=True)
-
-# -- Auth gate --------------------------------------------------------------
-
-DASHBOARD_TOKEN = os.environ.get("DASHBOARD_TOKEN", "jS-GpK2lpXoeLGGm17hRSmmPoAQxahs3")
-query_token = st.query_params.get("token", "")
-if query_token != DASHBOARD_TOKEN:
-    st.error("접근이 거부되었습니다. URL에 ?token=<토큰>을 추가하세요.")
-    st.stop()
 
 # -- Header with timestamp + NEW badge ----------------------------------------
 
