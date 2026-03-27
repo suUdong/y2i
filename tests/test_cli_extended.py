@@ -197,3 +197,45 @@ retention_days = 7
     with pytest.raises(SystemExit) as exc_info:
         main()
     assert exc_info.value.code == 0
+
+
+def test_cli_export_kindshot_feed(monkeypatch, tmp_path, capsys):
+    tracker_path = tmp_path / "tracker.json"
+    tracker_path.write_text(
+        json.dumps(
+            {
+                "signals": [
+                    {
+                        "ticker": "005930.KS",
+                        "company_name": "삼성전자",
+                        "channel_slug": "sampro",
+                        "signal_date": "2026-03-20",
+                        "signal_score": 88.0,
+                        "verdict": "BUY",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "kindshot_feed.json"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "omx-brainstorm",
+            "export-kindshot-feed",
+            "--tracker-db",
+            str(tracker_path),
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    main()
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["path"] == str(output_path)
+    assert payload["signal_count"] == 1
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+    assert written["signals"][0]["ticker"] == "005930.KS"

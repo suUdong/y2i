@@ -10,7 +10,10 @@ from .title_taxonomy import classify_video_type
 FINANCE_KEYWORDS = {
     '투자', '종목', '실적', '반도체', '메모리', '파운드리', '엔비디아', '삼성', 'sk하이닉스', '로드맵', '수혜주',
     '소부장', '밸류체인', 'cpo', 'ai', '공정', '장비', '소재', '전략', '매출', '이익', 'capex', 'hbm', 'gpu',
-    '전력', '전력인프라', '데이터센터', '변압기', '그리드', '버블'
+    '전력', '전력인프라', '데이터센터', '변압기', '그리드', '버블',
+    '코스피', '코스닥', '증시', '시황', '국장', '밸류업', '저pbr', '저pbr주', '리레이팅',
+    '2차전지', '바이오', '방산', '조선', '전력기기', '전선', '원전', '로봇', '지주사',
+    '주도주', '관련주', '상한가', '수급', '공매도', '관세'
 }
 NON_EQUITY_KEYWORDS = {'브이로그', '먹방', '여행', '일상', '운동', '게임', '리뷰만', '광고'}
 GENERIC_TITLE_CUES = {
@@ -19,7 +22,8 @@ GENERIC_TITLE_CUES = {
 }
 ACTIONABLE_TITLE_ANCHORS = {
     '반도체', '메모리', '전쟁', '방산', '금리', '환율', '유가',
-    '건설', '부동산', '증권', '조선', '정유', 'ai 반도체', '데이터센터', 'gpu'
+    '건설', '부동산', '증권', '조선', '정유', 'ai 반도체', '데이터센터', 'gpu',
+    '2차전지', '바이오', '전력기기', '원전', '밸류업', '저pbr', '지주사'
 }
 
 
@@ -61,6 +65,8 @@ def assess_video_signal(
     if used_metadata_fallback and finance_hits >= 3:
         score = max(score, 35.0)
     if used_metadata_fallback and title_description_company_hits >= 1 and finance_hits >= 3:
+        score = max(score, 55.0)
+    if finance_hits >= 6 and has_actionable_anchor:
         score = max(score, 55.0)
     if has_actionable_anchor and actionable_macro_count >= 1 and finance_hits >= 3:
         score = max(score, 55.0)

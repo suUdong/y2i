@@ -145,6 +145,20 @@ def test_extract_mentions_finds_companies():
     assert "NVDA" in tickers
 
 
+def test_extract_mentions_resolves_spaced_korean_company_names():
+    mentions = extract_mentions("삼성 바이오 로직스 분석", "SK 하이닉스 실적과 삼성 바이오 로직스 모멘텀을 본다")
+    tickers = [m.ticker for m, _count in mentions]
+    assert "207940.KS" in tickers
+    assert "000660.KS" in tickers
+
+
+def test_extract_mentions_suppresses_ambiguous_group_alias_when_longer_company_matches():
+    mentions = extract_mentions("삼성 바이오 로직스 실적", "삼성 바이오 로직스가 핵심이다")
+    tickers = [m.ticker for m, _count in mentions]
+    assert "207940.KS" in tickers
+    assert "005930.KS" not in tickers
+
+
 # --- basic_assessment verdicts ---
 
 def test_basic_assessment_buy_verdict():

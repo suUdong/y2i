@@ -71,6 +71,7 @@ def test_cli_parser_has_helpful_descriptions():
     assert "run-comparison" in help_text
     assert "run-scheduler" in help_text
     assert "run-healthcheck" in help_text
+    assert "export-kindshot-feed" in help_text
 
 
 def test_report_summary_includes_new_fields(tmp_path):

@@ -1,5 +1,5 @@
 """Tests for stock_registry module."""
-from omx_brainstorm.stock_registry import COMPANY_MAP, COMPANY_PATTERNS, SECTOR_STOCKS
+from omx_brainstorm.stock_registry import COMPANY_MAP, COMPANY_PATTERNS, SECTOR_STOCKS, resolve_kr_ticker
 
 
 def test_company_map_has_required_entries():
@@ -44,3 +44,19 @@ def test_company_patterns_match_expected_strings():
 def test_company_patterns_case_insensitive():
     matches = [p for p in COMPANY_PATTERNS if p.search("NVIDIA")]
     assert len(matches) >= 1
+
+
+def test_resolve_kr_ticker_exact_match():
+    assert resolve_kr_ticker("삼성전자") == ("005930.KS", "Samsung Electronics")
+
+
+def test_resolve_kr_ticker_alias_match():
+    assert resolve_kr_ticker("현대차") == ("005380.KS", "Hyundai Motor")
+
+
+def test_resolve_kr_ticker_normalizes_spacing():
+    assert resolve_kr_ticker("SK 하이닉스") == ("000660.KS", "SK hynix")
+
+
+def test_resolve_kr_ticker_unknown_name_returns_none():
+    assert resolve_kr_ticker("unknown_company_xyz") is None

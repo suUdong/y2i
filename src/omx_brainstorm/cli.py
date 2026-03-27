@@ -9,6 +9,7 @@ from pathlib import Path
 from .app_config import load_app_config
 from .backtest import BacktestEngine, BacktestIdea
 from .backtest_automation import run_backtest_for_artifact
+from .kindshot_feed import export_signals_for_kindshot
 from .logging_utils import configure_logging
 from .scheduler import run_scheduled_job, run_scheduler_forever
 from .signal_backtest import run_signal_backtest_workflow
@@ -70,6 +71,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_accuracy = sub.add_parser("signal-accuracy-report", help="Generate a tracked signal accuracy report")
     p_accuracy.add_argument("--tracker-db", default=".omx/state/signal_tracker.json")
     p_accuracy.add_argument("--top-tickers", type=int, default=20)
+
+    p_kindshot = sub.add_parser("export-kindshot-feed", help="Export KR BUY/STRONG_BUY tracked signals for kindshot")
+    p_kindshot.add_argument("--tracker-db", default=".omx/state/signal_tracker.json")
+    p_kindshot.add_argument("--output", default=".omx/state/kindshot_feed.json")
 
     p_backtest_report = sub.add_parser("signal-backtest-report", help="Backfill recent signals and generate a lookback backtest report")
     p_backtest_report.add_argument("--config", default="config.toml")
@@ -224,6 +229,12 @@ def main() -> None:
                 "channel_count": len(summary.get("by_channel", {})),
                 "ticker_count": len(summary.get("by_ticker", {})),
             }, ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "export-kindshot-feed":
+            tracker_db = SignalTrackerDB(Path(args.tracker_db))
+            payload = export_signals_for_kindshot(tracker_db, Path(args.output))
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
             return
 
         if args.command == "signal-backtest-report":

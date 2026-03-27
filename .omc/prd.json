@@ -1,53 +1,59 @@
 {
   "stories": [
     {
-      "id": "US-010",
-      "title": "Add missing Korean stock names to data_loader.py",
+      "id": "US-001",
+      "title": "Expand Korean stock registry with comprehensive KOSPI/KOSDAQ coverage",
+      "priority": 1,
+      "passes": true,
       "acceptanceCriteria": [
-        "KOREAN_STOCK_NAMES contains entries for 240810.KQ, 012450.KS, 047810.KS, 007660.KS, 131970.KQ, 222800.KQ, 399720.KQ, 253590.KQ, 036010.KQ, 005830.KS",
-        "format_ticker_display('240810.KQ') returns '240810 원익IPS'",
-        "format_ticker_display('047810.KS') returns '047810 한국항공우주'"
-      ],
-      "passes": true
+        "COMPANY_MAP has 60+ entries covering major KOSPI/KOSDAQ sectors (반도체, 2차전지, 바이오, 자동차, 조선, 방산, 전력, 건설, 금융, 유통, 엔터, 게임 etc)",
+        "Korean company name variants (e.g. '현대차', '현대자동차', '현차') all map to the same ticker",
+        "All tickers use correct suffix: .KS for KOSPI, .KQ for KOSDAQ",
+        "COMPANY_PATTERN_STRINGS updated with new company name patterns for signal_gate detection",
+        "SECTOR_STOCKS expanded with new sector categories (battery, bio, defense, entertainment, gaming)",
+        "FINANCE_KEYWORDS in signal_gate.py expanded with Korean market terms (2차전지, 바이오, 방산, 조선, 전력기기 etc)",
+        "Existing tests still pass"
+      ]
     },
     {
-      "id": "US-011",
-      "title": "Fix get_all_rankings to aggregate cross-channel data",
+      "id": "US-002",
+      "title": "KOSPI/KOSDAQ ticker code auto-mapping from Korean names",
+      "priority": 2,
+      "passes": true,
       "acceptanceCriteria": [
-        "get_all_rankings sums appearances across all channels for each ticker",
-        "get_all_rankings tracks list of source channels per ticker",
-        "get_all_rankings computes weighted average score (not just max)",
-        "Dashboard summary tab shows multi-channel stock entries with correct aggregated data"
-      ],
-      "passes": true
+        "New function resolve_kr_ticker(name: str) -> tuple[str, str] | None in stock_registry.py that fuzzy-matches Korean company names to (ticker, english_name)",
+        "extract_mentions in heuristic_pipeline.py uses resolve_kr_ticker as fallback when COMPANY_MAP miss",
+        "Korean suffixes handled: '전자', '화학', '건설', '증권', '보험', '카드', '지주' etc stripped for matching",
+        "Test: resolve_kr_ticker('삼성전자') returns ('005930.KS', 'Samsung Electronics')",
+        "Test: resolve_kr_ticker('현대차') returns ('005380.KS', 'Hyundai Motor')",
+        "Test: resolve_kr_ticker('unknown_company_xyz') returns None"
+      ]
     },
     {
-      "id": "US-012",
-      "title": "Add all-channel macro and expert aggregate to tabs",
+      "id": "US-003",
+      "title": "kindshot signal feed export",
+      "priority": 3,
+      "passes": true,
       "acceptanceCriteria": [
-        "Macro tab has '전체 (통합)' as first option in channel selector",
-        "Expert tab has '전체 (통합)' as first option in channel selector",
-        "Selecting '전체 (통합)' aggregates data from all channels"
-      ],
-      "passes": true
+        "New module src/omx_brainstorm/kindshot_feed.py with export_signals_for_kindshot(db: SignalTrackerDB, output_path: Path) function",
+        "Exports only KR-market signals (ticker ends with .KS or .KQ) with BUY/STRONG_BUY verdict",
+        "Output JSON schema: {signals: [{ticker, company_name, signal_source: 'y2i', signal_date, confidence, verdict, channel, evidence}], generated_at}",
+        "New CLI command 'export-kindshot-feed' writes to .omx/state/kindshot_feed.json",
+        "Scheduler auto-exports after each successful comparison run",
+        "Test: export produces correct JSON with KR-only filtered signals"
+      ]
     },
     {
-      "id": "US-013",
-      "title": "Re-generate DASHBOARD.md with fresh pipeline data",
+      "id": "US-004",
+      "title": "Tests pass, commit, and push",
+      "priority": 4,
+      "passes": true,
       "acceptanceCriteria": [
-        "DASHBOARD.md reflects latest output data",
-        "Cross-channel top stocks section uses aggregated multi-channel data"
-      ],
-      "passes": true
-    },
-    {
-      "id": "US-014",
-      "title": "Commit and push all changes",
-      "acceptanceCriteria": [
-        "All changes committed with descriptive message",
-        "Pushed to remote master successfully"
-      ],
-      "passes": true
+        "All existing tests pass (pytest)",
+        "New tests for resolve_kr_ticker, expanded registry, and kindshot feed export",
+        "Changes committed with descriptive message",
+        "Pushed to remote"
+      ]
     }
   ]
 }

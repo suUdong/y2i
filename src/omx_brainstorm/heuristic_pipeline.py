@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import asdict
 import logging
+import re
 from typing import Any
 
 from .expert_interview import extract_expert_insights
@@ -14,13 +15,46 @@ from .models import FundamentalSnapshot, TickerMention, VideoInput, VideoType
 from .price_targets import aggregate_price_targets, extract_price_targets
 from .signal_features import stock_signal_strength
 from .signal_gate import assess_video_signal
-from .stock_registry import COMPANY_MAP
+from .stock_registry import COMPANY_MAP, resolve_kr_ticker
 from .transcript_cache import TranscriptCache
 from .transcript_runtime import resolve_transcript_text
 from .utils import normalize_ws, unique_preserve
 from .youtube import TranscriptFetcher
 
 logger = logging.getLogger(__name__)
+_TOKEN_RE = re.compile(r"[0-9A-Za-z가-힣&]+")
+_AMBIGUOUS_ALIAS_KEYS = {"kt", "lg", "sk", "삼성", "한화"}
+
+
+def _count_alias_hits(text: str, alias: str) -> int:
+    escaped = re.escape(alias)
+    if alias in _AMBIGUOUS_ALIAS_KEYS:
+        return len(re.findall(rf"(?<![0-9a-z가-힣&]){escaped}(?![0-9a-z가-힣&])", text))
+    if alias.isascii():
+        return len(re.findall(rf"(?<![0-9a-z]){escaped}(?![0-9a-z])", text))
+    return text.count(alias)
+
+
+def _fallback_kr_company_hits(text: str) -> list[tuple[str, tuple[str, str]]]:
+    hits: list[tuple[str, tuple[str, str]]] = []
+    tokens = [match.group(0).lower() for match in _TOKEN_RE.finditer(text)]
+    idx = 0
+    while idx < len(tokens):
+        matched = False
+        for window in range(min(3, len(tokens) - idx), 1, -1):
+            candidate = "".join(tokens[idx : idx + window])
+            if text.count(candidate) > 0:
+                continue
+            resolved = resolve_kr_ticker(candidate)
+            if resolved is None:
+                continue
+            hits.append((candidate, resolved))
+            idx += window
+            matched = True
+            break
+        if not matched:
+            idx += 1
+    return hits
 
 
 def extract_mentions(title: str, text: str) -> list[tuple[TickerMention, int]]:
@@ -30,11 +64,31 @@ def extract_mentions(title: str, text: str) -> list[tuple[TickerMention, int]]:
     scores: dict[tuple[str, str], float] = {}
     reasons: dict[tuple[str, str], list[str]] = {}
     for key, (ticker, company) in COMPANY_MAP.items():
-        count = lower.count(key)
+        count = _count_alias_hits(lower, key)
         if count > 0:
             counts[(ticker, company)] += count
             scores[(ticker, company)] = max(scores.get((ticker, company), 0.0), float(count) + 0.5)
             reasons.setdefault((ticker, company), []).append(key)
+    for candidate, (ticker, company) in _fallback_kr_company_hits(lower):
+        counts[(ticker, company)] += 1
+        scores[(ticker, company)] = max(scores.get((ticker, company), 0.0), 1.35)
+        reasons.setdefault((ticker, company), []).append(candidate)
+    suppressed_keys: set[tuple[str, str]] = set()
+    for ambiguous in _AMBIGUOUS_ALIAS_KEYS:
+        ambiguous_entry = COMPANY_MAP.get(ambiguous)
+        if not ambiguous_entry:
+            continue
+        ambiguous_key = (ambiguous_entry[0], ambiguous_entry[1])
+        if ambiguous_key not in reasons:
+            continue
+        has_longer_prefixed_reason = any(
+            reason.startswith(ambiguous) and reason != ambiguous
+            for key, key_reasons in reasons.items()
+            if key != ambiguous_key
+            for reason in key_reasons
+        )
+        if has_longer_prefixed_reason:
+            suppressed_keys.add(ambiguous_key)
     for mention in indirect_macro_mentions(title, text):
         key = (mention.ticker, mention.company_name or "")
         if mention.confidence < 0.55:
@@ -43,7 +97,14 @@ def extract_mentions(title: str, text: str) -> list[tuple[TickerMention, int]]:
         scores[key] = max(scores.get(key, 0.0), mention.confidence)
         reasons.setdefault(key, list(mention.evidence or [mention.reason]))
     mentions = []
-    ranked = sorted(scores.items(), key=lambda item: (-item[1], item[0][0]))[:6]
+    ranked = sorted(
+        (
+            (key, score)
+            for key, score in scores.items()
+            if key not in suppressed_keys
+        ),
+        key=lambda item: (-item[1], item[0][0]),
+    )[:6]
     for (ticker, company), _score in ranked:
         count = counts.get((ticker, company), 1)
         mentions.append(

@@ -21,6 +21,7 @@ from omx_brainstorm.signal_tracker import (
     TRACKING_WINDOWS,
 )
 from omx_brainstorm.backtest import HistoricalPricePoint
+from omx_brainstorm.kindshot_feed import export_signals_for_kindshot
 from omx_brainstorm.price_targets import aggregate_price_targets
 
 
@@ -786,3 +787,52 @@ class TestUpdatePriceSnapshots:
         provider = FakeHistoryProvider()
         updated = update_price_snapshots(db, history_provider=provider)
         assert updated == 0
+
+
+def test_export_signals_for_kindshot_filters_to_kr_buy_signals(tmp_path: Path):
+    db = SignalTrackerDB(tmp_path / "tracker.json")
+    db.add_record(
+        SignalRecord(
+            ticker="005930.KS",
+            company_name="삼성전자",
+            channel_slug="sampro",
+            signal_date="2026-03-20",
+            signal_score=88.0,
+            verdict="STRONG_BUY",
+            source_title="삼성전자 집중 분석",
+            price_target={"target_price": 70000, "currency": "KRW"},
+        )
+    )
+    db.add_record(
+        SignalRecord(
+            ticker="NVDA",
+            company_name="NVIDIA",
+            channel_slug="itgod",
+            signal_date="2026-03-20",
+            signal_score=91.0,
+            verdict="BUY",
+            source_title="NVDA 분석",
+        )
+    )
+    db.add_record(
+        SignalRecord(
+            ticker="000660.KS",
+            company_name="SK hynix",
+            channel_slug="itgod",
+            signal_date="2026-03-21",
+            signal_score=76.0,
+            verdict="WATCH",
+            source_title="하이닉스 점검",
+        )
+    )
+
+    output_path = tmp_path / "kindshot_feed.json"
+    payload = export_signals_for_kindshot(db, output_path)
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert payload["path"] == str(output_path)
+    assert payload["signal_count"] == 1
+    assert written["signals"][0]["ticker"] == "005930.KS"
+    assert written["signals"][0]["signal_source"] == "y2i"
+    assert written["signals"][0]["channel"] == "sampro"
+    assert "목표가 70000 KRW" in written["signals"][0]["evidence"]

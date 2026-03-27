@@ -20,6 +20,7 @@ from omx_brainstorm.daily_report import (
 from omx_brainstorm.evaluation import ranking_validation
 from omx_brainstorm.fundamentals import FundamentalsFetcher
 from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic
+from omx_brainstorm.kindshot_feed import export_signals_for_kindshot
 from omx_brainstorm.logging_utils import configure_logging
 from omx_brainstorm.master_engine import validate_cross_stock_master_quality
 from omx_brainstorm.research import build_consensus_ranking, build_cross_video_ranking
@@ -387,6 +388,7 @@ def run_comparison_job(config: AppConfig) -> dict:
     leaderboard: list[dict[str, object]] = []
     signal_accuracy_summary: dict[str, object] = {}
     signal_accuracy_report: dict[str, str] | None = None
+    kindshot_feed: dict[str, object] | None = None
     try:
         total_tracked = 0
         for item in channel_payloads.values():
@@ -401,6 +403,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         accuracy_by_channel, leaderboard, signal_accuracy_summary = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
         accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, output_dir, context.run_id)
         signal_accuracy_report = {"json_path": str(accuracy_json), "txt_path": str(accuracy_txt)}
+        kindshot_feed = export_signals_for_kindshot(tracker_db, output_dir.parent / ".omx" / "state" / "kindshot_feed.json")
         comparison["signal_accuracy"] = signal_accuracy_summary
     except Exception as exc:
         logger.warning("Signal tracking failed (non-fatal): %s", exc)
@@ -411,6 +414,7 @@ def run_comparison_job(config: AppConfig) -> dict:
             accuracy_by_channel, leaderboard, signal_accuracy_summary = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
             accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, output_dir, context.run_id)
             signal_accuracy_report = {"json_path": str(accuracy_json), "txt_path": str(accuracy_txt)}
+            kindshot_feed = export_signals_for_kindshot(tracker_db, output_dir.parent / ".omx" / "state" / "kindshot_feed.json")
             comparison["signal_accuracy"] = signal_accuracy_summary
             telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
         except Exception as exc:
@@ -474,6 +478,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         "telegram": telegram_payload,
         "daily_report": daily_report_payload,
         "signal_accuracy_report": signal_accuracy_report,
+        "kindshot_feed": kindshot_feed,
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return payload
