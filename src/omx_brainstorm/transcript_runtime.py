@@ -11,7 +11,7 @@ def resolve_transcript_text(video, cache: TranscriptCache, fetcher: TranscriptFe
     """Resolve transcript text from cache, live fetch, or metadata fallback."""
     metadata_text = " ".join(part for part in [video.title, video.description or "", " ".join(video.tags)] if part).strip()
     cached = cache.load(video.video_id)
-    is_stale = cache.is_stale(video.video_id)
+    is_stale = cache.is_entry_stale(cached)
     if cached and cached.get("transcript_text") and cached.get("source") != "metadata_fallback" and not is_stale:
         return cached["transcript_text"], f"cache:{cached.get('transcript_language') or 'unknown'}", cached.get("source", "cache"), cached
     try:

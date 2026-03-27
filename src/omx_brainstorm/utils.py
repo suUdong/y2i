@@ -26,7 +26,9 @@ def read_json(path: Path, default: T) -> T:
 def write_json(path: Path, data: object) -> None:
     """Write JSON data to disk with directory creation."""
     ensure_dir(path.parent)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp_path = path.with_name(f".{path.name}.tmp")
+    tmp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp_path.replace(path)
 
 
 _whitespace = re.compile(r"\s+")

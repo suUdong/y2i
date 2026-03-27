@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import logging
 from datetime import date, datetime, timedelta, timezone
@@ -319,23 +320,13 @@ def run_comparison_job(config: AppConfig) -> dict:
     registry_rows = register_channels(configured_channels, registry_path)
     cache = TranscriptCache()
     cache.warm_from_output_dir(output_dir)
-    resolver = YoutubeResolver()
-    fetcher = TranscriptFetcher()
-    fundamentals = FundamentalsFetcher()
-
     channel_payloads: dict[str, dict] = {}
     for slug, channel in configured_channels.items():
         logger.info("Starting channel run: %s", slug)
         channel_id = registry_rows[slug].get("channel_id")
         video_ids = recent_feed_video_ids(channel_id, days=window_days, today=context.today)
         logger.info("Collected %s videos for %s", len(video_ids), slug)
-        rows = []
-        for video_id in video_ids:
-            try:
-                video = resolver.resolve_video(video_id)
-                rows.append(analyze_video_heuristic(video, cache, fetcher, fundamentals))
-            except Exception as exc:
-                logger.warning("Skipping video %s for %s due to resolve/analyze failure: %s", video_id, slug, exc)
+        rows = _analyze_channel_rows(video_ids, cache, config)
         validate_cross_stock_master_quality([stock for row in rows for stock in row["stocks"]])
         ranking = build_cross_video_ranking(rows)
         validation = ranking_validation(ranking, context.today)
@@ -433,6 +424,61 @@ def run_comparison_job(config: AppConfig) -> dict:
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return payload
+
+
+def _analyze_channel_rows(
+    video_ids: list[str],
+    cache: TranscriptCache,
+    config: AppConfig,
+) -> list[dict]:
+    resolver = YoutubeResolver()
+    fetcher = TranscriptFetcher()
+    fundamentals = FundamentalsFetcher(max_workers=config.strategy.fundamentals_workers)
+
+    if not video_ids:
+        return []
+
+    workers = min(max(1, config.strategy.video_workers), len(video_ids))
+    if workers == 1:
+        rows = []
+        for video_id in video_ids:
+            row = _analyze_single_video(video_id, resolver, fetcher, fundamentals, cache, config)
+            if row is not None:
+                rows.append(row)
+        return rows
+
+    results: list[dict | None] = [None] * len(video_ids)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        future_to_index = {
+            pool.submit(_analyze_single_video, video_id, resolver, fetcher, fundamentals, cache, config): idx
+            for idx, video_id in enumerate(video_ids)
+        }
+        for future in as_completed(future_to_index):
+            idx = future_to_index[future]
+            results[idx] = future.result()
+    return [row for row in results if row is not None]
+
+
+def _analyze_single_video(
+    video_id: str,
+    resolver: YoutubeResolver,
+    fetcher: TranscriptFetcher,
+    fundamentals: FundamentalsFetcher,
+    cache: TranscriptCache,
+    config: AppConfig,
+) -> dict | None:
+    try:
+        video = resolver.resolve_video(video_id)
+        return analyze_video_heuristic(
+            video,
+            cache,
+            fetcher,
+            fundamentals,
+            max_fundamental_workers=config.strategy.fundamentals_workers,
+        )
+    except Exception as exc:
+        logger.warning("Skipping video %s due to resolve/analyze failure: %s", video_id, exc)
+        return None
 
 
 def build_telegram_payload(

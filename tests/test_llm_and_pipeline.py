@@ -97,6 +97,30 @@ def test_fundamentals_fetcher_without_runtime_failure(monkeypatch):
     assert snap.ticker == "NVDA"
 
 
+def test_fundamentals_fetcher_uses_file_cache(monkeypatch, tmp_path):
+    calls = {"count": 0}
+
+    class DummyTicker:
+        info = {"longName": "NVIDIA", "currentPrice": 100.0}
+        fast_info = None
+
+    class DummyYF:
+        def Ticker(self, ticker):
+            calls["count"] += 1
+            return DummyTicker()
+
+    monkeypatch.setitem(__import__("sys").modules, "yfinance", DummyYF())
+    fetcher = FundamentalsFetcher(cache_root=tmp_path / "fundamentals")
+    mention = TickerMention(ticker="NVDA")
+
+    first = fetcher.fetch(mention)
+    second = fetcher.fetch(mention)
+
+    assert first.current_price == 100.0
+    assert second.current_price == 100.0
+    assert calls["count"] == 1
+
+
 def test_stock_analyzer_mock_provider():
     fundamentals = DummyFundamentals().fetch(TickerMention(ticker="NVDA"))
     analysis = StockAnalyzer(MockProvider()).analyze("제목", "엔비디아가 아직 더 갈 수 있다", TickerMention(ticker="NVDA"), fundamentals)

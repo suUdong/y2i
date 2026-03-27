@@ -97,6 +97,27 @@ state_path = ".omx/state/custom-scheduler.json"
     assert config.schedule.state_path == ".omx/state/custom-scheduler.json"
 
 
+def test_load_app_config_reads_parallel_and_retry_settings(tmp_path):
+    path = tmp_path / "cfg.toml"
+    path.write_text(
+        """
+[strategy]
+video_workers = 6
+fundamentals_workers = 3
+
+[schedule]
+job_max_attempts = 5
+retry_backoff_seconds = 45
+        """.strip(),
+        encoding="utf-8",
+    )
+    config = load_app_config(path)
+    assert config.strategy.video_workers == 6
+    assert config.strategy.fundamentals_workers == 3
+    assert config.schedule.job_max_attempts == 5
+    assert config.schedule.retry_backoff_seconds == 45
+
+
 def test_load_app_config_env_overrides_logging(tmp_path, monkeypatch):
     path = tmp_path / "cfg.toml"
     path.write_text("[logging]\njson = false", encoding="utf-8")

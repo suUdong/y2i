@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 from datetime import date, timedelta
 from dataclasses import asdict
 from pathlib import Path
+from threading import Lock
 from typing import Iterable
 
 from youtube_transcript_api import YouTubeTranscriptApi
 from yt_dlp import YoutubeDL
 
-from .models import TranscriptSegment, VideoInput
+from .models import TranscriptSegment, VideoInput, utc_now_iso
 from .utils import ensure_dir, normalize_ws, read_json, write_json
 
 VIDEO_ID_RE = re.compile(r"(?:v=|youtu\.be/|/shorts/)([A-Za-z0-9_-]{11})")
 CHANNEL_ID_RE = re.compile(r"/channel/([A-Za-z0-9_-]+)")
+SAFE_CACHE_KEY_RE = re.compile(r"[^A-Za-z0-9_-]")
+DEFAULT_VIDEO_CACHE_HOURS = 24
 
 
 class ChannelRegistry:
@@ -45,21 +49,34 @@ def extract_video_id(url_or_id: str) -> str:
 
 
 class YoutubeResolver:
-    def __init__(self):
+    def __init__(self, cache_root: Path | None = None, cache_max_age_hours: int = DEFAULT_VIDEO_CACHE_HOURS):
         self._ydl_opts = {
             "quiet": True,
             "no_warnings": True,
             "extract_flat": True,
             "skip_download": True,
         }
+        self.cache_root = cache_root or Path(".omx/cache/video_metadata")
+        self.cache_max_age_hours = cache_max_age_hours
+        self._memory_cache: dict[str, dict] = {}
+        self._cache_lock = Lock()
+        ensure_dir(self.cache_root)
 
     def resolve_video(self, url_or_id: str) -> VideoInput:
         video_id = extract_video_id(url_or_id)
+        cached = self._load_cached_video(video_id)
+        if cached is not None and not self._is_cache_stale(cached):
+            return self._video_from_payload(cached["video"])
         url = f"https://www.youtube.com/watch?v={video_id}"
         opts = {**self._ydl_opts, "extract_flat": False}
-        with YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-        return VideoInput(
+        try:
+            with YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+        except Exception:
+            if cached is not None:
+                return self._video_from_payload(cached["video"])
+            raise
+        video = VideoInput(
             video_id=video_id,
             title=info.get("title") or video_id,
             url=url,
@@ -69,6 +86,8 @@ class YoutubeResolver:
             description=info.get("description"),
             tags=list(info.get("tags") or []),
         )
+        self._save_video_cache(video)
+        return video
 
     def resolve_channel_videos_since(
         self,
@@ -131,6 +150,46 @@ class YoutubeResolver:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(channel_url, download=False)
         return info.get("entries") or []
+
+    def _cache_path(self, video_id: str) -> Path:
+        safe_video_id = SAFE_CACHE_KEY_RE.sub("_", video_id)
+        return self.cache_root / f"{safe_video_id}.json"
+
+    def _load_cached_video(self, video_id: str) -> dict | None:
+        with self._cache_lock:
+            cached = self._memory_cache.get(video_id)
+        if cached is not None:
+            return cached
+        payload = read_json(self._cache_path(video_id), None)
+        if payload is None:
+            return None
+        with self._cache_lock:
+            self._memory_cache[video_id] = payload
+        return payload
+
+    def _save_video_cache(self, video: VideoInput) -> None:
+        payload = {
+            "cached_at": utc_now_iso(),
+            "video": asdict(video),
+        }
+        with self._cache_lock:
+            self._memory_cache[video.video_id] = payload
+        write_json(self._cache_path(video.video_id), payload)
+
+    def _is_cache_stale(self, payload: dict) -> bool:
+        cached_at = payload.get("cached_at")
+        if not isinstance(cached_at, str) or not cached_at:
+            return True
+        try:
+            cached_time = datetime.fromisoformat(cached_at)
+        except ValueError:
+            return True
+        age = datetime.now(timezone.utc) - cached_time
+        return age.total_seconds() > self.cache_max_age_hours * 3600
+
+    @staticmethod
+    def _video_from_payload(payload: dict) -> VideoInput:
+        return VideoInput(**payload)
 
 
 class TranscriptFetcher:

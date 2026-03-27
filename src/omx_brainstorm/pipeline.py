@@ -43,8 +43,12 @@ class OMXPipeline:
         if not should_analyze:
             return [], []
         mentions = self.extractor.extract(video_title, analysis_text)
+        if hasattr(self.fundamentals, "fetch_many"):
+            snapshots = self.fundamentals.fetch_many(mentions)
+        else:
+            snapshots = {mention.ticker: self.fundamentals.fetch(mention) for mention in mentions}
         analyses = [
-            self.analyzer.analyze(video_title, analysis_text, mention, self.fundamentals.fetch(mention))
+            self.analyzer.analyze(video_title, analysis_text, mention, snapshots.get(mention.ticker) or self.fundamentals.fetch(mention))
             for mention in mentions
         ]
         return mentions, analyses

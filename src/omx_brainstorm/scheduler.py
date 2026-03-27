@@ -158,6 +158,49 @@ def processed_ids_from_payload(payload: dict | None) -> dict[str, list[str]]:
     return processed
 
 
+def merge_new_video_maps(*maps: dict[str, list[str]]) -> dict[str, list[str]]:
+    merged: dict[str, list[str]] = {}
+    for payload in maps:
+        if not isinstance(payload, dict):
+            continue
+        for slug, video_ids in payload.items():
+            bucket = merged.setdefault(slug, [])
+            seen = set(bucket)
+            for video_id in video_ids:
+                if video_id not in seen:
+                    bucket.append(video_id)
+                    seen.add(video_id)
+    return merged
+
+
+def retry_backoff_due(pending_run: dict | None, now: datetime) -> bool:
+    if not pending_run:
+        return False
+    next_retry_at = pending_run.get("next_retry_at")
+    if not next_retry_at:
+        return True
+    try:
+        return now >= datetime.fromisoformat(str(next_retry_at))
+    except ValueError:
+        return True
+
+
+def scheduler_retry_delay_seconds(base_seconds: int, attempt: int) -> int:
+    attempt = max(1, attempt)
+    return max(5, int(base_seconds) * (2 ** (attempt - 1)))
+
+
+def _record_scheduler_loop_crash(exc: Exception) -> None:
+    state = read_json(HEALTH_PATH, {"error_count": 0})
+    now = datetime.now(timezone.utc).isoformat()
+    state["last_run_at"] = now
+    state["last_error_at"] = now
+    state["last_error"] = f"{type(exc).__name__}: {exc}"
+    state["status"] = "crashed"
+    state["error_count"] = int(state.get("error_count", 0)) + 1
+    write_json(HEALTH_PATH, state)
+
+
 def run_scheduler_iteration(
     config: AppConfig,
     *,
@@ -168,10 +211,26 @@ def run_scheduler_iteration(
     now = now or datetime.now(timezone.utc)
     state_path = Path(config.schedule.state_path)
     state = read_json(state_path, {"channels": {}})
-    new_ids_by_channel, current_ids_by_channel = scan_channels_for_new_videos(config, state, resolver=resolver, now=now)
-    should_run_daily = daily_run_due(config, state, now=now)
+    new_ids_by_channel, _current_ids_by_channel = scan_channels_for_new_videos(config, state, resolver=resolver, now=now)
+    current_should_run_daily = daily_run_due(config, state, now=now)
+    pending_run = state.get("pending_run") if isinstance(state.get("pending_run"), dict) else None
+    retry_due = bool(pending_run and not pending_run.get("exhausted") and retry_backoff_due(pending_run, now))
+    pending_daily = bool(retry_due and pending_run and pending_run.get("daily_due"))
+    effective_new_videos = merge_new_video_maps(
+        pending_run.get("new_videos", {}) if retry_due and pending_run else {},
+        new_ids_by_channel,
+    )
+    should_run_daily = current_should_run_daily or pending_daily
 
-    if not new_ids_by_channel and not should_run_daily:
+    if pending_run and not retry_due and not current_should_run_daily and not new_ids_by_channel:
+        write_json(state_path, state)
+        return {
+            "ran": False,
+            "reason": "retry_exhausted" if pending_run.get("exhausted") else "retry_backoff",
+            "new_videos": pending_run.get("new_videos", {}),
+        }
+
+    if not effective_new_videos and not should_run_daily:
         write_json(state_path, state)
         return {
             "ran": False,
@@ -179,10 +238,20 @@ def run_scheduler_iteration(
             "new_videos": {},
         }
 
-    trigger = "daily_and_new_videos" if should_run_daily and new_ids_by_channel else "daily" if should_run_daily else "new_videos"
+    trigger = "daily_and_new_videos" if should_run_daily and effective_new_videos else "daily" if should_run_daily else "new_videos"
+    attempt = int(pending_run.get("attempts", 0)) + 1 if retry_due and pending_run else 1
     state["last_trigger_at"] = now.isoformat()
     state["last_trigger"] = trigger
-    state["last_new_videos"] = new_ids_by_channel
+    state["last_new_videos"] = effective_new_videos
+    state["pending_run"] = {
+        "trigger": trigger,
+        "new_videos": effective_new_videos,
+        "daily_due": should_run_daily,
+        "started_at": pending_run.get("started_at", now.isoformat()) if retry_due and pending_run else now.isoformat(),
+        "last_attempt_at": now.isoformat(),
+        "attempts": attempt,
+    }
+    write_json(state_path, state)
 
     exit_code, payload = _run_scheduled_job_result(config, script_path=script_path)
     if exit_code == 0:
@@ -196,11 +265,12 @@ def run_scheduler_iteration(
         if should_run_daily:
             localized_now = now.astimezone(ZoneInfo(config.schedule.timezone))
             state["last_daily_run_local_date"] = localized_now.date().isoformat()
+        state.pop("pending_run", None)
         channel_names = {ch.slug: ch.display_name for ch in config.channels}
         try:
             send_analysis_summary_alert(
                 config.notifications,
-                new_ids_by_channel,
+                effective_new_videos,
                 trigger=trigger,
                 top_signals=analysis_summary.get("top_signals"),
                 channel_names=channel_names,
@@ -219,12 +289,24 @@ def run_scheduler_iteration(
                 logger.warning("Daily leaderboard alert failed: %s", exc)
     else:
         state["last_failed_trigger_at"] = now.isoformat()
+        next_retry_at = now + timedelta(seconds=scheduler_retry_delay_seconds(config.schedule.retry_backoff_seconds, attempt))
+        state["pending_run"] = {
+            **state.get("pending_run", {}),
+            "trigger": trigger,
+            "new_videos": effective_new_videos,
+            "daily_due": should_run_daily,
+            "attempts": attempt,
+            "last_failure_at": now.isoformat(),
+            "last_exit_code": exit_code,
+            "next_retry_at": next_retry_at.isoformat(),
+            "exhausted": attempt >= config.schedule.job_max_attempts,
+        }
 
     write_json(state_path, state)
     return {
         "ran": True,
         "reason": trigger,
-        "new_videos": new_ids_by_channel,
+        "new_videos": effective_new_videos,
         "exit_code": exit_code,
     }
 
@@ -250,10 +332,15 @@ def run_scheduler_forever(config: AppConfig, script_path: str = DEFAULT_COMPARIS
     base_interval = max(60, int(config.schedule.poll_interval_minutes) * 60)
     consecutive_idle = 0
     while True:
-        result = run_scheduler_iteration(config, script_path=script_path)
-        found_new = bool(result.get("new_videos"))
-        if result["ran"]:
-            logger.info("Scheduler iteration finished: %s", result)
-        sleep_seconds, consecutive_idle = adaptive_poll_interval(base_interval, found_new, consecutive_idle)
+        try:
+            result = run_scheduler_iteration(config, script_path=script_path)
+            found_new = bool(result.get("new_videos"))
+            if result["ran"]:
+                logger.info("Scheduler iteration finished: %s", result)
+            sleep_seconds, consecutive_idle = adaptive_poll_interval(base_interval, found_new, consecutive_idle)
+        except Exception as exc:
+            logger.exception("Scheduler loop crashed but will continue: %s", exc)
+            _record_scheduler_loop_crash(exc)
+            sleep_seconds, consecutive_idle = adaptive_poll_interval(base_interval, found_new=False, consecutive_idle=consecutive_idle)
         logger.info("Next scheduler poll in %s seconds (idle streak: %s)", sleep_seconds, consecutive_idle)
         time.sleep(sleep_seconds)

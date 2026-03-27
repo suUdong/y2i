@@ -16,6 +16,7 @@ from .signal_gate import assess_video_signal
 from .stock_registry import COMPANY_MAP
 from .transcript_cache import TranscriptCache
 from .transcript_runtime import resolve_transcript_text
+from .utils import normalize_ws, unique_preserve
 from .youtube import TranscriptFetcher
 
 logger = logging.getLogger(__name__)
@@ -113,6 +114,10 @@ def analyze_video_heuristic(
     cache: TranscriptCache,
     fetcher: TranscriptFetcher,
     fundamentals: FundamentalsFetcher,
+    *,
+    max_fundamental_workers: int | None = None,
+    description_max_chars: int = 280,
+    max_tags: int = 12,
 ) -> dict[str, Any]:
     """Run the fast heuristic analysis lane for one resolved video."""
     analysis_text, transcript_language, evidence_source, cached_entry = resolve_transcript_text(video, cache, fetcher, logger)
@@ -139,8 +144,8 @@ def analyze_video_heuristic(
         "title": video.title,
         "url": video.url,
         "published_at": video.published_at,
-        "description": video.description or "",
-        "tags": list(video.tags),
+        "description": _compact_text(video.description or "", max_chars=description_max_chars),
+        "tags": _compact_tags(video.tags, max_items=max_tags),
         "video_type": video_type.value,
         "signal_score": signal.signal_score,
         "video_signal_class": signal.video_signal_class,
@@ -157,11 +162,22 @@ def analyze_video_heuristic(
     if not signal.should_analyze_stocks:
         return row
 
+    mentions = extract_mentions(video.title, analysis_text)
+    if hasattr(fundamentals, "fetch_many"):
+        snapshots = fundamentals.fetch_many(
+            [mention for mention, _mention_count in mentions],
+            max_workers=max_fundamental_workers,
+        )
+    else:
+        snapshots = {
+            mention.ticker: fundamentals.fetch(mention)
+            for mention, _mention_count in mentions
+        }
     cached_evidence = {item["ticker"]: list(item.get("evidence", [])) for item in (cached_entry or {}).get("ticker_mentions", [])}
-    for mention, mention_count in extract_mentions(video.title, analysis_text):
-        snapshot = fundamentals.fetch(mention)
+    for mention, mention_count in mentions:
+        snapshot = snapshots.get(mention.ticker) or fundamentals.fetch(mention)
         basic_score, basic_verdict, basic_state, basic_summary = basic_assessment(snapshot)
-        evidence_snippets = cached_evidence.get(mention.ticker) or list(mention.evidence or [mention.reason])
+        evidence_snippets = _compact_evidence(cached_evidence.get(mention.ticker) or list(mention.evidence or [mention.reason]))
         mops = build_master_opinions(
             ticker=mention.ticker,
             company_name=snapshot.company_name or mention.company_name,
@@ -201,6 +217,8 @@ def analyze_video_heuristic(
             }
         )
     return row
+
+
 def heuristic_rows_to_reports(rows: list[dict]) -> list[VideoAnalysisReport]:
     """Convert heuristic pipeline dict rows into VideoAnalysisReport objects for dashboard rendering."""
     from .models import (
@@ -290,3 +308,25 @@ def render_heuristic_dashboard(rows: list[dict], output_dir, label: str = "heuri
 
 def _safe_pct(value: float | None) -> float:
     return 0.0 if value is None else value * 100
+
+
+def _compact_text(text: str, max_chars: int) -> str:
+    normalized = normalize_ws(text)
+    if len(normalized) <= max_chars:
+        return normalized
+    return normalized[: max_chars - 3].rstrip() + "..."
+
+
+def _compact_tags(tags: list[str], max_items: int) -> list[str]:
+    compacted = [normalize_ws(tag)[:40] for tag in tags if normalize_ws(tag)]
+    return unique_preserve(compacted)[:max_items]
+
+
+def _compact_evidence(items: list[str], max_items: int = 3, max_chars: int = 160) -> list[str]:
+    compacted = []
+    for item in items:
+        normalized = normalize_ws(item)
+        if not normalized:
+            continue
+        compacted.append(normalized[:max_chars])
+    return unique_preserve(compacted)[:max_items]

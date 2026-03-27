@@ -21,6 +21,8 @@ class StrategyConfig:
     window_days: int = 30
     max_scan: int = 80
     top_n: int = 3
+    video_workers: int = 4
+    fundamentals_workers: int = 4
     paper_trade_capital: float = 10_000.0
     signal_alert_min_score: float = 68.0
     signal_alert_min_channel_quality: float = 50.0
@@ -43,6 +45,8 @@ class ScheduleConfig:
     enabled: bool = False
     poll_interval_minutes: int = 2
     poll_video_limit: int = 8
+    job_max_attempts: int = 3
+    retry_backoff_seconds: int = 60
     state_path: str = ".omx/state/scheduler_state.json"
 
 
@@ -119,6 +123,8 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
             window_days=int(os.getenv("OMX_WINDOW_DAYS", strategy_payload.get("window_days", 30))),
             max_scan=int(os.getenv("OMX_MAX_SCAN", strategy_payload.get("max_scan", 80))),
             top_n=int(os.getenv("OMX_TOP_N", strategy_payload.get("top_n", 3))),
+            video_workers=int(os.getenv("OMX_VIDEO_WORKERS", strategy_payload.get("video_workers", 4))),
+            fundamentals_workers=int(os.getenv("OMX_FUNDAMENTALS_WORKERS", strategy_payload.get("fundamentals_workers", 4))),
             paper_trade_capital=float(os.getenv("OMX_PAPER_TRADE_CAPITAL", strategy_payload.get("paper_trade_capital", 10_000.0))),
             signal_alert_min_score=float(os.getenv("OMX_SIGNAL_ALERT_MIN_SCORE", strategy_payload.get("signal_alert_min_score", 68.0))),
             signal_alert_min_channel_quality=float(os.getenv("OMX_SIGNAL_ALERT_MIN_CHANNEL_QUALITY", strategy_payload.get("signal_alert_min_channel_quality", 50.0))),
@@ -135,6 +141,8 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
             enabled=_env_bool("OMX_SCHEDULE_ENABLED", schedule_payload.get("enabled", False)),
             poll_interval_minutes=int(os.getenv("OMX_SCHEDULE_POLL_INTERVAL_MINUTES", schedule_payload.get("poll_interval_minutes", 10))),
             poll_video_limit=int(os.getenv("OMX_SCHEDULE_POLL_VIDEO_LIMIT", schedule_payload.get("poll_video_limit", 8))),
+            job_max_attempts=int(os.getenv("OMX_SCHEDULE_JOB_MAX_ATTEMPTS", schedule_payload.get("job_max_attempts", 3))),
+            retry_backoff_seconds=int(os.getenv("OMX_SCHEDULE_RETRY_BACKOFF_SECONDS", schedule_payload.get("retry_backoff_seconds", 60))),
             state_path=os.getenv("OMX_SCHEDULE_STATE_PATH", schedule_payload.get("state_path", ".omx/state/scheduler_state.json")),
         ),
         logging=LoggingConfig(

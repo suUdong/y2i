@@ -40,6 +40,9 @@ class TranscriptCache:
     def is_stale(self, video_id: str, max_age_hours: int | None = None) -> bool:
         """Check if a cached entry is older than max_age_hours."""
         entry = self.load(video_id)
+        return self.is_entry_stale(entry, max_age_hours=max_age_hours)
+
+    def is_entry_stale(self, entry: dict[str, Any] | None, max_age_hours: int | None = None) -> bool:
         if entry is None:
             return True
         cached_at = entry.get("cached_at")

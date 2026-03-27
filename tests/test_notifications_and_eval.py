@@ -140,7 +140,7 @@ def test_as_float_invalid():
     assert _as_float("not a number") is None
 
 
-def test_fundamentals_no_yfinance(monkeypatch):
+def test_fundamentals_no_yfinance(monkeypatch, tmp_path):
     import omx_brainstorm.fundamentals as mod
     original_import = __builtins__.__import__ if hasattr(__builtins__, '__import__') else __import__
 
@@ -154,7 +154,7 @@ def test_fundamentals_no_yfinance(monkeypatch):
     import sys
     saved = sys.modules.pop("yfinance", None)
     try:
-        fetcher = FundamentalsFetcher()
+        fetcher = FundamentalsFetcher(cache_root=tmp_path / "fundamentals")
         mention = TickerMention(ticker="NVDA", company_name="NVIDIA")
         snapshot = fetcher.fetch(mention)
         assert snapshot.data_source == "unavailable"
@@ -164,7 +164,7 @@ def test_fundamentals_no_yfinance(monkeypatch):
             sys.modules["yfinance"] = saved
 
 
-def test_fundamentals_yfinance_error(monkeypatch):
+def test_fundamentals_yfinance_error(monkeypatch, tmp_path):
     class _FakeTicker:
         def __init__(self, t):
             raise RuntimeError("API error")
@@ -173,13 +173,13 @@ def test_fundamentals_yfinance_error(monkeypatch):
     fake_yf.Ticker = _FakeTicker
     monkeypatch.setitem(__import__('sys').modules, "yfinance", fake_yf)
 
-    fetcher = FundamentalsFetcher()
+    fetcher = FundamentalsFetcher(cache_root=tmp_path / "fundamentals")
     mention = TickerMention(ticker="NVDA", company_name="NVIDIA")
     snapshot = fetcher.fetch(mention)
     assert snapshot.data_source == "yfinance_error"
 
 
-def test_fundamentals_yfinance_success(monkeypatch):
+def test_fundamentals_yfinance_success(monkeypatch, tmp_path):
     class _FakeFastInfo:
         last_price = 900.0
         market_cap = 2_000_000_000_000
@@ -204,7 +204,7 @@ def test_fundamentals_yfinance_success(monkeypatch):
     fake_yf.Ticker = _FakeTicker
     monkeypatch.setitem(__import__('sys').modules, "yfinance", fake_yf)
 
-    fetcher = FundamentalsFetcher()
+    fetcher = FundamentalsFetcher(cache_root=tmp_path / "fundamentals")
     mention = TickerMention(ticker="NVDA", company_name="NVIDIA")
     snapshot = fetcher.fetch(mention)
     assert snapshot.data_source == "yfinance"

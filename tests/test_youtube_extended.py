@@ -113,6 +113,39 @@ def test_resolve_video_mocked(monkeypatch):
     assert video.tags == ["tag1"]
 
 
+def test_resolve_video_uses_cache_on_repeat(monkeypatch, tmp_path):
+    calls = {"count": 0}
+    fake_info = {
+        "title": "Cached Video",
+        "channel_id": "CH1",
+        "channel": "Test Channel",
+        "upload_date": "20260315",
+        "description": "desc",
+        "tags": ["tag1"],
+    }
+
+    class FakeYDL:
+        def __init__(self, opts):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            pass
+        def extract_info(self, url, download=False):
+            calls["count"] += 1
+            return fake_info
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+
+    resolver = YoutubeResolver(cache_root=tmp_path / "video-cache")
+    first = resolver.resolve_video("dQw4w9WgXcQ")
+    second = resolver.resolve_video("dQw4w9WgXcQ")
+
+    assert first.title == "Cached Video"
+    assert second.title == "Cached Video"
+    assert calls["count"] == 1
+
+
 def test_resolve_channel_videos_mocked(monkeypatch):
     fake_info = {
         "id": "CHANNEL_ID",

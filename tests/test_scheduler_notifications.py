@@ -230,6 +230,71 @@ def test_run_scheduler_iteration_skips_daily_leaderboard_on_new_video_only(monke
     assert leaderboard_calls == []
 
 
+def test_run_scheduler_iteration_retries_pending_run(monkeypatch, tmp_path):
+    state_path = tmp_path / "scheduler_state.json"
+    health_path = tmp_path / "health.json"
+    monkeypatch.setattr("omx_brainstorm.scheduler.HEALTH_PATH", health_path)
+
+    config = AppConfig(
+        config_path=str(tmp_path / "config.toml"),
+        channels=[ChannelConfig(slug="sampro", display_name="Sampro", url="https://youtube.com/@sampro")],
+        schedule=ScheduleConfig(
+            enabled=True,
+            daily_time="23:59",
+            timezone="Asia/Seoul",
+            poll_video_limit=3,
+            state_path=str(state_path),
+            job_max_attempts=3,
+            retry_backoff_seconds=30,
+        ),
+        notifications=NotificationConfig(),
+    )
+
+    class Resolver:
+        def resolve_channel_videos(self, channel_url, limit):
+            return [VideoInput(video_id="vid-new", title="New", url="u", published_at="20260327")]
+
+    state_path.write_text(
+        json.dumps(
+            {
+                "channels": {"sampro": {"processed_video_ids": []}},
+                "pending_run": {
+                    "trigger": "new_videos",
+                    "new_videos": {"sampro": ["vid-new"]},
+                    "daily_due": False,
+                    "attempts": 1,
+                    "next_retry_at": "2026-03-27T01:00:00+00:00",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class Proc:
+        returncode = 0
+        stdout = json.dumps(
+            {
+                "channels": {"sampro": {"json_path": str(tmp_path / "artifact.json"), "txt_path": str(tmp_path / "artifact.txt")}},
+                "telegram": {"analysis_summary": {"channel_signal_summaries": [], "top_signals": []}, "daily_leaderboard": []},
+            }
+        )
+        stderr = ""
+
+    (tmp_path / "artifact.json").write_text(json.dumps({"videos": [{"video_id": "vid-new"}]}), encoding="utf-8")
+    monkeypatch.setattr("omx_brainstorm.scheduler.subprocess.run", lambda *a, **k: Proc())
+    monkeypatch.setattr("omx_brainstorm.scheduler.notify_all", lambda *a, **k: {"telegram": False, "discord": False})
+    monkeypatch.setattr("omx_brainstorm.scheduler.send_analysis_summary_alert", lambda *a, **k: True)
+    monkeypatch.setattr("omx_brainstorm.scheduler.send_daily_leaderboard_alert", lambda *a, **k: True)
+
+    result = run_scheduler_iteration(config, resolver=Resolver(), now=datetime(2026, 3, 27, 1, 5, tzinfo=timezone.utc))
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+
+    assert result["ran"] is True
+    assert result["new_videos"] == {"sampro": ["vid-new"]}
+    assert "pending_run" not in state
+    assert state["channels"]["sampro"]["processed_video_ids"] == ["vid-new"]
+
+
 def test_processed_ids_from_payload_reads_channel_artifacts(tmp_path):
     artifact_path = tmp_path / "sampro_30d_test.json"
     artifact_path.write_text(json.dumps({"videos": [{"video_id": "vid-1"}, {"video_id": "vid-2"}]}), encoding="utf-8")

@@ -105,6 +105,19 @@ def test_heuristic_output_includes_video_type_field(tmp_path):
     assert result["video_type"] == "NEWS_EVENT"
 
 
+def test_heuristic_compacts_large_description_and_tags(tmp_path):
+    video = VideoInput(
+        video_id="hcompact1",
+        title="반도체 수혜주 종목 분석",
+        url="https://youtube.com/watch?v=hcompact1",
+        description="메모리 수혜주 설명 " * 80,
+        tags=[f"태그{i}" for i in range(20)],
+    )
+    result = analyze_video_heuristic(video, TranscriptCache(tmp_path / "cache"), _DummyFetcher(), _DummyFundamentals())
+    assert len(result["description"]) <= 280
+    assert len(result["tags"]) == 12
+
+
 # --- extract_mentions ---
 
 def test_extract_mentions_no_matches():
