@@ -38,6 +38,9 @@ class ScheduleConfig:
     daily_time: str = "09:00"
     timezone: str = "Asia/Seoul"
     enabled: bool = False
+    poll_interval_minutes: int = 10
+    poll_video_limit: int = 8
+    state_path: str = ".omx/state/scheduler_state.json"
 
 
 @dataclass(slots=True)
@@ -51,6 +54,7 @@ class LoggingConfig:
 @dataclass(slots=True)
 class AppConfig:
     """Top-level application configuration."""
+    config_path: str = "config.toml"
     provider: str = "auto"
     output_dir: str = "output"
     registry_path: str = "channels.json"
@@ -102,6 +106,7 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
         raise ValueError(f"Invalid channel config entry missing field: {exc}") from exc
 
     return AppConfig(
+        config_path=str(path),
         provider=os.getenv("OMX_PROVIDER", app.get("provider", "auto")),
         output_dir=os.getenv("OMX_OUTPUT_DIR", app.get("output_dir", "output")),
         registry_path=os.getenv("OMX_REGISTRY_PATH", app.get("registry_path", "channels.json")),
@@ -122,6 +127,9 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
             daily_time=os.getenv("OMX_DAILY_TIME", schedule_payload.get("daily_time", "09:00")),
             timezone=os.getenv("OMX_TIMEZONE", schedule_payload.get("timezone", "Asia/Seoul")),
             enabled=_env_bool("OMX_SCHEDULE_ENABLED", schedule_payload.get("enabled", False)),
+            poll_interval_minutes=int(os.getenv("OMX_SCHEDULE_POLL_INTERVAL_MINUTES", schedule_payload.get("poll_interval_minutes", 10))),
+            poll_video_limit=int(os.getenv("OMX_SCHEDULE_POLL_VIDEO_LIMIT", schedule_payload.get("poll_video_limit", 8))),
+            state_path=os.getenv("OMX_SCHEDULE_STATE_PATH", schedule_payload.get("state_path", ".omx/state/scheduler_state.json")),
         ),
         logging=LoggingConfig(
             json=_env_bool("OMX_JSON_LOGS", logging_payload.get("json", True)),

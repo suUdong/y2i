@@ -282,7 +282,10 @@ def run_comparison_job(config: AppConfig) -> dict:
     compare_json, compare_txt = save_comparison_artifacts(comparison, context)
     dashboard_markdown = None
     try:
-        from scripts.generate_dashboard import generate_dashboard
+        try:
+            from scripts.generate_dashboard import generate_dashboard
+        except ModuleNotFoundError:
+            from generate_dashboard import generate_dashboard
 
         dashboard_markdown = str(generate_dashboard(output_dir, output_dir.parent / "DASHBOARD.md"))
     except Exception as exc:

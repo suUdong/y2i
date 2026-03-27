@@ -28,7 +28,7 @@ def main() -> None:
     if args.once:
         raise SystemExit(run_scheduled_job(config))
     if not config.schedule.enabled:
-        logging.getLogger(__name__).warning("Schedule is disabled in config; starting loop anyway because --once was not used")
+        logging.getLogger(__name__).warning("Daily schedule is disabled in config; upload polling loop will still run")
     run_scheduler_forever(config)
 
 

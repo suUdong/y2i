@@ -75,6 +75,28 @@ retention_days = 3
     assert config.logging.retention_days == 3
 
 
+def test_load_app_config_reads_scheduler_extensions(tmp_path):
+    path = tmp_path / "cfg.toml"
+    path.write_text(
+        """
+[schedule]
+enabled = true
+daily_time = "08:30"
+timezone = "Asia/Seoul"
+poll_interval_minutes = 15
+poll_video_limit = 6
+state_path = ".omx/state/custom-scheduler.json"
+        """.strip(),
+        encoding="utf-8",
+    )
+    config = load_app_config(path)
+    assert config.config_path == str(path)
+    assert config.schedule.enabled is True
+    assert config.schedule.poll_interval_minutes == 15
+    assert config.schedule.poll_video_limit == 6
+    assert config.schedule.state_path == ".omx/state/custom-scheduler.json"
+
+
 def test_load_app_config_env_overrides_logging(tmp_path, monkeypatch):
     path = tmp_path / "cfg.toml"
     path.write_text("[logging]\njson = false", encoding="utf-8")

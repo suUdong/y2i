@@ -36,7 +36,7 @@ pip install -e . pytest
 - `[[channels]]`: 채널 slug/display_name/url/enabled
 - `[strategy]`: window days, scan depth, top N, paper trade capital
 - `[notifications]`: Telegram bot/chat
-- `[schedule]`: daily time, timezone, enabled
+- `[schedule]`: daily time, timezone, enabled, poll interval, poll video limit, scheduler state path
 - `[logging]`: JSON logging 여부, 로그 디렉터리, 보관 일수
 
 ## CLI
@@ -67,10 +67,26 @@ python scripts/run_scheduler.py --config config.toml --once
 
 루프 실행:
 ```bash
-python scripts/run_scheduler.py --config config.toml
+.venv/bin/python scripts/run_scheduler.py --config config.toml
 ```
 
-성공/실패 요약은 Telegram 환경변수가 있으면 알림으로 전송된다.
+스케줄러 동작:
+- 10분 기본 폴링으로 각 채널의 최신 업로드를 확인한다.
+- 새 영상이 감지되면 즉시 30일 비교 파이프라인을 다시 실행한다.
+- `daily_time`을 지나면 하루 한 번 백스톱 비교 실행도 보장한다.
+- 상태는 `.omx/state/scheduler_state.json`, 헬스 정보는 `.omx/state/scheduler_health.json`에 남는다.
+
+성공/실패 요약은 Telegram/Discord 환경변수가 있으면 알림으로 전송된다.
+
+크론 watchdog 예시:
+```bash
+crontab -l
+```
+
+```cron
+@reboot /home/wdsr88/workspace/y2i/scripts/ensure_scheduler_daemon.sh
+*/10 * * * * /home/wdsr88/workspace/y2i/scripts/ensure_scheduler_daemon.sh
+```
 
 ## 로깅 / 헬스체크
 - 기본 로그는 JSON 형식으로 `.omx/logs/omx-app.log`에 기록된다.
