@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import json
 import logging
+from pathlib import Path
 
 import requests
 
@@ -21,6 +21,37 @@ def send_telegram_message(config: NotificationConfig, text: str) -> bool:
         return bool(body.get("ok"))
     except Exception as exc:
         logger.warning("Telegram notification failed: %s", exc)
+        return False
+
+
+def send_telegram_document(config: NotificationConfig, file_path: str | Path, caption: str = "") -> bool:
+    """Send a document to Telegram with an optional HTML caption."""
+    if not config.telegram_bot_token or not config.telegram_chat_id:
+        logger.info("Telegram document skipped: credentials missing")
+        return False
+
+    path = Path(file_path)
+    if not path.exists():
+        logger.warning("Telegram document skipped: file missing (%s)", path)
+        return False
+
+    url = f"https://api.telegram.org/bot{config.telegram_bot_token}/sendDocument"
+    try:
+        with path.open("rb") as handle:
+            response = requests.post(
+                url,
+                data={
+                    "chat_id": config.telegram_chat_id,
+                    "caption": caption[:1024],
+                    "parse_mode": "HTML",
+                },
+                files={"document": (path.name, handle, "text/markdown")},
+                timeout=20,
+            )
+        body = response.json()
+        return bool(body.get("ok"))
+    except Exception as exc:
+        logger.warning("Telegram document failed: %s", exc)
         return False
 
 

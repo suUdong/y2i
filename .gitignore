@@ -2,6 +2,7 @@ config.toml
 .env
 .env.*
 output/
+reports/
 .omx/
 .omc/*
 !.omc/prd.json

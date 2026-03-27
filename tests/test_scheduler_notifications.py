@@ -6,7 +6,7 @@ import sys
 from omx_brainstorm.app_config import AppConfig, ChannelConfig, NotificationConfig, ScheduleConfig
 from omx_brainstorm.healthcheck import read_health_state
 from omx_brainstorm.models import VideoInput
-from omx_brainstorm.notifications import send_telegram_message
+from omx_brainstorm.notifications import send_telegram_document, send_telegram_message
 from omx_brainstorm.scheduler import (
     HEALTH_PATH,
     adaptive_poll_interval,
@@ -23,6 +23,38 @@ from omx_brainstorm.scheduler import (
 def test_send_telegram_message_returns_false_without_credentials():
     config = NotificationConfig()
     assert send_telegram_message(config, "hello") is False
+
+
+def test_send_telegram_document_returns_false_without_credentials(tmp_path):
+    config = NotificationConfig()
+    path = tmp_path / "report.md"
+    path.write_text("# report", encoding="utf-8")
+    assert send_telegram_document(config, path, caption="x") is False
+
+
+def test_send_telegram_document_posts_markdown(monkeypatch, tmp_path):
+    calls = {}
+
+    class Response:
+        def json(self):
+            return {"ok": True}
+
+    def fake_post(url, data=None, files=None, timeout=None):
+        calls["url"] = url
+        calls["data"] = data
+        calls["files"] = files
+        calls["timeout"] = timeout
+        return Response()
+
+    monkeypatch.setattr("omx_brainstorm.notifications.requests.post", fake_post)
+    config = NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123")
+    path = tmp_path / "report.md"
+    path.write_text("# report", encoding="utf-8")
+
+    assert send_telegram_document(config, path, caption="<b>daily</b>") is True
+    assert calls["url"].endswith("/sendDocument")
+    assert calls["data"]["parse_mode"] == "HTML"
+    assert calls["files"]["document"][0] == "report.md"
 
 
 def test_seconds_until_next_run_is_non_negative():
@@ -153,6 +185,9 @@ def test_run_scheduler_iteration_triggers_and_updates_state(monkeypatch, tmp_pat
 
     artifact_path = tmp_path / "sampro_30d_test.json"
     artifact_path.write_text(json.dumps({"videos": [{"video_id": "vid-new"}]}), encoding="utf-8")
+    report_path = tmp_path / "reports" / "daily_summary_20260327_20260327T010500Z.md"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text("# daily report", encoding="utf-8")
 
     class Proc:
         returncode = 0
@@ -168,6 +203,10 @@ def test_run_scheduler_iteration_triggers_and_updates_state(monkeypatch, tmp_pat
                 },
                 "daily_leaderboard": [{"slug": "sampro", "display_name": "Sampro", "overall_quality_score": 77.2}],
             },
+            "daily_report": {
+                "markdown_path": str(report_path),
+                "telegram_caption": "<b>daily</b>",
+            },
         })
         stderr = ""
 
@@ -175,8 +214,10 @@ def test_run_scheduler_iteration_triggers_and_updates_state(monkeypatch, tmp_pat
     monkeypatch.setattr("omx_brainstorm.scheduler.notify_all", lambda *a, **k: {"telegram": False, "discord": False})
     analysis_calls = []
     leaderboard_calls = []
+    document_calls = []
     monkeypatch.setattr("omx_brainstorm.scheduler.send_analysis_summary_alert", lambda *a, **k: analysis_calls.append((a, k)) or True)
     monkeypatch.setattr("omx_brainstorm.scheduler.send_daily_leaderboard_alert", lambda *a, **k: leaderboard_calls.append((a, k)) or True)
+    monkeypatch.setattr("omx_brainstorm.scheduler.send_telegram_document", lambda *a, **k: document_calls.append((a, k)) or True)
     result = run_scheduler_iteration(config, resolver=Resolver(), now=datetime(2026, 3, 27, 1, 5, tzinfo=timezone.utc))
     state = json.loads(state_path.read_text(encoding="utf-8"))
     assert result["ran"] is True
@@ -185,6 +226,7 @@ def test_run_scheduler_iteration_triggers_and_updates_state(monkeypatch, tmp_pat
     assert state["last_daily_run_local_date"] == "2026-03-27"
     assert len(analysis_calls) == 1
     assert len(leaderboard_calls) == 1
+    assert len(document_calls) == 1
 
 
 def test_run_scheduler_iteration_skips_daily_leaderboard_on_new_video_only(monkeypatch, tmp_path):
@@ -205,6 +247,9 @@ def test_run_scheduler_iteration_skips_daily_leaderboard_on_new_video_only(monke
 
     artifact_path = tmp_path / "sampro_30d_test.json"
     artifact_path.write_text(json.dumps({"videos": [{"video_id": "vid-new"}]}), encoding="utf-8")
+    report_path = tmp_path / "reports" / "daily_summary_20260327_20260327T010500Z.md"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text("# daily report", encoding="utf-8")
 
     class Proc:
         returncode = 0
@@ -215,19 +260,26 @@ def test_run_scheduler_iteration_skips_daily_leaderboard_on_new_video_only(monke
                 "analysis_summary": {"channel_signal_summaries": [], "top_signals": []},
                 "daily_leaderboard": [{"slug": "sampro", "display_name": "Sampro", "overall_quality_score": 77.2}],
             },
+            "daily_report": {
+                "markdown_path": str(report_path),
+                "telegram_caption": "<b>daily</b>",
+            },
         })
         stderr = ""
 
     monkeypatch.setattr("omx_brainstorm.scheduler.subprocess.run", lambda *a, **k: Proc())
     monkeypatch.setattr("omx_brainstorm.scheduler.notify_all", lambda *a, **k: {"telegram": False, "discord": False})
     leaderboard_calls = []
+    document_calls = []
     monkeypatch.setattr("omx_brainstorm.scheduler.send_analysis_summary_alert", lambda *a, **k: True)
     monkeypatch.setattr("omx_brainstorm.scheduler.send_daily_leaderboard_alert", lambda *a, **k: leaderboard_calls.append((a, k)) or True)
+    monkeypatch.setattr("omx_brainstorm.scheduler.send_telegram_document", lambda *a, **k: document_calls.append((a, k)) or True)
 
     state_path.write_text(json.dumps({"channels": {"sampro": {"processed_video_ids": []}}}), encoding="utf-8")
     run_scheduler_iteration(config, resolver=Resolver(), now=datetime(2026, 3, 27, 1, 5, tzinfo=timezone.utc))
 
     assert leaderboard_calls == []
+    assert document_calls == []
 
 
 def test_run_scheduler_iteration_retries_pending_run(monkeypatch, tmp_path):
@@ -276,15 +328,22 @@ def test_run_scheduler_iteration_retries_pending_run(monkeypatch, tmp_path):
             {
                 "channels": {"sampro": {"json_path": str(tmp_path / "artifact.json"), "txt_path": str(tmp_path / "artifact.txt")}},
                 "telegram": {"analysis_summary": {"channel_signal_summaries": [], "top_signals": []}, "daily_leaderboard": []},
+                "daily_report": {
+                    "markdown_path": str(tmp_path / "reports" / "daily_summary_20260327_20260327T010500Z.md"),
+                    "telegram_caption": "<b>daily</b>",
+                },
             }
         )
         stderr = ""
 
     (tmp_path / "artifact.json").write_text(json.dumps({"videos": [{"video_id": "vid-new"}]}), encoding="utf-8")
+    (tmp_path / "reports").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "reports" / "daily_summary_20260327_20260327T010500Z.md").write_text("# daily report", encoding="utf-8")
     monkeypatch.setattr("omx_brainstorm.scheduler.subprocess.run", lambda *a, **k: Proc())
     monkeypatch.setattr("omx_brainstorm.scheduler.notify_all", lambda *a, **k: {"telegram": False, "discord": False})
     monkeypatch.setattr("omx_brainstorm.scheduler.send_analysis_summary_alert", lambda *a, **k: True)
     monkeypatch.setattr("omx_brainstorm.scheduler.send_daily_leaderboard_alert", lambda *a, **k: True)
+    monkeypatch.setattr("omx_brainstorm.scheduler.send_telegram_document", lambda *a, **k: True)
 
     result = run_scheduler_iteration(config, resolver=Resolver(), now=datetime(2026, 3, 27, 1, 5, tzinfo=timezone.utc))
     state = json.loads(state_path.read_text(encoding="utf-8"))

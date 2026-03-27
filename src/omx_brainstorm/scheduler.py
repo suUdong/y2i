@@ -10,7 +10,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from .app_config import AppConfig
-from .notifications import notify_all
+from .notifications import notify_all, send_telegram_document
 from .signal_alerts import send_analysis_summary_alert, send_daily_leaderboard_alert
 from .youtube import YoutubeResolver
 from .utils import write_json, read_json
@@ -287,6 +287,19 @@ def run_scheduler_iteration(
                 )
             except Exception as exc:
                 logger.warning("Daily leaderboard alert failed: %s", exc)
+            daily_report_payload = payload.get("daily_report", {}) if isinstance(payload, dict) else {}
+            report_path = daily_report_payload.get("markdown_path") if isinstance(daily_report_payload, dict) else None
+            if report_path:
+                try:
+                    sent = send_telegram_document(
+                        config.notifications,
+                        Path(str(report_path)),
+                        caption=str(daily_report_payload.get("telegram_caption", "")),
+                    )
+                    if not sent:
+                        logger.warning("Daily report delivery skipped or failed for %s", report_path)
+                except Exception as exc:
+                    logger.warning("Daily report delivery failed: %s", exc)
     else:
         state["last_failed_trigger_at"] = now.isoformat()
         next_retry_at = now + timedelta(seconds=scheduler_retry_delay_seconds(config.schedule.retry_backoff_seconds, attempt))

@@ -13,6 +13,11 @@ from omx_brainstorm.app_config import AppConfig, load_app_config
 from omx_brainstorm.backtest import YFinanceHistoryProvider
 from omx_brainstorm.channel_quality import compute_channel_quality, compute_dynamic_weights, rank_channels
 from omx_brainstorm.comparison import RunContext, compare_channels, quality_scorecard, save_channel_artifacts
+from omx_brainstorm.daily_report import (
+    build_daily_report_payload,
+    format_daily_report_telegram_caption,
+    save_daily_report,
+)
 from omx_brainstorm.evaluation import ranking_validation
 from omx_brainstorm.fundamentals import FundamentalsFetcher
 from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic
@@ -420,6 +425,14 @@ def run_comparison_job(config: AppConfig) -> dict:
             logger.warning("Signal accuracy enrichment retry failed (non-fatal): %s", exc)
     comparison["consensus_signals"] = telegram_payload.get("analysis_summary", {}).get("consensus_signals", [])
 
+    daily_report_payload = build_daily_report_payload(channel_payloads, comparison, leaderboard, context)
+    daily_report_path = save_daily_report(daily_report_payload, output_dir.parent / "reports")
+    daily_report_payload = {
+        **daily_report_payload,
+        "markdown_path": str(daily_report_path),
+        "telegram_caption": format_daily_report_telegram_caption(daily_report_payload),
+    }
+
     compare_json, compare_txt = save_comparison_artifacts(comparison, context)
     dashboard_markdown = None
     try:
@@ -467,6 +480,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         "comparison_txt": str(compare_txt),
         "dashboard_markdown": dashboard_markdown,
         "telegram": telegram_payload,
+        "daily_report": daily_report_payload,
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return payload

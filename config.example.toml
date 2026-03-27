@@ -64,6 +64,7 @@ telegram_chat_id = ""
 
 [schedule]
 enabled = true
+# Set this after your target market close. 09:00 Asia/Seoul is after the US cash close.
 daily_time = "09:00"
 timezone = "Asia/Seoul"
 poll_interval_minutes = 10

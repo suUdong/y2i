@@ -74,6 +74,8 @@ def test_run_comparison_job_handles_empty_channel_set(tmp_path):
     assert "channels" in payload
     assert payload["dashboard_markdown"] is not None
     assert Path(payload["dashboard_markdown"]).exists()
+    assert Path(payload["daily_report"]["markdown_path"]).exists()
+    assert payload["daily_report"]["totals"]["videos_analyzed"] == 0
 
 
 def test_save_comparison_artifacts_writes_human_readable_labels(tmp_path):

@@ -74,6 +74,8 @@ python scripts/run_scheduler.py --config config.toml --once
 - 10분 기본 폴링으로 각 채널의 최신 업로드를 확인한다.
 - 새 영상이 감지되면 즉시 30일 비교 파이프라인을 다시 실행한다.
 - `daily_time`을 지나면 하루 한 번 백스톱 비교 실행도 보장한다.
+- 일일 실행이 성공하면 `reports/daily_summary_*.md` 마감 리포트를 생성한다.
+- Telegram이 설정되어 있으면 일일 실행에서 Markdown 리포트를 문서로 자동 발송한다.
 - 상태는 `.omx/state/scheduler_state.json`, 헬스 정보는 `.omx/state/scheduler_health.json`에 남는다.
 
 성공/실패 요약은 Telegram/Discord 환경변수가 있으면 알림으로 전송된다.
