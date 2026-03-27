@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import logging
 import re
+import time
 from datetime import datetime, timezone
 from datetime import date, timedelta
 from dataclasses import asdict
 from pathlib import Path
 from threading import Lock
-from typing import Iterable
+from typing import Any, Callable, Iterable
 
-from youtube_transcript_api import YouTubeTranscriptApi
-from yt_dlp import YoutubeDL
+from youtube_transcript_api import IpBlocked, RequestBlocked, YouTubeTranscriptApi
+from yt_dlp import DownloadError, YoutubeDL
 
 from .models import TranscriptSegment, VideoInput, utc_now_iso
 from .utils import ensure_dir, normalize_ws, read_json, write_json
@@ -20,6 +22,89 @@ CHANNEL_HANDLE_RE = re.compile(r"/@([^/?#]+)")
 CHANNEL_SUFFIX_RE = re.compile(r"/(?:videos|featured|streams|shorts)/?$")
 SAFE_CACHE_KEY_RE = re.compile(r"[^A-Za-z0-9_-]")
 DEFAULT_VIDEO_CACHE_HOURS = 24
+DEFAULT_YOUTUBE_FETCH_MAX_ATTEMPTS = 3
+DEFAULT_YOUTUBE_FETCH_RETRY_BASE_SECONDS = 2.0
+MAX_YOUTUBE_FETCH_RETRY_SECONDS = 12.0
+RETRYABLE_YTDLP_MARKERS = (
+    "sign in to confirm you're not a bot",
+    "sign in to confirm you’re not a bot",
+    "too many requests",
+    "http error 429",
+    "broken pipe",
+    "timed out",
+    "temporarily unavailable",
+)
+RETRYABLE_TRANSCRIPT_MARKERS = (
+    "youtube is blocking requests from your ip",
+    "too many requests",
+    "request blocked",
+    "ip blocked",
+    "broken pipe",
+)
+
+logger = logging.getLogger(__name__)
+
+
+def describe_youtube_error(exc: Exception) -> str:
+    """Collapse multiline extractor/transcript errors into a log-friendly summary."""
+    message = normalize_ws(str(exc))
+    return message or exc.__class__.__name__
+
+
+def _retry_delay_seconds(attempt: int, base_delay_seconds: float = DEFAULT_YOUTUBE_FETCH_RETRY_BASE_SECONDS) -> float:
+    attempt = max(1, int(attempt))
+    return min(MAX_YOUTUBE_FETCH_RETRY_SECONDS, float(base_delay_seconds) * (2 ** (attempt - 1)))
+
+
+def _sleep_before_retry(delay_seconds: float) -> None:
+    time.sleep(delay_seconds)
+
+
+def _is_retryable_ytdlp_error(exc: Exception) -> bool:
+    if isinstance(exc, BrokenPipeError):
+        return True
+    if not isinstance(exc, DownloadError):
+        return False
+    message = describe_youtube_error(exc).lower()
+    return any(marker in message for marker in RETRYABLE_YTDLP_MARKERS)
+
+
+def _is_retryable_transcript_error(exc: Exception) -> bool:
+    if isinstance(exc, (RequestBlocked, IpBlocked, BrokenPipeError)):
+        return True
+    message = describe_youtube_error(exc).lower()
+    return any(marker in message for marker in RETRYABLE_TRANSCRIPT_MARKERS)
+
+
+def _call_with_retry(
+    operation: Callable[[], Any],
+    *,
+    context: str,
+    is_retryable: Callable[[Exception], bool],
+    max_attempts: int = DEFAULT_YOUTUBE_FETCH_MAX_ATTEMPTS,
+) -> Any:
+    max_attempts = max(1, int(max_attempts))
+    last_exc: Exception | None = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return operation()
+        except Exception as exc:
+            last_exc = exc
+            if attempt >= max_attempts or not is_retryable(exc):
+                raise
+            delay_seconds = _retry_delay_seconds(attempt)
+            logger.warning(
+                "%s failed with retryable YouTube error on attempt %s/%s: %s; retrying in %.1fs",
+                context,
+                attempt,
+                max_attempts,
+                describe_youtube_error(exc),
+                delay_seconds,
+            )
+            _sleep_before_retry(delay_seconds)
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError(f"{context} failed without raising an exception")
 
 
 class ChannelRegistry:
@@ -76,8 +161,7 @@ class YoutubeResolver:
         url = f"https://www.youtube.com/watch?v={video_id}"
         opts = {**self._ydl_opts, "extract_flat": False}
         try:
-            with YoutubeDL(opts) as ydl:
-                info = ydl.extract_info(url, download=False)
+            info = self._extract_info(url, opts=opts, context=f"yt-dlp video metadata fetch for {video_id}")
         except Exception:
             if cached is not None:
                 return self._video_from_payload(cached["video"])
@@ -128,9 +212,11 @@ class YoutubeResolver:
         return videos
 
     def resolve_channel_videos(self, channel_url: str, limit: int = 5) -> list[VideoInput]:
-        opts = {**self._ydl_opts, "playlistend": limit}
-        with YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(channel_url, download=False)
+        info = self._extract_info(
+            channel_url,
+            opts={**self._ydl_opts, "playlistend": limit},
+            context=f"yt-dlp channel fetch for {channel_url}",
+        )
         entries = info.get("entries") or []
         videos: list[VideoInput] = []
         for entry in entries[:limit]:
@@ -152,9 +238,11 @@ class YoutubeResolver:
         return videos
 
     def discover_channel(self, channel_url: str) -> dict[str, str | None]:
-        opts = {**self._ydl_opts, "playlistend": 1}
-        with YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(channel_url, download=False)
+        info = self._extract_info(
+            channel_url,
+            opts={**self._ydl_opts, "playlistend": 1},
+            context=f"yt-dlp channel discovery for {channel_url}",
+        )
         first_entry = next((entry for entry in info.get("entries") or [] if isinstance(entry, dict)), {})
         channel_id = (
             info.get("channel_id")
@@ -184,10 +272,24 @@ class YoutubeResolver:
         }
 
     def _fetch_channel_entries(self, channel_url: str, max_entries: int = 80) -> list[dict]:
-        opts = {**self._ydl_opts, "playlistend": max_entries}
-        with YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(channel_url, download=False)
+        info = self._extract_info(
+            channel_url,
+            opts={**self._ydl_opts, "playlistend": max_entries},
+            context=f"yt-dlp channel entries fetch for {channel_url}",
+        )
         return info.get("entries") or []
+
+    def _extract_info(self, target: str, *, opts: dict[str, Any], context: str) -> dict[str, Any]:
+        return _call_with_retry(
+            lambda: self._extract_info_once(target, opts),
+            context=context,
+            is_retryable=_is_retryable_ytdlp_error,
+        )
+
+    @staticmethod
+    def _extract_info_once(target: str, opts: dict[str, Any]) -> dict[str, Any]:
+        with YoutubeDL(opts) as ydl:
+            return ydl.extract_info(target, download=False)
 
     def _cache_path(self, video_id: str) -> Path:
         safe_video_id = SAFE_CACHE_KEY_RE.sub("_", video_id)
@@ -234,12 +336,18 @@ class TranscriptFetcher:
     def fetch(self, video_id: str, preferred_languages: Iterable[str] | None = None) -> tuple[list[TranscriptSegment], str | None]:
         preferred_languages = list(preferred_languages or ["ko", "en"])
         api = YouTubeTranscriptApi()
-        fetched = api.fetch(video_id, languages=preferred_languages)
+        fetched = _call_with_retry(
+            lambda: api.fetch(video_id, languages=preferred_languages),
+            context=f"transcript fetch for {video_id}",
+            is_retryable=_is_retryable_transcript_error,
+        )
         segments = [
             TranscriptSegment(start=item.start, duration=item.duration, text=normalize_ws(item.text))
             for item in fetched
             if normalize_ws(item.text)
         ]
+        if not segments:
+            raise ValueError(f"Transcript fetch returned no non-empty segments for {video_id}")
         language = getattr(fetched, "language_code", None)
         return segments, language
 

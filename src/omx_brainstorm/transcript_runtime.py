@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from .transcript_cache import TranscriptCache
-from .youtube import TranscriptFetcher
+from .youtube import TranscriptFetcher, describe_youtube_error
 
 
 def resolve_transcript_text(video, cache: TranscriptCache, fetcher: TranscriptFetcher, logger: logging.Logger) -> tuple[str, str, str, dict[str, Any] | None]:
@@ -17,11 +17,17 @@ def resolve_transcript_text(video, cache: TranscriptCache, fetcher: TranscriptFe
     try:
         segments, language = fetcher.fetch(video.video_id)
         transcript_text = fetcher.join_segments(segments)
+        if not transcript_text:
+            raise ValueError(f"Transcript fetch returned empty text for {video.video_id}")
         cache.save(video, transcript_text, language, "transcript_api")
         return transcript_text, language or "unknown", "transcript_api", cache.load(video.video_id)
     except Exception as exc:
-        logger.warning("Transcript fetch failed for %s: %s", video.video_id, exc)
+        logger.warning("Transcript fetch failed for %s: %s", video.video_id, describe_youtube_error(exc))
         if cached and cached.get("transcript_text"):
+            logger.info("Using cached transcript fallback for %s", video.video_id)
             return cached["transcript_text"], f"cache:{cached.get('transcript_language') or 'unknown'}", cached.get("source", "cache"), cached
+        if not metadata_text:
+            logger.warning("Transcript fetch failed for %s and metadata fallback is empty", video.video_id)
         cache.save(video, metadata_text, "metadata_fallback", "metadata_fallback")
+        logger.info("Using metadata fallback for %s", video.video_id)
         return metadata_text, "metadata_fallback", "metadata_fallback", cache.load(video.video_id)

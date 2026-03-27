@@ -151,6 +151,14 @@ class FailingFetcher:
         return ""
 
 
+class EmptyTranscriptFetcher:
+    def fetch(self, video_id: str, preferred_languages=None):
+        return [], "ko"
+
+    def join_segments(self, segments):
+        return ""
+
+
 class MetadataResolver(DummyResolver):
     def resolve_video(self, url_or_id: str) -> VideoInput:
         return VideoInput(
@@ -197,6 +205,18 @@ def test_pipeline_uses_cached_transcript_when_fetch_fails(tmp_path: Path):
 
     assert report.transcript_language.startswith("cache")
     assert "엔비디아" in report.transcript_text
+
+
+def test_pipeline_uses_metadata_fallback_when_transcript_is_empty(tmp_path: Path):
+    pipeline = OMXPipeline(provider_name="mock", output_dir=tmp_path, transcript_cache=TranscriptCache(tmp_path / "cache"))
+    pipeline.resolver = MetadataResolver()
+    pipeline.fetcher = EmptyTranscriptFetcher()
+    pipeline.fundamentals = DummyFundamentals()
+
+    report, _ = pipeline.analyze_video("https://youtube.com/watch?v=abc123def45")
+
+    assert report.transcript_language == "metadata_fallback"
+    assert "HD현대일렉트릭" in report.transcript_text
 
 
 def test_pipeline_gracefully_handles_fundamentals_failure(tmp_path: Path):

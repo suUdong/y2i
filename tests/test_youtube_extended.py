@@ -2,6 +2,9 @@
 from datetime import date
 from unittest.mock import MagicMock, patch
 
+from youtube_transcript_api import RequestBlocked
+from yt_dlp import DownloadError
+
 from omx_brainstorm.models import TranscriptSegment, VideoInput
 from omx_brainstorm.youtube import (
     ChannelRegistry,
@@ -157,6 +160,45 @@ def test_resolve_video_uses_cache_on_repeat(monkeypatch, tmp_path):
     assert calls["count"] == 1
 
 
+def test_resolve_video_retries_bot_error(monkeypatch, tmp_path):
+    calls = {"count": 0}
+    sleeps: list[float] = []
+    fake_info = {
+        "title": "Recovered Video",
+        "channel_id": "CH1",
+        "channel": "Test Channel",
+        "upload_date": "20260315",
+        "description": "desc",
+        "tags": ["tag1"],
+    }
+
+    class FakeYDL:
+        def __init__(self, opts):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
+
+        def extract_info(self, url, download=False):
+            calls["count"] += 1
+            if calls["count"] < 3:
+                raise DownloadError("ERROR: [youtube] dQw4w9WgXcQ: Sign in to confirm you’re not a bot")
+            return fake_info
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+    monkeypatch.setattr("omx_brainstorm.youtube._sleep_before_retry", lambda delay: sleeps.append(delay))
+
+    resolver = YoutubeResolver(cache_root=tmp_path / "video-cache")
+    video = resolver.resolve_video("dQw4w9WgXcQ")
+
+    assert video.title == "Recovered Video"
+    assert calls["count"] == 3
+    assert sleeps == [2.0, 4.0]
+
+
 def test_resolve_channel_videos_mocked(monkeypatch):
     fake_info = {
         "id": "CHANNEL_ID",
@@ -184,6 +226,44 @@ def test_resolve_channel_videos_mocked(monkeypatch):
     assert len(videos) == 2
     assert videos[0].video_id == "vid1"
     assert videos[1].tags == []
+
+
+def test_resolve_channel_videos_retries_broken_pipe(monkeypatch):
+    calls = {"count": 0}
+    sleeps: list[float] = []
+    fake_info = {
+        "id": "CHANNEL_ID",
+        "title": "Channel Title",
+        "entries": [
+            {"id": "vid1", "title": "Video 1", "channel_id": "CH1", "channel": "Ch", "upload_date": "20260320", "description": "d", "tags": []},
+        ],
+    }
+
+    class FakeYDL:
+        def __init__(self, opts):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
+
+        def extract_info(self, url, download=False):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise DownloadError("ERROR: broken pipe")
+            return fake_info
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+    monkeypatch.setattr("omx_brainstorm.youtube._sleep_before_retry", lambda delay: sleeps.append(delay))
+
+    resolver = YoutubeResolver()
+    videos = resolver.resolve_channel_videos("https://youtube.com/@test", limit=1)
+
+    assert [video.video_id for video in videos] == ["vid1"]
+    assert calls["count"] == 2
+    assert sleeps == [2.0]
 
 
 def test_resolve_channel_videos_skips_no_id(monkeypatch):
@@ -323,3 +403,29 @@ def test_transcript_fetcher_join_segments():
         TranscriptSegment(1, 1, "world"),
     ]
     assert TranscriptFetcher.join_segments(segments) == "hello world"
+
+
+def test_transcript_fetcher_retries_request_blocked(monkeypatch):
+    calls = {"count": 0}
+    sleeps: list[float] = []
+
+    class FakeFetched(list):
+        language_code = "ko"
+
+    class FakeApi:
+        def fetch(self, video_id, languages):
+            calls["count"] += 1
+            if calls["count"] < 3:
+                raise RequestBlocked(video_id)
+            return FakeFetched([MagicMock(start=0, duration=1, text=" hello "), MagicMock(start=1, duration=1, text="world")])
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda: FakeApi())
+    monkeypatch.setattr("omx_brainstorm.youtube._sleep_before_retry", lambda delay: sleeps.append(delay))
+
+    fetcher = TranscriptFetcher()
+    segments, language = fetcher.fetch("dQw4w9WgXcQ")
+
+    assert [segment.text for segment in segments] == ["hello", "world"]
+    assert language == "ko"
+    assert calls["count"] == 3
+    assert sleeps == [2.0, 4.0]
