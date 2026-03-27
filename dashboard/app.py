@@ -4,11 +4,18 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 import streamlit as st
+import streamlit.components.v1 as components
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from streamlit_autorefresh import st_autorefresh
 
+from dashboard.auth import (
+    AUTH_COOKIE_NAME,
+    build_cookie_clear_html,
+    build_cookie_sync_html,
+    resolve_dashboard_auth,
+)
 from dashboard.data_loader import (
     DEFAULT_OUTPUT_DIR,
     build_overview_report,
@@ -46,6 +53,88 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+DASHBOARD_AUTH_TOKEN = "6149ba10085f1be3"
+
+
+def render_forbidden() -> None:
+    """Block dashboard access without rendering any protected UI."""
+    st.markdown(
+        """
+        <style>
+        .auth-block-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .auth-block-card {
+            width: min(520px, 100%);
+            background: linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(30,41,59,0.94) 100%);
+            border: 1px solid rgba(239,68,68,0.28);
+            border-radius: 20px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 18px 50px rgba(2,6,23,0.45);
+        }
+        .auth-block-code {
+            color: #EF4444;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .auth-block-title {
+            color: #F8FAFC;
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            margin-top: 0.4rem;
+        }
+        .auth-block-copy {
+            color: #CBD5E1;
+            font-size: 0.94rem;
+            line-height: 1.6;
+            margin-top: 0.7rem;
+        }
+        </style>
+        <div class="auth-block-shell">
+            <div class="auth-block-card">
+                <div class="auth-block-code">403 Forbidden</div>
+                <div class="auth-block-title">접근이 차단되었습니다</div>
+                <div class="auth-block-copy">
+                    유효한 대시보드 접근 토큰이 없거나 올바르지 않습니다.<br>
+                    로그인 화면 없이 접근이 차단되며, 인증이 확인될 때만 본문이 렌더링됩니다.
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.stop()
+
+
+query_token = st.query_params.get("token")
+cookie_token = st.context.cookies.get(AUTH_COOKIE_NAME)
+auth_decision = resolve_dashboard_auth(
+    query_token=query_token,
+    cookie_token=cookie_token,
+    expected_token=DASHBOARD_AUTH_TOKEN,
+)
+
+if auth_decision.should_clear_cookie:
+    components.html(build_cookie_clear_html(AUTH_COOKIE_NAME), height=0, width=0)
+
+if not auth_decision.is_authenticated:
+    render_forbidden()
+
+if auth_decision.should_set_cookie and auth_decision.token_to_persist is not None:
+    components.html(
+        build_cookie_sync_html(AUTH_COOKIE_NAME, auth_decision.token_to_persist),
+        height=0,
+        width=0,
+    )
 
 # -- Auto-refresh every 60s ----------------------------------------------------
 

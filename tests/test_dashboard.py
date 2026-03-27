@@ -621,6 +621,7 @@ def test_streamlit_app_runs_without_session_errors(tmp_output: Path, monkeypatch
     monkeypatch.setattr(data_loader_module, "DEFAULT_OUTPUT_DIR", tmp_output)
 
     at = AppTest.from_file("dashboard/app.py", default_timeout=60)
+    at.query_params["token"] = "6149ba10085f1be3"
     at.run(timeout=60)
 
     assert not at.exception
