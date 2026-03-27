@@ -11,6 +11,7 @@ from .macro_signals import extract_macro_insights, indirect_macro_mentions
 from .market_review import extract_market_review
 from .master_engine import build_master_opinions, master_variance_score
 from .models import FundamentalSnapshot, TickerMention, VideoInput, VideoType
+from .price_targets import aggregate_price_targets, extract_price_targets
 from .signal_features import stock_signal_strength
 from .signal_gate import assess_video_signal
 from .stock_registry import COMPANY_MAP
@@ -178,6 +179,14 @@ def analyze_video_heuristic(
         snapshot = snapshots.get(mention.ticker) or fundamentals.fetch(mention)
         basic_score, basic_verdict, basic_state, basic_summary = basic_assessment(snapshot)
         evidence_snippets = _compact_evidence(cached_evidence.get(mention.ticker) or list(mention.evidence or [mention.reason]))
+        price_targets = extract_price_targets(
+            analysis_text,
+            ticker=mention.ticker,
+            company_name=snapshot.company_name or mention.company_name,
+            current_price=snapshot.current_price,
+            currency=snapshot.currency,
+        )
+        price_target_payloads = [asdict(item) for item in price_targets]
         mops = build_master_opinions(
             ticker=mention.ticker,
             company_name=snapshot.company_name or mention.company_name,
@@ -214,6 +223,12 @@ def analyze_video_heuristic(
                 "final_score": round(total_score, 1),
                 "final_verdict": verdict,
                 "invalidation_triggers": ["실적/가이던스 둔화", "섹터 CAPEX 둔화", "멀티플 재조정"],
+                "price_targets": price_target_payloads,
+                "price_target": aggregate_price_targets(
+                    price_target_payloads,
+                    latest_price=snapshot.current_price,
+                    currency=snapshot.currency,
+                ),
             }
         )
     return row
@@ -223,7 +238,7 @@ def heuristic_rows_to_reports(rows: list[dict]) -> list[VideoAnalysisReport]:
     """Convert heuristic pipeline dict rows into VideoAnalysisReport objects for dashboard rendering."""
     from .models import (
         AnalysisScore, ExpertInsight, MacroInsight, MarketReviewSummary,
-        MasterOpinion, StockAnalysis, TickerMention, VideoAnalysisReport,
+        MasterOpinion, PriceTarget, StockAnalysis, TickerMention, VideoAnalysisReport,
         VideoInput, VideoSignalAssessment,
     )
 
@@ -257,6 +272,7 @@ def heuristic_rows_to_reports(rows: list[dict]) -> list[VideoAnalysisReport]:
         for s in row.get("stocks", []):
             mops = [MasterOpinion(**m) for m in s.get("master_opinions", [])]
             snap = FundamentalSnapshot(**s["fundamentals"])
+            price_targets = [PriceTarget(**item) for item in s.get("price_targets", [])]
             stock_analyses.append(StockAnalysis(
                 ticker=s["ticker"],
                 company_name=s.get("company_name"),
@@ -272,6 +288,7 @@ def heuristic_rows_to_reports(rows: list[dict]) -> list[VideoAnalysisReport]:
                 max_score=100.0,
                 final_verdict=s.get("final_verdict", ""),
                 invalidation_triggers=s.get("invalidation_triggers", []),
+                price_targets=price_targets,
             ))
 
         mentions = [

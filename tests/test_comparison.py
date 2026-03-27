@@ -153,6 +153,7 @@ def test_save_channel_artifacts_with_stocks(tmp_path):
             {"master": "druckenmiller", "verdict": "BUY", "score": 80.0, "max_score": 100.0,
              "one_liner": "test", "rationale": [], "risks": [], "citations": []},
         ],
+        "price_target": {"target_price": 1100.0, "currency": "USD", "status": "PENDING", "current_vs_target_pct": 22.2},
     }
     rows = [_make_row(stocks=[stock])]
     ranking = _make_ranking()
@@ -168,6 +169,7 @@ def test_save_channel_artifacts_with_stocks(tmp_path):
     txt = txt_path.read_text(encoding="utf-8")
     assert "NVDA" in txt
     assert "druckenmiller" in txt
+    assert "가격타겟" in txt
 
 
 def test_compare_channels_empty():

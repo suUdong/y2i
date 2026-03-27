@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from .master_engine import master_variance_score
+from .price_targets import aggregate_price_targets
 from .reporting import format_number
 
 RANKING_FORMULA = (
@@ -39,6 +40,7 @@ class RankedStock:
     latest_checked_at: str | None
     latest_price: float | None
     currency: str | None
+    price_target: dict[str, Any] | None = None
     source_video_ids: list[str] = field(default_factory=list)
     source_video_titles: list[str] = field(default_factory=list)
 
@@ -70,6 +72,7 @@ def build_cross_video_ranking(videos: list[dict[str, Any]]) -> list[RankedStock]
                     "latest_checked_at": None,
                     "latest_price": None,
                     "currency": fundamentals.get("currency"),
+                    "price_targets": [],
                     "source_video_ids": [],
                     "source_video_titles": [],
                 },
@@ -92,6 +95,8 @@ def build_cross_video_ranking(videos: list[dict[str, Any]]) -> list[RankedStock]
                 bucket["latest_price"] = fundamentals.get("current_price")
                 bucket["currency"] = fundamentals.get("currency")
                 bucket["company_name"] = stock.get("company_name") or bucket["company_name"]
+            if stock.get("price_target"):
+                bucket["price_targets"].append(dict(stock["price_target"]))
             bucket["source_video_ids"].append(video.get("video_id", ""))
             bucket["source_video_titles"].append(video.get("title", ""))
 
@@ -100,6 +105,11 @@ def build_cross_video_ranking(videos: list[dict[str, Any]]) -> list[RankedStock]
         average_signal_strength = bucket["signal_strength_sum"] / bucket["appearances"]
         average_master_variance = bucket["master_variance_sum"] / bucket["appearances"]
         average_final_score = bucket["score_sum"] / bucket["appearances"]
+        price_target = aggregate_price_targets(
+            bucket["price_targets"],
+            latest_price=bucket["latest_price"],
+            currency=bucket["currency"],
+        )
         aggregate_score = min(
             100.0,
             average_signal_strength * 0.85
@@ -124,6 +134,7 @@ def build_cross_video_ranking(videos: list[dict[str, Any]]) -> list[RankedStock]
                 latest_checked_at=bucket["latest_checked_at"],
                 latest_price=bucket["latest_price"],
                 currency=bucket["currency"],
+                price_target=price_target,
                 source_video_ids=bucket["source_video_ids"],
                 source_video_titles=bucket["source_video_titles"],
             )
@@ -280,6 +291,7 @@ def render_cross_video_ranking_text(ranking: list[RankedStock]) -> str:
         return "\n".join(lines)
 
     for idx, item in enumerate(ranking, start=1):
+        price_target = getattr(item, "price_target", None)
         lines.append(
             "  ".join(
                 [
@@ -294,6 +306,7 @@ def render_cross_video_ranking_text(ranking: list[RankedStock]) -> str:
                     f"first_signal_at={item.first_signal_at or '-'}",
                     f"latest_checked_at={item.latest_checked_at or '-'}",
                     f"latest_price={format_number(item.latest_price, item.currency)}",
+                    f"target={(format_number(price_target.get('target_price'), price_target.get('currency')) if price_target else '-')}",
                 ]
             )
         )

@@ -33,6 +33,10 @@ class ChannelQualityReport:
     ranking_predictive_power: float
     overall_quality_score: float
     weight_multiplier: float | None = None
+    target_count: int = 0
+    target_hit_rate: float | None = None
+    avg_target_progress_pct: float | None = None
+    pending_targets: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -72,6 +76,10 @@ def compute_channel_quality(
         avg_return_3d = accuracy.get("avg_return_3d")
         avg_return_5d = accuracy.get("avg_return_5d")
         avg_return_10d = accuracy.get("avg_return_10d")
+        target_count = int(accuracy.get("target_count", 0) or 0)
+        target_hit_rate = accuracy.get("target_hit_rate")
+        avg_target_progress_pct = accuracy.get("avg_target_progress_pct")
+        pending_targets = int(accuracy.get("pending_targets", 0) or 0)
         short_hit_rates = [float(value) for value in (hit_rate_1d, hit_rate_3d, hit_rate_5d) if value is not None]
         short_returns = [float(value) for value in (avg_return_1d, avg_return_3d, avg_return_5d) if value is not None]
         short_coverages = [
@@ -107,6 +115,10 @@ def compute_channel_quality(
             avg_return_3d=avg_return_3d,
             avg_return_5d=avg_return_5d,
             avg_return_10d=avg_return_10d,
+            target_count=target_count,
+            target_hit_rate=target_hit_rate,
+            avg_target_progress_pct=avg_target_progress_pct,
+            pending_targets=pending_targets,
             spearman_correlation=spearman,
             ranking_predictive_power=ranking_pp,
             overall_quality_score=round(quality, 1),

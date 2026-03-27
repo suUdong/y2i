@@ -22,6 +22,7 @@ from omx_brainstorm.research import build_consensus_ranking, build_cross_video_r
 from omx_brainstorm.signal_alerts import (
     build_channel_signal_summary,
     send_consensus_signal_alerts,
+    send_high_accuracy_target_alerts,
     send_high_confidence_signal_alerts,
 )
 from omx_brainstorm.signal_tracker import SignalTrackerDB, record_signals_from_output, update_price_snapshots
@@ -193,6 +194,10 @@ def enrich_comparison_with_signal_accuracy(
         info["avg_return_10d"] = accuracy.get("avg_return_10d")
         info["tracked_signals"] = accuracy.get("total_signals", 0)
         info["tracked_signals_5d"] = accuracy.get("signals_with_price", 0)
+        info["target_count"] = accuracy.get("target_count", 0)
+        info["target_hit_rate"] = accuracy.get("target_hit_rate")
+        info["avg_target_progress_pct"] = accuracy.get("avg_target_progress_pct")
+        info["pending_targets"] = accuracy.get("pending_targets", 0)
         info["weight_multiplier"] = quality.get("weight_multiplier")
 
     updated_at = max(
@@ -204,6 +209,7 @@ def enrich_comparison_with_signal_accuracy(
         "overall": overall_accuracy,
         "by_channel": accuracy_by_channel,
         "recent_signals": tracker_db.recent_records(limit=12),
+        "recent_targets": [item for item in tracker_db.recent_records(limit=20) if item.get("price_target")],
         "channel_leaderboard": leaderboard,
     }
     return accuracy_by_channel, leaderboard
@@ -412,6 +418,12 @@ def run_comparison_job(config: AppConfig) -> dict:
             config.notifications,
             telegram_payload.get("analysis_summary", {}).get("consensus_signals", []),
         )
+        send_high_accuracy_target_alerts(
+            config.notifications,
+            tracker_db.recent_records(limit=30),
+            accuracy_by_channel=accuracy_by_channel,
+            channel_names={slug: item["display_name"] for slug, item in channel_payloads.items()},
+        )
     except Exception as exc:
         logger.warning("High-confidence signal alerts failed (non-fatal): %s", exc)
 
@@ -582,6 +594,11 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
         lines.append(f"- 3일 평균수익률: {_fmt_percentage(overall_accuracy.get('avg_return_3d'))}")
         lines.append(f"- 5일 평균수익률: {_fmt_percentage(overall_accuracy.get('avg_return_5d'))}")
         lines.append(f"- 10일 평균수익률: {_fmt_percentage(overall_accuracy.get('avg_return_10d'))}")
+        lines.append(f"- 가격타겟 수: {_fmt_scalar(overall_accuracy.get('target_count', 0))}")
+        lines.append(f"- 타겟 달성 수: {_fmt_scalar(overall_accuracy.get('target_hits', 0))}")
+        lines.append(f"- 타겟 적중률: {_fmt_percentage(overall_accuracy.get('target_hit_rate'))}")
+        lines.append(f"- 평균 타겟 진행률: {_fmt_percentage(overall_accuracy.get('avg_target_progress_pct'))}")
+        lines.append(f"- 미달성 타겟: {_fmt_scalar(overall_accuracy.get('pending_targets', 0))}")
         lines.append(
             f"- 윈도우 요약: "
             f"{_fmt_window_stats(overall_accuracy.get('window_stats', {}), '1d')} | "
@@ -648,6 +665,10 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
         lines.append(f"- 3일 평균수익률: {_fmt_percentage(info.get('signal_accuracy', {}).get('avg_return_3d'))}")
         lines.append(f"- 5일 평균수익률: {_fmt_percentage(info.get('avg_return_5d'))}")
         lines.append(f"- 10일 평균수익률: {_fmt_percentage(info.get('avg_return_10d'))}")
+        lines.append(f"- 가격타겟 수: {_fmt_scalar(info.get('target_count', 0))}")
+        lines.append(f"- 타겟 적중률: {_fmt_percentage(info.get('target_hit_rate'))}")
+        lines.append(f"- 평균 타겟 진행률: {_fmt_percentage(info.get('avg_target_progress_pct'))}")
+        lines.append(f"- 미달성 타겟: {_fmt_scalar(info.get('pending_targets', 0))}")
         lines.append(f"- 종합 품질 점수: {_fmt_scalar(info.get('overall_quality_score'))}")
         lines.append(f"- 품질 점수표: {_fmt_scorecard(info['quality_scorecard'])}")
         lines.append(f"- 상위 스킵 사유: {_fmt_skip_reasons(info.get('top_skip_reasons', []))}")

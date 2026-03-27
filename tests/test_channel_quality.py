@@ -57,6 +57,10 @@ class TestComputeChannelQuality:
                 "avg_return_3d": 4.0,
                 "avg_return_5d": 8.0,
                 "avg_return_10d": 6.0,
+                "target_count": 3,
+                "target_hit_rate": 66.7,
+                "avg_target_progress_pct": 84.5,
+                "pending_targets": 1,
             },
         }
         reports = compute_channel_quality(channels, accuracy)
@@ -67,6 +71,9 @@ class TestComputeChannelQuality:
         assert reports[0].avg_return_1d == 2.0
         assert reports[0].avg_return_3d == 4.0
         assert reports[0].avg_return_5d == 8.0
+        assert reports[0].target_count == 3
+        assert reports[0].target_hit_rate == 66.7
+        assert reports[0].avg_target_progress_pct == 84.5
         # With real accuracy data, score should differ from no-data case
         no_acc_reports = compute_channel_quality(channels)
         # Scores will differ because accuracy bonus changes

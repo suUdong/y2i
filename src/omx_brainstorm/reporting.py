@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .models import ExpertInsight, FundamentalSnapshot, MacroInsight, MarketReviewSummary, MasterOpinion, VideoAnalysisReport
+from .models import ExpertInsight, FundamentalSnapshot, MacroInsight, MarketReviewSummary, MasterOpinion, PriceTarget, VideoAnalysisReport
 from .utils import ensure_dir, write_json
 
 
@@ -71,12 +71,11 @@ def render_markdown(report: VideoAnalysisReport) -> str:
                 "",
                 render_fundamentals_markdown(stock.fundamentals),
                 "",
-                "#### 거장 한줄평",
-                "",
-                "| Master | Verdict | Score | One-liner |",
-                "|---|---|---:|---|",
             ]
         )
+        if stock.price_targets:
+            lines.extend(["#### 가격 타겟", "", *[render_price_target_markdown(item) for item in stock.price_targets], ""])
+        lines.extend(["#### 거장 한줄평", "", "| Master | Verdict | Score | One-liner |", "|---|---|---:|---|"])
         for opinion in stock.master_opinions:
             lines.append(
                 f"| {opinion.master} | {opinion.verdict} | {opinion.score:.1f}/{opinion.max_score:.1f} | {opinion.one_liner} |"
@@ -118,6 +117,8 @@ def render_text(report: VideoAnalysisReport) -> str:
                 f"투자테제: {stock.thesis_summary}",
                 "현재 기본 지표:",
                 *render_fundamentals_lines(stock.fundamentals),
+                "가격 타겟:",
+                *render_price_target_lines(stock.price_targets),
                 "거장 한줄평:",
                 *[render_master_line(opinion) for opinion in stock.master_opinions],
                 "무효화 조건:",
@@ -168,6 +169,35 @@ def render_fundamentals_lines(snapshot: FundamentalSnapshot) -> list[str]:
 
 def render_master_line(opinion: MasterOpinion) -> str:
     return f"- {opinion.master}: {opinion.verdict} ({opinion.score:.1f}/{opinion.max_score:.1f}) | {opinion.one_liner}"
+
+
+def render_price_target_markdown(target: PriceTarget) -> str:
+    horizon = f" | horizon={target.time_horizon}" if target.time_horizon else ""
+    evidence = ", ".join(target.evidence[:2]) if target.evidence else "-"
+    return (
+        f"- {format_number(target.target_price, target.currency)}"
+        f" | direction={target.direction}"
+        f" | confidence={target.confidence:.2f}{horizon}"
+        f" | evidence={evidence}"
+    )
+
+
+def render_price_target_lines(targets: list[PriceTarget]) -> list[str]:
+    if not targets:
+        return ["- 없음"]
+    lines: list[str] = []
+    for target in targets:
+        parts = [
+            f"- 목표가: {format_number(target.target_price, target.currency)}",
+            f"방향 {target.direction}",
+            f"신뢰도 {target.confidence:.2f}",
+        ]
+        if target.time_horizon:
+            parts.append(f"기간 {target.time_horizon}")
+        if target.evidence:
+            parts.append(f"근거 {target.evidence[0]}")
+        lines.append(" | ".join(parts))
+    return lines
 
 
 def format_pct(value: float | None) -> str:

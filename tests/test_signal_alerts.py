@@ -8,14 +8,17 @@ from omx_brainstorm.app_config import NotificationConfig
 from omx_brainstorm.signal_alerts import (
     build_channel_signal_summary,
     filter_consensus_signals,
+    filter_high_accuracy_targets,
     filter_high_confidence_signals,
     filter_high_quality_signals,
     format_analysis_summary,
     format_consensus_telegram_alert,
     format_daily_leaderboard_summary,
+    format_high_accuracy_target_alert,
     format_telegram_alert,
     send_daily_leaderboard_alert,
     send_consensus_signal_alerts,
+    send_high_accuracy_target_alerts,
     send_high_confidence_signal_alerts,
     send_analysis_summary_alert,
     send_signal_alerts,
@@ -39,6 +42,19 @@ def _make_stock(ticker: str = "005930.KS", name: str = "삼성전자", score: fl
         "currency": currency,
         "appearances": appearances,
         "total_mentions": mentions,
+    }
+
+
+def _make_target_record(ticker: str = "NVDA", channel_slug: str = "itgod", progress: float = 92.0, hit: bool = False) -> dict:
+    return {
+        "ticker": ticker,
+        "company_name": "NVIDIA",
+        "channel_slug": channel_slug,
+        "signal_score": 86.0,
+        "latest_price": 146.0,
+        "price_target": {"target_price": 150.0, "currency": "USD"},
+        "target_progress_pct": progress,
+        "target_hit": hit,
     }
 
 
@@ -224,6 +240,43 @@ class TestSendHighConfidenceSignalAlerts:
     def test_missing_credentials_returns_false(self):
         result = send_high_confidence_signal_alerts(NotificationConfig(), [_make_stock(score=90.0)])
         assert result is False
+
+
+class TestHighAccuracyTargets:
+    def test_filter_high_accuracy_targets(self):
+        records = [
+            _make_target_record(progress=88.0),
+            _make_target_record(ticker="LOW", progress=60.0),
+            _make_target_record(ticker="SPARSE", channel_slug="sparse", progress=95.0),
+        ]
+        accuracy = {
+            "itgod": {"target_count": 4, "target_hit_rate": 62.0},
+            "sparse": {"target_count": 1, "target_hit_rate": 100.0},
+        }
+        result = filter_high_accuracy_targets(records, accuracy_by_channel=accuracy)
+        assert [item["ticker"] for item in result] == ["NVDA"]
+
+    def test_format_high_accuracy_target_alert(self):
+        msg = format_high_accuracy_target_alert(
+            [_make_target_record(progress=100.0, hit=True)],
+            channel_names={"itgod": "IT의 신"},
+        )
+        assert "고정확도 타겟" in msg
+        assert "IT의 신" in msg
+        assert "목표" in msg
+        assert "달성" in msg
+
+    @patch("omx_brainstorm.signal_alerts._send_telegram_html")
+    def test_send_high_accuracy_target_alerts(self, mock_send):
+        mock_send.return_value = True
+        result = send_high_accuracy_target_alerts(
+            NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123"),
+            [_make_target_record(progress=96.0)],
+            accuracy_by_channel={"itgod": {"target_count": 3, "target_hit_rate": 70.0}},
+            channel_names={"itgod": "IT의 신"},
+        )
+        assert result is True
+        assert "IT의 신" in mock_send.call_args[0][1]
 
 
 class TestConsensusSignalAlerts:

@@ -29,6 +29,11 @@ class SignalRecord:
     latest_price: float | None = None
     latest_price_date: str | None = None
     price_path: list[dict[str, Any]] = field(default_factory=list)
+    price_target: dict[str, Any] | None = None
+    target_progress_pct: float | None = None
+    target_distance_pct: float | None = None
+    target_hit: bool = False
+    target_hit_date: str | None = None
     recorded_at: str = ""
     last_updated: str = ""
 
@@ -60,6 +65,12 @@ class AccuracyStats:
     worst_signal: str | None = None
     avg_signal_score: float | None = None
     window_stats: dict[str, dict[str, float | int | None]] = field(default_factory=dict)
+    target_count: int = 0
+    target_hits: int = 0
+    pending_targets: int = 0
+    target_hit_rate: float | None = None
+    avg_target_progress_pct: float | None = None
+    best_target_ticker: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -184,6 +195,10 @@ class SignalTrackerDB:
         with_5d = [r for r in filtered if r.returns.get("5d") is not None]
         best = max(with_5d, key=lambda r: r.returns.get("5d") or -999) if with_5d else None
         worst = min(with_5d, key=lambda r: r.returns.get("5d") or 999) if with_5d else None
+        target_records = [r for r in filtered if _target_price_from_record(r) is not None]
+        progressed_targets = [r for r in target_records if r.target_progress_pct is not None]
+        best_target = max(progressed_targets, key=lambda r: r.target_progress_pct or -999) if progressed_targets else None
+        target_hits = sum(1 for r in target_records if r.target_hit)
 
         return AccuracyStats(
             total_signals=len(filtered),
@@ -203,6 +218,15 @@ class SignalTrackerDB:
             worst_signal=worst.ticker if worst else None,
             avg_signal_score=round(sum(r.signal_score for r in filtered) / len(filtered), 1) if filtered else None,
             window_stats=window_stats,
+            target_count=len(target_records),
+            target_hits=target_hits,
+            pending_targets=sum(1 for r in target_records if not r.target_hit),
+            target_hit_rate=round(target_hits / len(target_records) * 100, 1) if target_records else None,
+            avg_target_progress_pct=(
+                round(sum(float(r.target_progress_pct or 0) for r in progressed_targets) / len(progressed_targets), 2)
+                if progressed_targets else None
+            ),
+            best_target_ticker=best_target.ticker if best_target else None,
         )
 
     def recent_records(self, limit: int = 10, channel_slug: str | None = None) -> list[dict[str, Any]]:
@@ -246,6 +270,7 @@ def record_signals_from_output(db: SignalTrackerDB, output_path: Path, history_p
             verdict=stock.get("aggregate_verdict", ""),
             entry_date=entry_point.date if entry_point else None,
             entry_price=entry_point.close if entry_point else None,
+            price_target=dict(stock.get("price_target") or {}) or None,
         )
         if db.add_record(record):
             added += 1
@@ -336,6 +361,8 @@ def update_price_snapshots(db: SignalTrackerDB, history_provider: Any = None) ->
             if latest_path_point:
                 record.latest_price = float(latest_path_point["close"])
                 record.latest_price_date = str(latest_path_point["date"])
+        if latest_path_point and record.latest_price is not None:
+            _update_target_tracking(record, latest_price=record.latest_price, latest_price_date=record.latest_price_date)
 
         if new_returns or entry_changed or path_changed:
             if new_returns:
@@ -398,3 +425,38 @@ def _build_price_path(
         )
 
     return path
+
+
+def _target_price_from_record(record: SignalRecord) -> float | None:
+    payload = record.price_target or {}
+    value = payload.get("target_price")
+    try:
+        return float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _update_target_tracking(record: SignalRecord, *, latest_price: float | None, latest_price_date: str | None) -> None:
+    target_price = _target_price_from_record(record)
+    if target_price is None or latest_price is None or latest_price <= 0 or record.entry_price is None or record.entry_price <= 0:
+        return
+
+    if abs(target_price - record.entry_price) <= 1e-9:
+        record.target_progress_pct = 100.0
+        record.target_distance_pct = 0.0
+        record.target_hit = True
+        record.target_hit_date = record.target_hit_date or latest_price_date
+        return
+
+    if target_price > record.entry_price:
+        progress = (latest_price - record.entry_price) / (target_price - record.entry_price) * 100
+        hit = latest_price >= target_price
+    else:
+        progress = (record.entry_price - latest_price) / (record.entry_price - target_price) * 100
+        hit = latest_price <= target_price
+
+    record.target_progress_pct = round(progress, 2)
+    record.target_distance_pct = round((target_price - latest_price) / latest_price * 100, 2)
+    record.target_hit = hit
+    if hit and not record.target_hit_date:
+        record.target_hit_date = latest_price_date

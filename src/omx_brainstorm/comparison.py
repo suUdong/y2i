@@ -190,6 +190,13 @@ def save_channel_artifacts(
                     f"  기본재무상태: {stock['basic_state']}",
                 ]
             )
+            price_target = stock.get("price_target")
+            if isinstance(price_target, dict) and price_target.get("target_price") is not None:
+                lines.append(
+                    f"  가격타겟: {price_target.get('target_price')} {price_target.get('currency') or ''}"
+                    f" | status={price_target.get('status', 'PENDING')}"
+                    f" | delta={price_target.get('current_vs_target_pct')}"
+                )
             snapshot = FundamentalSnapshot(**stock["fundamentals"])
             for fund_line in render_fundamentals_lines(snapshot)[:4]:
                 lines.append(f"  {fund_line}")

@@ -5,6 +5,7 @@ from dataclasses import asdict
 from .llm import LLMProvider
 from .master_engine import validate_master_opinions
 from .models import AnalysisScore, FundamentalSnapshot, MasterOpinion, StockAnalysis, TickerMention
+from .price_targets import extract_price_targets
 from .prompts import ANALYSIS_SYSTEM, analysis_user_prompt
 from .utils import chunk_text
 
@@ -60,6 +61,13 @@ class StockAnalyzer:
             for item in payload.get("master_opinions", [])
         ]
         validate_master_opinions(master_opinions)
+        price_targets = extract_price_targets(
+            transcript_text,
+            ticker=mention.ticker,
+            company_name=payload.get("company_name") or mention.company_name or fundamentals.company_name,
+            current_price=fundamentals.current_price,
+            currency=fundamentals.currency,
+        )
         return StockAnalysis(
             ticker=payload.get("ticker", mention.ticker),
             company_name=payload.get("company_name") or mention.company_name or fundamentals.company_name,
@@ -77,4 +85,5 @@ class StockAnalyzer:
             invalidation_triggers=list(payload.get("invalidation_triggers", []) or []),
             citations=list(payload.get("citations", []) or []),
             raw_llm_payload=payload,
+            price_targets=price_targets,
         )

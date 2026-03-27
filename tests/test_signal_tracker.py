@@ -52,6 +52,9 @@ class TestSignalRecord:
                 {"date": "2026-03-20", "close": 58000.0, "days_from_signal": 0, "days_from_entry": 0, "return_pct": 0.0},
                 {"date": "2026-03-25", "close": 59200.0, "days_from_signal": 5, "days_from_entry": 5, "return_pct": 2.07},
             ],
+            price_target={"target_price": 62000.0, "currency": "KRW"},
+            target_progress_pct=57.14,
+            target_distance_pct=4.73,
             returns={"5d": 2.5, "10d": None},
         )
         d = record.to_dict()
@@ -62,6 +65,8 @@ class TestSignalRecord:
         assert restored.returns["5d"] == 2.5
         assert restored.latest_price == 59200.0
         assert restored.price_path[-1]["return_pct"] == 2.07
+        assert restored.price_target["target_price"] == 62000.0
+        assert restored.target_progress_pct == 57.14
 
 
 class TestSignalTrackerDB:
@@ -136,6 +141,9 @@ class TestSignalTrackerDB:
             r = SignalRecord(
                 ticker=f"00{i}.KS", company_name=f"Stock{i}", channel_slug="itgod",
                 signal_date=f"2026-03-0{i+1}", signal_score=70.0, verdict="BUY",
+                price_target={"target_price": 110.0 + i, "currency": "USD"},
+                target_progress_pct=100.0 if ret > 0 else 40.0,
+                target_hit=ret > 0,
                 returns={"1d": ret / 3, "3d": ret / 2, "5d": ret, "10d": ret * 1.5, "20d": None},
             )
             db.add_record(r)
@@ -154,6 +162,10 @@ class TestSignalTrackerDB:
         assert stats.window_stats["5d"]["tracked"] == 4
         assert stats.window_stats["10d"]["hit_rate"] == 50.0
         assert stats.avg_signal_score == 70.0
+        assert stats.target_count == 4
+        assert stats.target_hits == 2
+        assert stats.target_hit_rate == 50.0
+        assert stats.pending_targets == 2
 
     def test_accuracy_report_channel_filter(self, db: SignalTrackerDB):
         r1 = SignalRecord(ticker="001.KS", company_name="A", channel_slug="itgod",
@@ -195,6 +207,7 @@ class TestRecordSignalsFromOutput:
                     "aggregate_verdict": "BUY",
                     "first_signal_at": "2026-03-15",
                     "latest_price": 58000.0,
+                    "price_target": {"target_price": 65000.0, "currency": "KRW"},
                 },
                 {
                     "ticker": "000660.KS",
@@ -227,6 +240,7 @@ class TestRecordSignalsFromOutput:
         assert db.records[0].ticker == "005930.KS"
         assert db.records[0].entry_date == "2026-03-15"
         assert db.records[0].entry_price == 57500.0
+        assert db.records[0].price_target["target_price"] == 65000.0
 
     def test_no_duplicate_ingest(self, db: SignalTrackerDB, tmp_path: Path):
         output_data = {
@@ -285,6 +299,38 @@ class TestUpdatePriceSnapshots:
         assert r.latest_price_date == "2026-03-21"
         assert r.price_path[0]["date"] == "2026-03-01"
         assert r.price_path[-1]["return_pct"] == 6.0
+
+    def test_update_price_snapshots_tracks_target_progress(self, db: SignalTrackerDB):
+        record = SignalRecord(
+            ticker="NVDA", company_name="NVIDIA", channel_slug="itgod",
+            signal_date="2026-03-01", signal_score=88.0, verdict="BUY",
+            entry_price=100.0,
+            price_target={"target_price": 150.0, "currency": "USD"},
+            returns={"1d": None, "3d": None, "5d": None, "10d": None, "20d": None},
+        )
+        db.add_record(record)
+        provider = FakeHistoryProvider(
+            {
+                "NVDA": [
+                    HistoricalPricePoint(date="2026-03-01", close=100.0),
+                    HistoricalPricePoint(date="2026-03-05", close=125.0),
+                    HistoricalPricePoint(date="2026-03-08", close=150.0),
+                ]
+            }
+        )
+
+        import omx_brainstorm.signal_tracker as mod
+        try:
+            mod.date = type("MockDate", (), {"today": staticmethod(lambda: date(2026, 3, 25)), "fromisoformat": date.fromisoformat})()
+            updated = update_price_snapshots(db, history_provider=provider)
+        finally:
+            mod.date = date
+
+        assert updated == 1
+        tracked = db.records[0]
+        assert tracked.target_progress_pct == 100.0
+        assert tracked.target_hit is True
+        assert tracked.target_hit_date == "2026-03-08"
 
     def test_skip_no_entry_price(self, db: SignalTrackerDB):
         record = SignalRecord(

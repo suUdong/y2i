@@ -49,6 +49,17 @@ class TickerMention:
 
 
 @dataclass(slots=True)
+class PriceTarget:
+    target_price: float
+    currency: str | None = None
+    confidence: float = 0.0
+    direction: str = "UP"
+    time_horizon: str | None = None
+    reasoning: str = ""
+    evidence: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class VideoSignalAssessment:
     signal_score: float
     video_signal_class: str
@@ -143,6 +154,7 @@ class StockAnalysis:
     invalidation_triggers: list[str] = field(default_factory=list)
     citations: list[str] = field(default_factory=list)
     raw_llm_payload: dict[str, Any] = field(default_factory=dict)
+    price_targets: list[PriceTarget] = field(default_factory=list)
 
 
 @dataclass(slots=True)

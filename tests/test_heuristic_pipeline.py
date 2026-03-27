@@ -243,3 +243,38 @@ def test_heuristic_no_stock_analysis_when_low_signal(tmp_path):
     result = analyze_video_heuristic(video, TranscriptCache(tmp_path / "cache"), _NoStockFetcher(), _DummyFundamentals())
     assert result["stocks"] == []
     assert result["skip_reason"] == result["reason"]
+
+
+def test_heuristic_extracts_price_target(tmp_path, monkeypatch):
+    from omx_brainstorm.models import VideoSignalAssessment
+
+    class _TargetFetcher:
+        def fetch(self, video_id, preferred_languages=None):
+            text = "엔비디아 매수 관점에서 목표가 150달러까지 본다. 현재는 100달러 수준이라 업사이드가 남아 있다."
+            return [TranscriptSegment(0, 1, text)], "ko"
+
+        def join_segments(self, segments):
+            return " ".join(s.text for s in segments)
+
+    video = VideoInput(
+        video_id="htarget1",
+        title="엔비디아 매수 목표가 점검",
+        url="https://youtube.com/watch?v=htarget1",
+        description="매수 목표가 분석",
+        tags=["엔비디아", "목표가", "매수"],
+    )
+    monkeypatch.setattr(
+        "omx_brainstorm.heuristic_pipeline.assess_video_signal",
+        lambda *args, **kwargs: VideoSignalAssessment(
+            signal_score=88.0,
+            video_signal_class="ACTIONABLE",
+            should_analyze_stocks=True,
+            reason="target test",
+            video_type="STOCK_PICK",
+        ),
+    )
+    result = analyze_video_heuristic(video, TranscriptCache(tmp_path / "cache"), _TargetFetcher(), _DummyFundamentals())
+    nvda = next(stock for stock in result["stocks"] if stock["ticker"] == "NVDA")
+    assert nvda["price_targets"][0]["target_price"] == 150.0
+    assert nvda["price_target"]["target_price"] == 150.0
+    assert nvda["price_target"]["status"] == "PENDING"

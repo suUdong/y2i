@@ -15,6 +15,9 @@ DEFAULT_HIGH_CONFIDENCE_MIN_SCORE = 82.0
 DEFAULT_CONSENSUS_MIN_SCORE = 78.0
 DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION = 65.0
 DEFAULT_MIN_CHANNEL_QUALITY = 50.0
+DEFAULT_TARGET_ALERT_MIN_PROGRESS = 80.0
+DEFAULT_TARGET_ALERT_MIN_CHANNEL_HIT_RATE = 55.0
+DEFAULT_TARGET_ALERT_MIN_CHANNEL_TARGETS = 2
 MAX_SIGNALS_PER_MESSAGE = 10
 MAX_CHANNEL_SUMMARY_SIGNALS = 3
 MAX_LEADERBOARD_ROWS = 5
@@ -147,6 +150,15 @@ def summarize_signal(stock: dict[str, Any]) -> str:
             summary_parts.append(f"{master}: {one_liner}")
         elif one_liner:
             summary_parts.append(one_liner)
+    price_target = stock.get("price_target")
+    if isinstance(price_target, dict) and price_target.get("target_price") is not None:
+        target_price = format_number(price_target.get("target_price"), price_target.get("currency"))
+        current_price = format_number(price_target.get("current_price"), price_target.get("currency"))
+        delta = price_target.get("current_vs_target_pct")
+        if delta is None:
+            summary_parts.append(f"목표 {target_price}")
+        else:
+            summary_parts.append(f"목표 {target_price} / 현재 {current_price} / 괴리 {float(delta):+.1f}%")
 
     return " | ".join(summary_parts)
 
@@ -171,6 +183,7 @@ def build_channel_signal_summary(
                 "aggregate_score": float(stock.get("aggregate_score", 0)),
                 "aggregate_verdict": stock.get("aggregate_verdict", ""),
                 "signal_summary": summarize_signal(stock),
+                "price_target": stock.get("price_target"),
             }
         )
     return {
@@ -301,6 +314,122 @@ def send_high_confidence_signal_alerts(
         title="🚨 Y2I 고신뢰 시그널 알림",
         footer_threshold=min_score,
     )
+    if not message:
+        return False
+    return _send_telegram_html(config, message)
+
+
+def filter_high_accuracy_targets(
+    records: Sequence[dict[str, Any]],
+    *,
+    accuracy_by_channel: dict[str, dict[str, Any]] | None = None,
+    min_signal_score: float = DEFAULT_MIN_SCORE,
+    min_target_progress_pct: float = DEFAULT_TARGET_ALERT_MIN_PROGRESS,
+    min_channel_target_hit_rate: float = DEFAULT_TARGET_ALERT_MIN_CHANNEL_HIT_RATE,
+    min_channel_target_count: int = DEFAULT_TARGET_ALERT_MIN_CHANNEL_TARGETS,
+) -> list[dict[str, Any]]:
+    """Return only target-bearing records from historically accurate channels."""
+    accuracy_by_channel = accuracy_by_channel or {}
+    filtered: list[dict[str, Any]] = []
+    for record in records:
+        price_target = record.get("price_target")
+        if not isinstance(price_target, dict) or price_target.get("target_price") is None:
+            continue
+        if float(record.get("signal_score", 0) or 0) < min_signal_score:
+            continue
+        channel_slug = str(record.get("channel_slug", "") or "")
+        channel_stats = accuracy_by_channel.get(channel_slug, {})
+        if int(channel_stats.get("target_count", 0) or 0) < min_channel_target_count:
+            continue
+        if float(channel_stats.get("target_hit_rate", 0) or 0) < min_channel_target_hit_rate:
+            continue
+        progress = record.get("target_progress_pct")
+        hit = bool(record.get("target_hit"))
+        if not hit and (progress is None or float(progress) < min_target_progress_pct):
+            continue
+        enriched = dict(record)
+        enriched["channel_target_hit_rate"] = channel_stats.get("target_hit_rate")
+        filtered.append(enriched)
+    return sorted(
+        filtered,
+        key=lambda item: (
+            not bool(item.get("target_hit")),
+            -(float(item.get("target_progress_pct", 0) or 0)),
+            -(float(item.get("signal_score", 0) or 0)),
+            str(item.get("ticker", "")),
+        ),
+    )
+
+
+def format_high_accuracy_target_alert(
+    records: Sequence[dict[str, Any]],
+    *,
+    channel_names: dict[str, str] | None = None,
+    title: str = "🎯 Y2I 고정확도 타겟 알림",
+) -> str:
+    """Format historically accurate target calls into one Telegram message."""
+    channel_names = channel_names or {}
+    if not records:
+        return ""
+
+    lines = [f"<b>{html.escape(title)}</b>", ""]
+    for idx, record in enumerate(records[:MAX_SIGNALS_PER_MESSAGE], start=1):
+        price_target = dict(record.get("price_target") or {})
+        label = record.get("company_name") or record.get("ticker", "")
+        ticker = record.get("ticker", "")
+        channel_slug = str(record.get("channel_slug", "") or "")
+        channel_display = channel_names.get(channel_slug, channel_slug)
+        if ticker and label and ticker != label:
+            heading = f"{label} ({ticker})"
+        else:
+            heading = label or ticker
+        lines.append(f"<b>{idx}. {html.escape(str(heading))}</b>")
+        lines.append(f"   📺 {html.escape(str(channel_display))}")
+        lines.append(
+            "   🎯 목표 "
+            f"{html.escape(format_number(price_target.get('target_price'), price_target.get('currency')))}"
+            " | 현재 "
+            f"{html.escape(format_number(record.get('latest_price'), price_target.get('currency') or record.get('currency')))}"
+        )
+        progress = record.get("target_progress_pct")
+        hit_rate = record.get("channel_target_hit_rate")
+        status = "달성" if record.get("target_hit") else "진행중"
+        meta_parts = [status]
+        if progress is not None:
+            meta_parts.append(f"진행률 {float(progress):.1f}%")
+        if hit_rate is not None:
+            meta_parts.append(f"채널 적중률 {float(hit_rate):.1f}%")
+        meta_parts.append(f"시그널 {float(record.get('signal_score', 0) or 0):.1f}")
+        lines.append(f"   ✅ {' | '.join(meta_parts)}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def send_high_accuracy_target_alerts(
+    config: NotificationConfig,
+    records: Sequence[dict[str, Any]],
+    *,
+    accuracy_by_channel: dict[str, dict[str, Any]] | None = None,
+    channel_names: dict[str, str] | None = None,
+    min_signal_score: float = DEFAULT_MIN_SCORE,
+    min_target_progress_pct: float = DEFAULT_TARGET_ALERT_MIN_PROGRESS,
+    min_channel_target_hit_rate: float = DEFAULT_TARGET_ALERT_MIN_CHANNEL_HIT_RATE,
+    min_channel_target_count: int = DEFAULT_TARGET_ALERT_MIN_CHANNEL_TARGETS,
+) -> bool:
+    """Send a dedicated alert lane for creator targets with measured historical accuracy."""
+    signals = filter_high_accuracy_targets(
+        records,
+        accuracy_by_channel=accuracy_by_channel,
+        min_signal_score=min_signal_score,
+        min_target_progress_pct=min_target_progress_pct,
+        min_channel_target_hit_rate=min_channel_target_hit_rate,
+        min_channel_target_count=min_channel_target_count,
+    )
+    if not signals:
+        logger.info("No high-accuracy targets to alert")
+        return False
+    message = format_high_accuracy_target_alert(signals, channel_names=channel_names)
     if not message:
         return False
     return _send_telegram_html(config, message)
