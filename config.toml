@@ -56,7 +56,7 @@ telegram_chat_id = ""
 enabled = true
 daily_time = "09:00"
 timezone = "Asia/Seoul"
-poll_interval_minutes = 10
+poll_interval_minutes = 2
 poll_video_limit = 8
 state_path = ".omx/state/scheduler_state.json"
 

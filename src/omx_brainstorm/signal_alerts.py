@@ -114,17 +114,29 @@ def send_signal_alerts(
     channel_quality_scores: dict[str, float] | None = None,
     min_score: float = DEFAULT_MIN_SCORE,
     min_channel_quality: float = DEFAULT_MIN_CHANNEL_QUALITY,
+    weight_multipliers: dict[str, float] | None = None,
 ) -> bool:
     """Filter, format, and send high-quality signal alerts via Telegram.
 
+    Args:
+        weight_multipliers: Per-channel multiplier from leaderboard ranking.
+            Effective threshold = min_channel_quality / multiplier, so
+            high-quality channels (multiplier > 1) pass more easily.
+
     Returns True if message was sent successfully.
     """
+    effective_min_quality = min_channel_quality
+    if weight_multipliers and channel_slug:
+        multiplier = weight_multipliers.get(channel_slug, 1.0)
+        if multiplier > 0:
+            effective_min_quality = min_channel_quality / multiplier
+
     signals = filter_high_quality_signals(
         ranked_stocks,
         channel_quality_scores=channel_quality_scores,
         channel_slug=channel_slug,
         min_score=min_score,
-        min_channel_quality=min_channel_quality,
+        min_channel_quality=effective_min_quality,
     )
     if not signals:
         logger.info("No high-quality signals to alert for %s", channel_slug or "all channels")
@@ -159,3 +171,57 @@ def _send_telegram_html(config: NotificationConfig, text: str) -> bool:
     except Exception as exc:
         logger.warning("Telegram HTML alert failed: %s", exc)
         return False
+
+
+def format_analysis_summary(
+    new_videos: dict[str, list[str]],
+    trigger: str = "",
+    top_signals: Sequence[dict[str, Any]] | None = None,
+    channel_names: dict[str, str] | None = None,
+) -> str:
+    """Format an analysis-completion summary as an HTML Telegram message."""
+    channel_names = channel_names or {}
+    total_videos = sum(len(ids) for ids in new_videos.values())
+    lines = [
+        "<b>📡 Y2I 분석 완료</b>",
+        "",
+        f"트리거: <b>{html.escape(trigger or 'manual')}</b>",
+        f"새 영상: <b>{total_videos}</b>개",
+        "",
+    ]
+    for slug, video_ids in new_videos.items():
+        display = html.escape(channel_names.get(slug, slug))
+        lines.append(f"  📺 {display}: {len(video_ids)}개")
+
+    if top_signals:
+        lines.append("")
+        lines.append("<b>🏆 주요 시그널</b>")
+        for sig in top_signals[:5]:
+            name = html.escape(sig.get("company_name") or sig.get("ticker", ""))
+            score = float(sig.get("aggregate_score", 0))
+            verdict = sig.get("aggregate_verdict", "")
+            lines.append(f"  • {name} — {verdict} ({score:.1f})")
+
+    return "\n".join(lines)
+
+
+def send_analysis_summary_alert(
+    config: NotificationConfig,
+    new_videos: dict[str, list[str]],
+    trigger: str = "",
+    top_signals: Sequence[dict[str, Any]] | None = None,
+    channel_names: dict[str, str] | None = None,
+) -> bool:
+    """Send an analysis-completion summary via Telegram.
+
+    Returns True if the message was sent.
+    """
+    if not new_videos:
+        return False
+    message = format_analysis_summary(
+        new_videos,
+        trigger=trigger,
+        top_signals=top_signals,
+        channel_names=channel_names,
+    )
+    return _send_telegram_html(config, message)

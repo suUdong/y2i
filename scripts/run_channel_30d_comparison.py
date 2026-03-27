@@ -10,7 +10,7 @@ from xml.etree import ElementTree as ET
 
 from omx_brainstorm.app_config import AppConfig, load_app_config
 from omx_brainstorm.backtest import YFinanceHistoryProvider
-from omx_brainstorm.channel_quality import compute_channel_quality, rank_channels
+from omx_brainstorm.channel_quality import compute_channel_quality, compute_dynamic_weights, rank_channels
 from omx_brainstorm.comparison import RunContext, compare_channels, quality_scorecard, save_channel_artifacts
 from omx_brainstorm.evaluation import ranking_validation
 from omx_brainstorm.fundamentals import FundamentalsFetcher
@@ -374,6 +374,11 @@ def run_comparison_job(config: AppConfig) -> dict:
         if not accuracy_by_channel:
             accuracy_by_channel, leaderboard = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
         quality_scores = {item["slug"]: item["overall_quality_score"] for item in leaderboard}
+        ranked_reports = rank_channels(compute_channel_quality(
+            comparison.get("channels", {}),
+            {item["slug"]: item for item in leaderboard},
+        ))
+        dynamic_weights = compute_dynamic_weights(ranked_reports)
         for slug, item in channel_payloads.items():
             ranking_dicts = [s.to_dict() for s in item["ranking"]]
             send_signal_alerts(
@@ -384,6 +389,7 @@ def run_comparison_job(config: AppConfig) -> dict:
                 channel_quality_scores=quality_scores,
                 min_score=config.strategy.signal_alert_min_score,
                 min_channel_quality=config.strategy.signal_alert_min_channel_quality,
+                weight_multipliers=dynamic_weights,
             )
     except Exception as exc:
         logger.warning("Signal alerts failed (non-fatal): %s", exc)

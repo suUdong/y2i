@@ -692,6 +692,28 @@ KOREAN_STOCK_NAMES: dict[str, str] = {
 }
 
 
+def get_live_feed_data(
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    hours: int = 48,
+) -> dict[str, Any]:
+    """Combine recent videos and tracked signals into a live-feed payload.
+
+    Returns dict with keys:
+        recent_videos: list of recently analyzed videos (last *hours*)
+        recent_signals: list of recently tracked signals from signal_tracker
+        last_update: ISO timestamp of latest output file
+    """
+    recent_videos = get_recent_videos(output_dir, hours=hours)
+    comparison = load_channel_comparison(output_dir)
+    recent_signals = extract_recent_tracked_signals(comparison)
+    last_update = get_last_update_time(output_dir)
+    return {
+        "recent_videos": recent_videos,
+        "recent_signals": recent_signals,
+        "last_update": last_update.isoformat() if last_update else None,
+    }
+
+
 def format_ticker_display(ticker: str, company_name: str = "") -> str:
     """Format ticker for Korean display: code + Korean/English name."""
     kr_name = KOREAN_STOCK_NAMES.get(ticker)

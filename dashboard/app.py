@@ -29,6 +29,7 @@ from dashboard.data_loader import (
     get_available_channels,
     get_channel_display_names,
     get_last_update_time,
+    get_live_feed_data,
     get_pipeline_activity,
     get_recent_videos,
     load_30d_results,
@@ -768,7 +769,7 @@ def format_percent_metric(value: float | int | None, digits: int = 1) -> str:
 
 # -- Build tabs ---------------------------------------------------------------
 
-fixed_tabs = ["요약", "종목 랭킹", "정확도", "매크로", "전문가"]
+fixed_tabs = ["요약", "실시간 피드", "종목 랭킹", "정확도", "매크로", "전문가"]
 channel_tab_labels = [channel_names.get(ch, ch) for ch in available_channels]
 tab_labels = fixed_tabs + channel_tab_labels + ["채널 비교", "상태"]
 
@@ -1066,10 +1067,71 @@ with tabs[0]:
                 render_chart(fig_labels, key="overview_labels", height=300)
 
 # =============================================================================
-# TAB 1 — 종목 랭킹
+# TAB 1 — 실시간 피드
 # =============================================================================
 
 with tabs[1]:
+    st.markdown("#### 실시간 피드")
+    try:
+        live_data = get_live_feed_data(OUTPUT_DIR, hours=48)
+    except Exception as _e:
+        st.error(f"실시간 피드 로딩 오류: {_e}")
+        live_data = {"recent_videos": [], "recent_signals": [], "last_update": None}
+
+    if live_data.get("last_update"):
+        st.caption(f"마지막 업데이트: {live_data['last_update']}")
+
+    # -- Recent tracked signals --
+    live_signals = live_data.get("recent_signals", [])
+    if live_signals:
+        st.markdown("##### 최근 추적 시그널")
+        for sig in live_signals[:12]:
+            ticker = sig.get("ticker", "")
+            company = sig.get("company_name", "")
+            display = format_ticker_display(ticker, company)
+            verdict = sig.get("verdict", "")
+            score = sig.get("signal_score", 0)
+            entry_price = sig.get("entry_price")
+            returns = sig.get("returns", {})
+            ret_5d = returns.get("5d")
+            ret_str = f" | 5일 수익률: {ret_5d:+.2f}%" if ret_5d is not None else ""
+            entry_str = f" | 진입가: {format_price(entry_price)}" if entry_price else ""
+            verdict_emoji = {"STRONG_BUY": "🟢", "BUY": "🔵", "WATCH": "🟡"}.get(verdict, "⚪")
+            st.markdown(
+                f'<div class="omx-card" style="padding:10px;margin-bottom:6px;">'
+                f"{verdict_emoji} <b>{display}</b> — {verdict} ({score:.1f}){entry_str}{ret_str}"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+    else:
+        st.info("추적 시그널이 없습니다.")
+
+    # -- Recent analyzed videos --
+    live_videos = live_data.get("recent_videos", [])
+    if live_videos:
+        st.markdown("##### 최근 분석 영상")
+        for vid in live_videos[:20]:
+            title = vid.get("title", "")
+            channel = vid.get("_channel", "")
+            ch_display = channel_names.get(channel, channel)
+            signal_class = vid.get("video_signal_class", vid.get("signal_class", ""))
+            published = vid.get("published_at", "")
+            class_emoji = {"ACTIONABLE": "🟢", "SECTOR_ONLY": "🔵", "LOW_SIGNAL": "🟡"}.get(signal_class, "⚪")
+            st.markdown(
+                f'<div class="omx-card" style="padding:8px;margin-bottom:4px;">'
+                f"{class_emoji} <b>{ch_display}</b> — {title}"
+                f'<span style="color:#94A3B8;font-size:0.8em;"> | {published} | {signal_class}</span>'
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+    else:
+        st.info("최근 48시간 내 분석된 영상이 없습니다.")
+
+# =============================================================================
+# TAB 2 — 종목 랭킹
+# =============================================================================
+
+with tabs[2]:
     st.markdown("#### 종목 랭킹")
     rank_ch_options = ["전체 (통합)"] + [channel_names.get(ch, ch) for ch in available_channels]
     rank_ch_idx = st.selectbox("채널 선택", rank_ch_options, key="rank_ch")
@@ -1199,10 +1261,10 @@ with tabs[1]:
         st.info("랭킹 데이터가 없습니다.")
 
 # =============================================================================
-# TAB 2 — 정확도
+# TAB 3 — 정확도
 # =============================================================================
 
-with tabs[2]:
+with tabs[3]:
     st.markdown("#### 시그널 정확도")
     try:
         accuracy_comp = load_channel_comparison(OUTPUT_DIR)
@@ -1369,10 +1431,10 @@ with tabs[2]:
         st.info("시그널 정확도 데이터가 없습니다.")
 
 # =============================================================================
-# TAB 3 — 매크로
+# TAB 4 — 매크로
 # =============================================================================
 
-with tabs[3]:
+with tabs[4]:
     st.markdown("#### 매크로 시그널")
     macro_ch_options = ["전체 (통합)"] + [channel_names.get(ch, ch) for ch in available_channels]
     macro_ch_display = st.selectbox("채널 선택", macro_ch_options, key="macro_ch")
@@ -1510,10 +1572,10 @@ with tabs[3]:
             st.info(f"'{macro_ch_display}' 채널의 매크로 시그널이 없습니다.")
 
 # =============================================================================
-# TAB 4 — 전문가
+# TAB 5 — 전문가
 # =============================================================================
 
-with tabs[4]:
+with tabs[5]:
     st.markdown("#### 전문가 인사이트")
     expert_ch_options = ["전체 (통합)"] + [channel_names.get(ch, ch) for ch in available_channels]
     expert_ch_display = st.selectbox("채널 선택", expert_ch_options, key="expert_ch")

@@ -100,3 +100,31 @@ def compute_channel_quality(
 def rank_channels(reports: list[ChannelQualityReport]) -> list[ChannelQualityReport]:
     """Return channels sorted by overall_quality_score descending."""
     return sorted(reports, key=lambda r: (-r.overall_quality_score, r.slug))
+
+
+def compute_dynamic_weights(
+    ranked_reports: list[ChannelQualityReport],
+) -> dict[str, float]:
+    """Derive per-channel weight multipliers from leaderboard ranking.
+
+    Top-ranked channels receive a boost (up to 1.5x), while bottom-ranked
+    channels receive a penalty (down to 0.7x).  The multiplier is applied to
+    signal_alert_min_channel_quality so that high-quality channels have a
+    lower effective threshold (more alerts pass) and low-quality channels
+    have a higher effective threshold (fewer alerts pass).
+
+    Returns:
+        Dict mapping channel slug -> weight multiplier (0.7 – 1.5).
+    """
+    if not ranked_reports:
+        return {}
+    n = len(ranked_reports)
+    weights: dict[str, float] = {}
+    for idx, report in enumerate(ranked_reports):
+        if n == 1:
+            multiplier = 1.0
+        else:
+            # Linear interpolation: rank 0 (best) -> 1.5, rank n-1 (worst) -> 0.7
+            multiplier = 1.5 - (idx / (n - 1)) * 0.8
+        weights[report.slug] = round(multiplier, 3)
+    return weights

@@ -7,7 +7,9 @@ import pytest
 from omx_brainstorm.app_config import NotificationConfig
 from omx_brainstorm.signal_alerts import (
     filter_high_quality_signals,
+    format_analysis_summary,
     format_telegram_alert,
+    send_analysis_summary_alert,
     send_signal_alerts,
     DEFAULT_MIN_SCORE,
     DEFAULT_MIN_CHANNEL_QUALITY,
@@ -136,3 +138,70 @@ class TestSendSignalAlerts:
         result = send_signal_alerts(config, stocks, channel_slug="bad", channel_quality_scores=quality)
         assert result is False
         mock_send.assert_not_called()
+
+    @patch("omx_brainstorm.signal_alerts._send_telegram_html")
+    def test_weight_multiplier_lowers_threshold(self, mock_send):
+        """A high weight multiplier should lower the effective quality threshold."""
+        mock_send.return_value = True
+        config = NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123")
+        stocks = [_make_stock(score=80.0)]
+        # Channel quality is 40 (below default 50 threshold)
+        quality = {"good": 40.0}
+        # Without weight, would be blocked:
+        assert send_signal_alerts(config, stocks, channel_slug="good", channel_quality_scores=quality) is False
+        # With high weight (1.5), effective threshold = 50/1.5 = 33.3, so 40 passes:
+        result = send_signal_alerts(
+            config, stocks, channel_slug="good", channel_quality_scores=quality,
+            weight_multipliers={"good": 1.5},
+        )
+        assert result is True
+
+
+class TestFormatAnalysisSummary:
+    def test_basic_format(self):
+        new_videos = {"itgod": ["v1", "v2"], "sampro": ["v3"]}
+        msg = format_analysis_summary(new_videos, trigger="new_videos")
+        assert "분석 완료" in msg
+        assert "3" in msg  # total videos
+        assert "new_videos" in msg
+
+    def test_with_top_signals(self):
+        new_videos = {"itgod": ["v1"]}
+        signals = [{"company_name": "삼성전자", "aggregate_score": 82.0, "aggregate_verdict": "STRONG_BUY"}]
+        msg = format_analysis_summary(new_videos, top_signals=signals)
+        assert "삼성전자" in msg
+        assert "STRONG_BUY" in msg
+
+    def test_with_channel_names(self):
+        new_videos = {"itgod": ["v1"]}
+        msg = format_analysis_summary(new_videos, channel_names={"itgod": "IT의 신"})
+        assert "IT의 신" in msg
+
+    def test_empty_videos_returns_header(self):
+        msg = format_analysis_summary({}, trigger="daily")
+        assert "0" in msg
+
+    def test_html_escaping(self):
+        new_videos = {"ch": ["v1"]}
+        msg = format_analysis_summary(new_videos, channel_names={"ch": "<script>alert(1)</script>"})
+        assert "<script>" not in msg
+        assert "&lt;script&gt;" in msg
+
+
+class TestSendAnalysisSummaryAlert:
+    def test_empty_videos_returns_false(self):
+        config = NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123")
+        assert send_analysis_summary_alert(config, {}) is False
+
+    @patch("omx_brainstorm.signal_alerts._send_telegram_html")
+    def test_sends_when_videos_present(self, mock_send):
+        mock_send.return_value = True
+        config = NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123")
+        result = send_analysis_summary_alert(config, {"itgod": ["v1"]}, trigger="new_videos")
+        assert result is True
+        mock_send.assert_called_once()
+
+    def test_missing_credentials_returns_false(self):
+        config = NotificationConfig()
+        result = send_analysis_summary_alert(config, {"itgod": ["v1"]})
+        assert result is False

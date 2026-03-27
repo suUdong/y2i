@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 
 from .app_config import AppConfig
 from .notifications import notify_all
+from .signal_alerts import send_analysis_summary_alert
 from .youtube import YoutubeResolver
 from .utils import write_json, read_json
 
@@ -193,6 +194,17 @@ def run_scheduler_iteration(
         if should_run_daily:
             localized_now = now.astimezone(ZoneInfo(config.schedule.timezone))
             state["last_daily_run_local_date"] = localized_now.date().isoformat()
+        if new_ids_by_channel:
+            channel_names = {ch.slug: ch.display_name for ch in config.channels}
+            try:
+                send_analysis_summary_alert(
+                    config.notifications,
+                    new_ids_by_channel,
+                    trigger=trigger,
+                    channel_names=channel_names,
+                )
+            except Exception as exc:
+                logger.warning("Analysis summary alert failed: %s", exc)
     else:
         state["last_failed_trigger_at"] = now.isoformat()
 
@@ -205,11 +217,31 @@ def run_scheduler_iteration(
     }
 
 
+def adaptive_poll_interval(
+    base_seconds: float,
+    found_new: bool,
+    consecutive_idle: int,
+) -> tuple[float, int]:
+    """Return (sleep_seconds, updated_consecutive_idle) using adaptive backoff.
+
+    After finding new videos, poll again in 60s.  After consecutive idle polls,
+    gradually back off: base * 1.5^idle, capped at 5 minutes.
+    """
+    if found_new:
+        return 60.0, 0
+    idle = consecutive_idle + 1
+    interval = min(base_seconds * (1.5 ** min(idle - 1, 3)), 300.0)
+    return max(60.0, interval), idle
+
+
 def run_scheduler_forever(config: AppConfig, script_path: str = DEFAULT_COMPARISON_TARGET) -> None:
-    poll_interval_seconds = max(60, int(config.schedule.poll_interval_minutes) * 60)
+    base_interval = max(60, int(config.schedule.poll_interval_minutes) * 60)
+    consecutive_idle = 0
     while True:
         result = run_scheduler_iteration(config, script_path=script_path)
+        found_new = bool(result.get("new_videos"))
         if result["ran"]:
             logger.info("Scheduler iteration finished: %s", result)
-        logger.info("Next scheduler poll in %s seconds", poll_interval_seconds)
-        time.sleep(poll_interval_seconds)
+        sleep_seconds, consecutive_idle = adaptive_poll_interval(base_interval, found_new, consecutive_idle)
+        logger.info("Next scheduler poll in %s seconds (idle streak: %s)", sleep_seconds, consecutive_idle)
+        time.sleep(sleep_seconds)

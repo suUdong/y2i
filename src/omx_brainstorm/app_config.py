@@ -40,7 +40,7 @@ class ScheduleConfig:
     daily_time: str = "09:00"
     timezone: str = "Asia/Seoul"
     enabled: bool = False
-    poll_interval_minutes: int = 10
+    poll_interval_minutes: int = 2
     poll_video_limit: int = 8
     state_path: str = ".omx/state/scheduler_state.json"
 

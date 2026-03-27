@@ -9,6 +9,7 @@ from omx_brainstorm.models import VideoInput
 from omx_brainstorm.notifications import send_telegram_message
 from omx_brainstorm.scheduler import (
     HEALTH_PATH,
+    adaptive_poll_interval,
     build_scheduler_command,
     daily_run_due,
     processed_ids_from_payload,
@@ -178,3 +179,29 @@ def test_processed_ids_from_payload_reads_channel_artifacts(tmp_path):
 def test_seconds_until_next_run_for_late_target_is_small(monkeypatch):
     seconds = seconds_until_next_run("23:59", "Asia/Seoul")
     assert seconds >= 0
+
+
+class TestAdaptivePollInterval:
+    def test_found_new_resets_to_60s(self):
+        sleep, idle = adaptive_poll_interval(120.0, found_new=True, consecutive_idle=5)
+        assert sleep == 60.0
+        assert idle == 0
+
+    def test_first_idle_uses_base(self):
+        sleep, idle = adaptive_poll_interval(120.0, found_new=False, consecutive_idle=0)
+        assert sleep == 120.0
+        assert idle == 1
+
+    def test_backoff_increases_with_idle(self):
+        _, idle1 = adaptive_poll_interval(120.0, found_new=False, consecutive_idle=0)
+        sleep2, idle2 = adaptive_poll_interval(120.0, found_new=False, consecutive_idle=idle1)
+        assert sleep2 > 120.0
+        assert idle2 == 2
+
+    def test_capped_at_300s(self):
+        sleep, _ = adaptive_poll_interval(120.0, found_new=False, consecutive_idle=20)
+        assert sleep <= 300.0
+
+    def test_minimum_is_60s(self):
+        sleep, _ = adaptive_poll_interval(30.0, found_new=False, consecutive_idle=0)
+        assert sleep >= 60.0

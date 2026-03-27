@@ -5,6 +5,7 @@ import pytest
 from omx_brainstorm.channel_quality import (
     ChannelQualityReport,
     compute_channel_quality,
+    compute_dynamic_weights,
     rank_channels,
 )
 
@@ -96,6 +97,46 @@ class TestRankChannels:
         # Equal scores, should sort by slug alphabetically
         assert ranked[0].slug == "a_channel"
         assert ranked[1].slug == "b_channel"
+
+
+class TestComputeDynamicWeights:
+    def _make_report(self, slug: str, quality: float) -> ChannelQualityReport:
+        return ChannelQualityReport(
+            slug=slug, display_name=slug, actionable_ratio=0.5,
+            avg_signal_score=50.0, hit_rate_5d=50.0, hit_rate_10d=50.0,
+            avg_return_5d=1.0, avg_return_10d=1.0, spearman_correlation=0.5,
+            ranking_predictive_power=50.0, overall_quality_score=quality,
+        )
+
+    def test_empty_returns_empty(self):
+        assert compute_dynamic_weights([]) == {}
+
+    def test_single_channel_gets_neutral_weight(self):
+        reports = [self._make_report("a", 70.0)]
+        weights = compute_dynamic_weights(reports)
+        assert weights == {"a": 1.0}
+
+    def test_top_ranked_gets_boost_bottom_gets_penalty(self):
+        reports = [self._make_report("best", 90.0), self._make_report("worst", 30.0)]
+        weights = compute_dynamic_weights(reports)
+        assert weights["best"] == 1.5
+        assert weights["worst"] == 0.7
+
+    def test_three_channels_linear_interpolation(self):
+        reports = [
+            self._make_report("a", 90.0),
+            self._make_report("b", 60.0),
+            self._make_report("c", 30.0),
+        ]
+        weights = compute_dynamic_weights(reports)
+        assert weights["a"] == 1.5
+        assert weights["b"] == 1.1
+        assert weights["c"] == 0.7
+
+    def test_weights_are_bounded(self):
+        reports = [self._make_report(f"ch{i}", 90.0 - i * 10) for i in range(6)]
+        weights = compute_dynamic_weights(reports)
+        assert all(0.7 <= w <= 1.5 for w in weights.values())
 
 
 class TestChannelQualityReport:

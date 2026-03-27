@@ -28,6 +28,7 @@ from dashboard.data_loader import (
     extract_videos,
     get_available_channels,
     get_last_update_time,
+    get_live_feed_data,
     get_pipeline_activity,
     get_recent_videos,
     load_30d_results,
@@ -546,6 +547,28 @@ class TestLoadSignalAccuracySummary:
         summary = load_signal_accuracy_summary(tmp_output, load_channel_comparison(tmp_output))
         assert summary["overall"]["total_signals"] == 2
         assert summary["overall"]["window_stats"]["5d"]["tracked"] == 2
+
+
+class TestGetLiveFeedData:
+    def test_returns_expected_keys(self, tmp_output: Path):
+        data = get_live_feed_data(tmp_output, hours=9999)
+        assert "recent_videos" in data
+        assert "recent_signals" in data
+        assert "last_update" in data
+
+    def test_recent_videos_is_list(self, tmp_output: Path):
+        data = get_live_feed_data(tmp_output, hours=9999)
+        assert isinstance(data["recent_videos"], list)
+
+    def test_recent_signals_is_list(self, tmp_output: Path):
+        data = get_live_feed_data(tmp_output, hours=9999)
+        assert isinstance(data["recent_signals"], list)
+
+    def test_empty_dir_returns_empty_lists(self, tmp_path: Path):
+        data = get_live_feed_data(tmp_path, hours=48)
+        assert data["recent_videos"] == []
+        assert data["recent_signals"] == []
+        assert data["last_update"] is None
 
 
 def test_streamlit_app_runs_without_session_errors(tmp_output: Path, monkeypatch: pytest.MonkeyPatch):
