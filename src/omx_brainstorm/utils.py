@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Iterable, TypeVar
@@ -29,6 +30,34 @@ def write_json(path: Path, data: object) -> None:
     tmp_path = path.with_name(f".{path.name}.tmp")
     tmp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp_path.replace(path)
+
+
+def load_env_file(path: str | Path, *, override: bool = False) -> dict[str, str]:
+    """Load simple KEY=VALUE pairs from a .env file into os.environ."""
+    env_path = Path(path)
+    if not env_path.exists():
+        return {}
+
+    loaded: dict[str, str] = {}
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].strip()
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        if override or key not in os.environ:
+            os.environ[key] = value
+        loaded[key] = os.environ[key]
+    return loaded
 
 
 _whitespace = re.compile(r"\s+")

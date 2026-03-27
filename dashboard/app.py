@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import os
+from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -44,6 +46,7 @@ from dashboard.data_loader import (
     load_channel_comparison,
     load_all_video_titles,
 )
+from omx_brainstorm.utils import load_env_file
 
 # -- Page config ---------------------------------------------------------------
 
@@ -54,7 +57,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-DASHBOARD_AUTH_TOKEN = "6149ba10085f1be3"
+load_env_file(os.getenv("OMX_ENV_PATH", str(Path(__file__).resolve().parent.parent / ".env")))
+
+DEFAULT_DASHBOARD_AUTH_TOKEN = "6149ba10085f1be3"
+DASHBOARD_AUTH_TOKEN = os.getenv("DASHBOARD_AUTH_TOKEN", DEFAULT_DASHBOARD_AUTH_TOKEN)
 
 
 def render_forbidden() -> None:

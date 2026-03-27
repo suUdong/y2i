@@ -126,3 +126,19 @@ def test_load_app_config_env_overrides_logging(tmp_path, monkeypatch):
     config = load_app_config(path)
     assert config.logging.json is True
     assert config.logging.retention_days == 9
+
+
+def test_load_app_config_reads_adjacent_dotenv(tmp_path, monkeypatch):
+    path = tmp_path / "cfg.toml"
+    path.write_text("[notifications]\ntelegram_bot_token = \"\"\ntelegram_chat_id = \"\"", encoding="utf-8")
+    (tmp_path / ".env").write_text(
+        "TELEGRAM_BOT_TOKEN=bot-from-dotenv\nTELEGRAM_CHAT_ID=chat-from-dotenv\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    config = load_app_config(path)
+
+    assert config.notifications.telegram_bot_token == "bot-from-dotenv"
+    assert config.notifications.telegram_chat_id == "chat-from-dotenv"

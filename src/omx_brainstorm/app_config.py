@@ -5,6 +5,8 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .utils import load_env_file
+
 
 @dataclass(slots=True)
 class ChannelConfig:
@@ -85,6 +87,7 @@ DEFAULT_CHANNELS = [
 
 def load_app_config(path: str | Path | None = None) -> AppConfig:
     path = Path(path or os.getenv("OMX_CONFIG_PATH", "config.toml"))
+    load_env_file(os.getenv("OMX_ENV_PATH", str(path.with_name(".env"))))
     payload = {}
     if path.exists():
         try:
