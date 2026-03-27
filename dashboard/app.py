@@ -57,10 +57,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-load_env_file(os.getenv("OMX_ENV_PATH", str(Path(__file__).resolve().parent.parent / ".env")))
+dotenv_payload = load_env_file(os.getenv("OMX_ENV_PATH", str(Path(__file__).resolve().parent.parent / ".env")))
 
 DEFAULT_DASHBOARD_AUTH_TOKEN = "6149ba10085f1be3"
-DASHBOARD_AUTH_TOKEN = os.getenv("DASHBOARD_AUTH_TOKEN", DEFAULT_DASHBOARD_AUTH_TOKEN)
+DASHBOARD_AUTH_TOKEN = os.getenv("DASHBOARD_AUTH_TOKEN") or dotenv_payload.get("DASHBOARD_AUTH_TOKEN") or DEFAULT_DASHBOARD_AUTH_TOKEN
 
 
 def render_forbidden() -> None:

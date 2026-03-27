@@ -87,7 +87,7 @@ DEFAULT_CHANNELS = [
 
 def load_app_config(path: str | Path | None = None) -> AppConfig:
     path = Path(path or os.getenv("OMX_CONFIG_PATH", "config.toml"))
-    load_env_file(os.getenv("OMX_ENV_PATH", str(path.with_name(".env"))))
+    dotenv_payload = load_env_file(os.getenv("OMX_ENV_PATH", str(path.with_name(".env"))))
     payload = {}
     if path.exists():
         try:
@@ -117,43 +117,63 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
 
     return AppConfig(
         config_path=str(path),
-        provider=os.getenv("OMX_PROVIDER", app.get("provider", "auto")),
-        output_dir=os.getenv("OMX_OUTPUT_DIR", app.get("output_dir", "output")),
-        registry_path=os.getenv("OMX_REGISTRY_PATH", app.get("registry_path", "channels.json")),
-        paper_trading_mode=_env_bool("OMX_PAPER_TRADING_MODE", app.get("paper_trading_mode", True)),
+        provider=_env_or_dotenv("OMX_PROVIDER", dotenv_payload, app.get("provider", "auto")),
+        output_dir=_env_or_dotenv("OMX_OUTPUT_DIR", dotenv_payload, app.get("output_dir", "output")),
+        registry_path=_env_or_dotenv("OMX_REGISTRY_PATH", dotenv_payload, app.get("registry_path", "channels.json")),
+        paper_trading_mode=_env_or_dotenv_bool("OMX_PAPER_TRADING_MODE", dotenv_payload, app.get("paper_trading_mode", True)),
         channels=channels,
         strategy=StrategyConfig(
-            window_days=int(os.getenv("OMX_WINDOW_DAYS", strategy_payload.get("window_days", 30))),
-            max_scan=int(os.getenv("OMX_MAX_SCAN", strategy_payload.get("max_scan", 80))),
-            top_n=int(os.getenv("OMX_TOP_N", strategy_payload.get("top_n", 3))),
-            video_workers=int(os.getenv("OMX_VIDEO_WORKERS", strategy_payload.get("video_workers", 4))),
-            fundamentals_workers=int(os.getenv("OMX_FUNDAMENTALS_WORKERS", strategy_payload.get("fundamentals_workers", 4))),
-            paper_trade_capital=float(os.getenv("OMX_PAPER_TRADE_CAPITAL", strategy_payload.get("paper_trade_capital", 10_000.0))),
-            signal_alert_min_score=float(os.getenv("OMX_SIGNAL_ALERT_MIN_SCORE", strategy_payload.get("signal_alert_min_score", 68.0))),
-            signal_alert_min_channel_quality=float(os.getenv("OMX_SIGNAL_ALERT_MIN_CHANNEL_QUALITY", strategy_payload.get("signal_alert_min_channel_quality", 50.0))),
-            high_confidence_min_score=float(os.getenv("OMX_HIGH_CONFIDENCE_MIN_SCORE", strategy_payload.get("high_confidence_min_score", 82.0))),
+            window_days=int(_env_or_dotenv("OMX_WINDOW_DAYS", dotenv_payload, strategy_payload.get("window_days", 30))),
+            max_scan=int(_env_or_dotenv("OMX_MAX_SCAN", dotenv_payload, strategy_payload.get("max_scan", 80))),
+            top_n=int(_env_or_dotenv("OMX_TOP_N", dotenv_payload, strategy_payload.get("top_n", 3))),
+            video_workers=int(_env_or_dotenv("OMX_VIDEO_WORKERS", dotenv_payload, strategy_payload.get("video_workers", 4))),
+            fundamentals_workers=int(_env_or_dotenv("OMX_FUNDAMENTALS_WORKERS", dotenv_payload, strategy_payload.get("fundamentals_workers", 4))),
+            paper_trade_capital=float(_env_or_dotenv("OMX_PAPER_TRADE_CAPITAL", dotenv_payload, strategy_payload.get("paper_trade_capital", 10_000.0))),
+            signal_alert_min_score=float(_env_or_dotenv("OMX_SIGNAL_ALERT_MIN_SCORE", dotenv_payload, strategy_payload.get("signal_alert_min_score", 68.0))),
+            signal_alert_min_channel_quality=float(_env_or_dotenv("OMX_SIGNAL_ALERT_MIN_CHANNEL_QUALITY", dotenv_payload, strategy_payload.get("signal_alert_min_channel_quality", 50.0))),
+            high_confidence_min_score=float(_env_or_dotenv("OMX_HIGH_CONFIDENCE_MIN_SCORE", dotenv_payload, strategy_payload.get("high_confidence_min_score", 82.0))),
         ),
         notifications=NotificationConfig(
-            telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", notifications_payload.get("telegram_bot_token")),
-            telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID", notifications_payload.get("telegram_chat_id")),
-            discord_webhook_url=os.getenv("DISCORD_WEBHOOK_URL", notifications_payload.get("discord_webhook_url")),
+            telegram_bot_token=_env_or_dotenv("TELEGRAM_BOT_TOKEN", dotenv_payload, notifications_payload.get("telegram_bot_token")),
+            telegram_chat_id=_env_or_dotenv("TELEGRAM_CHAT_ID", dotenv_payload, notifications_payload.get("telegram_chat_id")),
+            discord_webhook_url=_env_or_dotenv("DISCORD_WEBHOOK_URL", dotenv_payload, notifications_payload.get("discord_webhook_url")),
         ),
         schedule=ScheduleConfig(
-            daily_time=os.getenv("OMX_DAILY_TIME", schedule_payload.get("daily_time", "09:00")),
-            timezone=os.getenv("OMX_TIMEZONE", schedule_payload.get("timezone", "Asia/Seoul")),
-            enabled=_env_bool("OMX_SCHEDULE_ENABLED", schedule_payload.get("enabled", False)),
-            poll_interval_minutes=int(os.getenv("OMX_SCHEDULE_POLL_INTERVAL_MINUTES", schedule_payload.get("poll_interval_minutes", 10))),
-            poll_video_limit=int(os.getenv("OMX_SCHEDULE_POLL_VIDEO_LIMIT", schedule_payload.get("poll_video_limit", 8))),
-            job_max_attempts=int(os.getenv("OMX_SCHEDULE_JOB_MAX_ATTEMPTS", schedule_payload.get("job_max_attempts", 3))),
-            retry_backoff_seconds=int(os.getenv("OMX_SCHEDULE_RETRY_BACKOFF_SECONDS", schedule_payload.get("retry_backoff_seconds", 60))),
-            state_path=os.getenv("OMX_SCHEDULE_STATE_PATH", schedule_payload.get("state_path", ".omx/state/scheduler_state.json")),
+            daily_time=_env_or_dotenv("OMX_DAILY_TIME", dotenv_payload, schedule_payload.get("daily_time", "09:00")),
+            timezone=_env_or_dotenv("OMX_TIMEZONE", dotenv_payload, schedule_payload.get("timezone", "Asia/Seoul")),
+            enabled=_env_or_dotenv_bool("OMX_SCHEDULE_ENABLED", dotenv_payload, schedule_payload.get("enabled", False)),
+            poll_interval_minutes=int(_env_or_dotenv("OMX_SCHEDULE_POLL_INTERVAL_MINUTES", dotenv_payload, schedule_payload.get("poll_interval_minutes", 10))),
+            poll_video_limit=int(_env_or_dotenv("OMX_SCHEDULE_POLL_VIDEO_LIMIT", dotenv_payload, schedule_payload.get("poll_video_limit", 8))),
+            job_max_attempts=int(_env_or_dotenv("OMX_SCHEDULE_JOB_MAX_ATTEMPTS", dotenv_payload, schedule_payload.get("job_max_attempts", 3))),
+            retry_backoff_seconds=int(_env_or_dotenv("OMX_SCHEDULE_RETRY_BACKOFF_SECONDS", dotenv_payload, schedule_payload.get("retry_backoff_seconds", 60))),
+            state_path=_env_or_dotenv("OMX_SCHEDULE_STATE_PATH", dotenv_payload, schedule_payload.get("state_path", ".omx/state/scheduler_state.json")),
         ),
         logging=LoggingConfig(
-            json=_env_bool("OMX_JSON_LOGS", logging_payload.get("json", True)),
-            log_dir=os.getenv("OMX_LOG_DIR", logging_payload.get("log_dir", ".omx/logs")),
-            retention_days=int(os.getenv("OMX_LOG_RETENTION_DAYS", logging_payload.get("retention_days", 7))),
+            json=_env_or_dotenv_bool("OMX_JSON_LOGS", dotenv_payload, logging_payload.get("json", True)),
+            log_dir=_env_or_dotenv("OMX_LOG_DIR", dotenv_payload, logging_payload.get("log_dir", ".omx/logs")),
+            retention_days=int(_env_or_dotenv("OMX_LOG_RETENTION_DAYS", dotenv_payload, logging_payload.get("retention_days", 7))),
         ),
     )
+
+
+def _env_or_dotenv(name: str, dotenv_payload: dict[str, str], default: str | int | float | None) -> str | int | float | None:
+    env_value = os.getenv(name)
+    if env_value is not None:
+        return env_value
+    dotenv_value = dotenv_payload.get(name)
+    if dotenv_value is not None and dotenv_value.strip():
+        return dotenv_value
+    return default
+
+
+def _env_or_dotenv_bool(name: str, dotenv_payload: dict[str, str], default: bool) -> bool:
+    env_value = os.getenv(name)
+    if env_value is not None:
+        return env_value.lower() in {"1", "true", "yes", "on"}
+    dotenv_value = dotenv_payload.get(name)
+    if dotenv_value is not None and dotenv_value.strip():
+        return dotenv_value.lower() in {"1", "true", "yes", "on"}
+    return bool(default)
 
 
 def _env_bool(name: str, default: bool) -> bool:

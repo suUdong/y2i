@@ -142,3 +142,70 @@ def test_load_app_config_reads_adjacent_dotenv(tmp_path, monkeypatch):
 
     assert config.notifications.telegram_bot_token == "bot-from-dotenv"
     assert config.notifications.telegram_chat_id == "chat-from-dotenv"
+
+
+def test_load_app_config_ignores_blank_dotenv_placeholders(tmp_path, monkeypatch):
+    path = tmp_path / "cfg.toml"
+    path.write_text(
+        "[notifications]\ntelegram_bot_token = \"toml-bot\"\ntelegram_chat_id = \"toml-chat\"",
+        encoding="utf-8",
+    )
+    (tmp_path / ".env").write_text(
+        "TELEGRAM_BOT_TOKEN=\nTELEGRAM_CHAT_ID=\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    config = load_app_config(path)
+
+    assert config.notifications.telegram_bot_token == "toml-bot"
+    assert config.notifications.telegram_chat_id == "toml-chat"
+
+
+def test_load_app_config_does_not_leak_dotenv_between_config_roots(tmp_path, monkeypatch):
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    first.mkdir()
+    second.mkdir()
+    (first / "cfg.toml").write_text("", encoding="utf-8")
+    (second / "cfg.toml").write_text("", encoding="utf-8")
+    (first / ".env").write_text("TELEGRAM_BOT_TOKEN=first-bot\n", encoding="utf-8")
+    (second / ".env").write_text("TELEGRAM_BOT_TOKEN=second-bot\n", encoding="utf-8")
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+
+    first_config = load_app_config(first / "cfg.toml")
+    second_config = load_app_config(second / "cfg.toml")
+
+    assert first_config.notifications.telegram_bot_token == "first-bot"
+    assert second_config.notifications.telegram_bot_token == "second-bot"
+
+
+def test_load_app_config_reads_boolean_overrides_from_adjacent_dotenv(tmp_path, monkeypatch):
+    path = tmp_path / "cfg.toml"
+    path.write_text(
+        """
+[app]
+paper_trading_mode = true
+
+[schedule]
+enabled = false
+
+[logging]
+json = true
+        """.strip(),
+        encoding="utf-8",
+    )
+    (tmp_path / ".env").write_text(
+        "OMX_PAPER_TRADING_MODE=false\nOMX_SCHEDULE_ENABLED=true\nOMX_JSON_LOGS=false\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("OMX_PAPER_TRADING_MODE", raising=False)
+    monkeypatch.delenv("OMX_SCHEDULE_ENABLED", raising=False)
+    monkeypatch.delenv("OMX_JSON_LOGS", raising=False)
+
+    config = load_app_config(path)
+
+    assert config.paper_trading_mode is False
+    assert config.schedule.enabled is True
+    assert config.logging.json is False
