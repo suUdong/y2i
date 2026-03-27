@@ -49,15 +49,23 @@ class TestComputeChannelQuality:
         }
         accuracy = {
             "itgod": {
+                "hit_rate_1d": 85.0,
+                "hit_rate_3d": 82.0,
                 "hit_rate_5d": 80.0,
                 "hit_rate_10d": 75.0,
+                "avg_return_1d": 2.0,
+                "avg_return_3d": 4.0,
                 "avg_return_5d": 8.0,
                 "avg_return_10d": 6.0,
             },
         }
         reports = compute_channel_quality(channels, accuracy)
         assert len(reports) == 1
+        assert reports[0].hit_rate_1d == 85.0
+        assert reports[0].hit_rate_3d == 82.0
         assert reports[0].hit_rate_5d == 80.0
+        assert reports[0].avg_return_1d == 2.0
+        assert reports[0].avg_return_3d == 4.0
         assert reports[0].avg_return_5d == 8.0
         # With real accuracy data, score should differ from no-data case
         no_acc_reports = compute_channel_quality(channels)
@@ -103,7 +111,9 @@ class TestComputeDynamicWeights:
     def _make_report(self, slug: str, quality: float) -> ChannelQualityReport:
         return ChannelQualityReport(
             slug=slug, display_name=slug, actionable_ratio=0.5,
-            avg_signal_score=50.0, hit_rate_5d=50.0, hit_rate_10d=50.0,
+            avg_signal_score=50.0, hit_rate_1d=50.0, hit_rate_3d=50.0,
+            hit_rate_5d=50.0, hit_rate_10d=50.0,
+            avg_return_1d=1.0, avg_return_3d=1.0,
             avg_return_5d=1.0, avg_return_10d=1.0, spearman_correlation=0.5,
             ranking_predictive_power=50.0, overall_quality_score=quality,
         )
@@ -114,36 +124,56 @@ class TestComputeDynamicWeights:
     def test_single_channel_gets_neutral_weight(self):
         reports = [self._make_report("a", 70.0)]
         weights = compute_dynamic_weights(reports)
-        assert weights == {"a": 1.0}
+        assert 1.0 < weights["a"] <= 1.5
 
-    def test_top_ranked_gets_boost_bottom_gets_penalty(self):
+    def test_stronger_channel_gets_higher_weight(self):
         reports = [self._make_report("best", 90.0), self._make_report("worst", 30.0)]
         weights = compute_dynamic_weights(reports)
-        assert weights["best"] == 1.5
-        assert weights["worst"] == 0.7
+        assert weights["best"] > weights["worst"]
+        assert weights["best"] > 1.0
+        assert weights["worst"] < 1.0
 
-    def test_three_channels_linear_interpolation(self):
-        reports = [
-            self._make_report("a", 90.0),
-            self._make_report("b", 60.0),
-            self._make_report("c", 30.0),
-        ]
-        weights = compute_dynamic_weights(reports)
-        assert weights["a"] == 1.5
-        assert weights["b"] == 1.1
-        assert weights["c"] == 0.7
+    def test_low_accuracy_channel_gets_extra_penalty(self):
+        low = ChannelQualityReport(
+            slug="low", display_name="low", actionable_ratio=0.5,
+            avg_signal_score=40.0, hit_rate_1d=20.0, hit_rate_3d=25.0,
+            hit_rate_5d=30.0, hit_rate_10d=35.0,
+            avg_return_1d=-3.0, avg_return_3d=-4.0,
+            avg_return_5d=-5.0, avg_return_10d=-6.0,
+            spearman_correlation=0.1, ranking_predictive_power=20.0,
+            overall_quality_score=35.0,
+        )
+        high = self._make_report("high", 85.0)
+        weights = compute_dynamic_weights([high, low])
+        assert weights["low"] <= 0.7
+        assert weights["high"] >= 1.1
+
+    def test_sparse_accuracy_stays_near_neutral(self):
+        report = ChannelQualityReport(
+            slug="sparse", display_name="sparse", actionable_ratio=0.5,
+            avg_signal_score=60.0, hit_rate_1d=None, hit_rate_3d=None,
+            hit_rate_5d=None, hit_rate_10d=None,
+            avg_return_1d=None, avg_return_3d=None,
+            avg_return_5d=None, avg_return_10d=None,
+            spearman_correlation=0.5, ranking_predictive_power=50.0,
+            overall_quality_score=62.0,
+        )
+        weights = compute_dynamic_weights([report])
+        assert 0.9 <= weights["sparse"] <= 1.1
 
     def test_weights_are_bounded(self):
         reports = [self._make_report(f"ch{i}", 90.0 - i * 10) for i in range(6)]
         weights = compute_dynamic_weights(reports)
-        assert all(0.7 <= w <= 1.5 for w in weights.values())
+        assert all(0.4 <= w <= 1.5 for w in weights.values())
 
 
 class TestChannelQualityReport:
     def test_to_dict(self):
         report = ChannelQualityReport(
             slug="itgod", display_name="IT의 신", actionable_ratio=0.733,
-            avg_signal_score=67.3, hit_rate_5d=60.0, hit_rate_10d=55.0,
+            avg_signal_score=67.3, hit_rate_1d=62.0, hit_rate_3d=61.0,
+            hit_rate_5d=60.0, hit_rate_10d=55.0,
+            avg_return_1d=1.0, avg_return_3d=2.5,
             avg_return_5d=3.5, avg_return_10d=2.0, spearman_correlation=0.5,
             ranking_predictive_power=47.6, overall_quality_score=65.0,
         )

@@ -220,10 +220,17 @@ class TestFormatAnalysisSummary:
 
     def test_with_top_signals(self):
         new_videos = {"itgod": ["v1"]}
-        signals = [{"company_name": "삼성전자", "aggregate_score": 82.0, "aggregate_verdict": "STRONG_BUY"}]
+        signals = [{
+            "company_name": "삼성전자",
+            "aggregate_score": 82.0,
+            "aggregate_verdict": "STRONG_BUY",
+            "channel_count": 2,
+            "_source_channels_display": ["IT의 신", "삼프로TV"],
+        }]
         msg = format_analysis_summary(new_videos, top_signals=signals)
         assert "삼성전자" in msg
         assert "STRONG_BUY" in msg
+        assert "2개 채널 합의" in msg
 
     def test_with_channel_names(self):
         new_videos = {"itgod": ["v1"]}
@@ -297,7 +304,7 @@ class TestSendAnalysisSummaryAlert:
 class TestDailyLeaderboardSummary:
     def test_formats_leaderboard(self):
         leaderboard = [
-            {"slug": "sampro", "display_name": "삼프로TV", "overall_quality_score": 77.2, "hit_rate_5d": 66.0, "avg_return_5d": 3.2, "actionable_ratio": 0.55},
+            {"slug": "sampro", "display_name": "삼프로TV", "overall_quality_score": 77.2, "weight_multiplier": 1.18, "hit_rate_3d": 61.0, "hit_rate_5d": 66.0, "avg_return_5d": 3.2, "actionable_ratio": 0.55},
             {"slug": "itgod", "display_name": "IT의 신", "overall_quality_score": 71.0, "actionable_ratio": 0.41},
         ]
         msg = format_daily_leaderboard_summary(leaderboard, generated_at="20260327T140000Z")
@@ -305,6 +312,8 @@ class TestDailyLeaderboardSummary:
         assert "삼프로TV" in msg
         assert "77.2" in msg
         assert "66.0%" in msg
+        assert "1.18x" in msg
+        assert "3d 적중률 61.0%" in msg
 
     @patch("omx_brainstorm.signal_alerts._send_telegram_html")
     def test_send_daily_leaderboard_alert(self, mock_send):

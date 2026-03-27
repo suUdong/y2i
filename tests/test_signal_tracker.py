@@ -136,13 +136,20 @@ class TestSignalTrackerDB:
             r = SignalRecord(
                 ticker=f"00{i}.KS", company_name=f"Stock{i}", channel_slug="itgod",
                 signal_date=f"2026-03-0{i+1}", signal_score=70.0, verdict="BUY",
-                returns={"1d": None, "3d": None, "5d": ret, "10d": ret * 1.5, "20d": None},
+                returns={"1d": ret / 3, "3d": ret / 2, "5d": ret, "10d": ret * 1.5, "20d": None},
             )
             db.add_record(r)
         stats = db.accuracy_report("itgod")
         assert stats.total_signals == 4
         assert stats.signals_with_price == 4
+        assert stats.signals_with_price_1d == 4
+        assert stats.signals_with_price_3d == 4
+        assert stats.signals_with_price_5d == 4
+        assert stats.hit_rate_1d == 50.0
+        assert stats.hit_rate_3d == 50.0
         assert stats.hit_rate_5d == 50.0  # 2 out of 4 positive
+        assert stats.avg_return_1d == 0.42
+        assert stats.avg_return_3d == 0.62
         assert stats.avg_return_5d == 1.25  # (3-1+5-2)/4
         assert stats.window_stats["5d"]["tracked"] == 4
         assert stats.window_stats["10d"]["hit_rate"] == 50.0
@@ -160,6 +167,20 @@ class TestSignalTrackerDB:
         itgod_stats = db.accuracy_report("itgod")
         assert itgod_stats.total_signals == 1
         assert itgod_stats.hit_rate_5d == 100.0
+
+    def test_accuracy_report_handles_sparse_short_windows(self, db: SignalTrackerDB):
+        db.add_record(
+            SignalRecord(
+                ticker="001.KS", company_name="A", channel_slug="itgod",
+                signal_date="2026-03-01", signal_score=70.0, verdict="BUY",
+                returns={"1d": 1.0, "3d": None, "5d": None, "10d": None, "20d": None},
+            )
+        )
+        stats = db.accuracy_report("itgod")
+        assert stats.hit_rate_1d == 100.0
+        assert stats.hit_rate_3d is None
+        assert stats.avg_return_3d is None
+        assert stats.signals_with_price_3d == 0
 
 
 class TestRecordSignalsFromOutput:

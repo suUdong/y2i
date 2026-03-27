@@ -276,8 +276,13 @@ def load_channel_comparison(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, 
                 quality = quality_by_slug.get(slug, {})
                 merged["signal_accuracy"] = accuracy
                 merged["overall_quality_score"] = quality.get("overall_quality_score")
+                merged["weight_multiplier"] = quality.get("weight_multiplier")
+                merged["hit_rate_1d"] = accuracy.get("hit_rate_1d")
+                merged["hit_rate_3d"] = accuracy.get("hit_rate_3d")
                 merged["hit_rate_5d"] = accuracy.get("hit_rate_5d")
                 merged["hit_rate_10d"] = accuracy.get("hit_rate_10d")
+                merged["avg_return_1d"] = accuracy.get("avg_return_1d")
+                merged["avg_return_3d"] = accuracy.get("avg_return_3d")
                 merged["avg_return_5d"] = accuracy.get("avg_return_5d")
                 merged["avg_return_10d"] = accuracy.get("avg_return_10d")
                 merged["tracked_signals"] = accuracy.get("total_signals", 0)
@@ -353,7 +358,7 @@ def load_signal_accuracy_summary(
         return {}
 
     try:
-        from omx_brainstorm.channel_quality import compute_channel_quality, rank_channels
+        from omx_brainstorm.channel_quality import compute_channel_quality, compute_dynamic_weights, rank_channels
         from omx_brainstorm.signal_tracker import SignalTrackerDB
     except Exception:
         return {}
@@ -367,10 +372,13 @@ def load_signal_accuracy_summary(
         slug: tracker_db.accuracy_report(slug).to_dict()
         for slug in channels
     }
-    leaderboard = [
-        report.to_dict()
-        for report in rank_channels(compute_channel_quality(channels, accuracy_by_channel))
-    ]
+    ranked_reports = rank_channels(compute_channel_quality(channels, accuracy_by_channel))
+    weight_multipliers = compute_dynamic_weights(ranked_reports)
+    leaderboard = []
+    for report in ranked_reports:
+        item = report.to_dict()
+        item["weight_multiplier"] = weight_multipliers.get(report.slug)
+        leaderboard.append(item)
     updated_at = max(
         (record.last_updated for record in tracker_db.records if record.last_updated),
         default="",
@@ -968,85 +976,31 @@ def get_channel_display_names(
 def get_all_rankings(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
 ) -> list[dict[str, Any]]:
-    """Aggregate cross_video_ranking across all channels with proper multi-channel aggregation."""
-    agg: dict[str, dict[str, Any]] = {}
+    """Aggregate cross_video_ranking across all channels using weighted consensus."""
+    try:
+        from omx_brainstorm.research import build_consensus_ranking
+    except Exception:
+        return []
+
     channel_names = get_channel_display_names(output_dir)
+    comparison = load_channel_comparison(output_dir)
+    accuracy_summary = extract_signal_accuracy_summary(comparison if isinstance(comparison, dict) else {})
+    leaderboard = accuracy_summary.get("channel_leaderboard", []) if isinstance(accuracy_summary, dict) else []
+    channel_weights = {
+        str(item.get("slug", "")): float(item.get("weight_multiplier", 1.0) or 1.0)
+        for item in leaderboard
+        if item.get("slug")
+    }
+    channel_rankings: dict[str, list[dict[str, Any]]] = {}
 
     for slug in get_available_channels(output_dir):
         data = load_30d_results(slug, output_dir)
-        for item in data.get("cross_video_ranking", []):
-            ticker = item.get("ticker", "")
-            if not ticker:
-                continue
-            score = item.get("aggregate_score", 0)
-            appearances = item.get("appearances", 0)
+        ranking = data.get("cross_video_ranking", [])
+        if isinstance(ranking, list) and ranking:
+            channel_rankings[slug] = [item for item in ranking if isinstance(item, dict)]
 
-            if ticker not in agg:
-                agg[ticker] = {
-                    "ticker": ticker,
-                    "company_name": item.get("company_name", ""),
-                    "aggregate_score": score,
-                    "aggregate_verdict": item.get("aggregate_verdict", "WATCH"),
-                    "appearances": appearances,
-                    "total_mentions": item.get("total_mentions", 0),
-                    "latest_price": item.get("latest_price"),
-                    "currency": item.get("currency", "KRW"),
-                    "last_signal_at": item.get("last_signal_at", ""),
-                    "first_signal_at": item.get("first_signal_at", ""),
-                    "latest_checked_at": item.get("latest_checked_at", ""),
-                    "source_video_titles": list(item.get("source_video_titles", [])),
-                    "_source_channels": [slug],
-                    "_channel_scores": [score],
-                    "_source_channel": slug,
-                }
-            else:
-                existing = agg[ticker]
-                existing["_source_channels"].append(slug)
-                existing["_channel_scores"].append(score)
-                existing["appearances"] += appearances
-                existing["total_mentions"] = existing.get("total_mentions", 0) + item.get("total_mentions", 0)
-                existing["source_video_titles"].extend(item.get("source_video_titles", []))
-                # Keep best price/company info from the strongest scoring channel.
-                if score > max(existing["_channel_scores"][:-1]):
-                    existing["company_name"] = item.get("company_name") or existing["company_name"]
-                    existing["latest_price"] = item.get("latest_price") or existing["latest_price"]
-                    existing["currency"] = item.get("currency", existing["currency"])
-                if _is_newer_timestamp(item.get("latest_checked_at", ""), existing.get("latest_checked_at", "")):
-                    existing["latest_checked_at"] = item.get("latest_checked_at") or existing["latest_checked_at"]
-                    existing["latest_price"] = item.get("latest_price") or existing["latest_price"]
-                    existing["currency"] = item.get("currency", existing["currency"])
-                if _is_newer_timestamp(item.get("last_signal_at", ""), existing.get("last_signal_at", "")):
-                    existing["last_signal_at"] = item.get("last_signal_at") or existing["last_signal_at"]
-                if _is_older_timestamp(item.get("first_signal_at", ""), existing.get("first_signal_at", "")):
-                    existing["first_signal_at"] = item.get("first_signal_at") or existing["first_signal_at"]
-
-    # Compute weighted average score and best verdict
-    for entry in agg.values():
-        scores = entry.pop("_channel_scores")
-        entry["aggregate_score"] = sum(scores) / len(scores) if scores else 0
-        entry["channel_count"] = len(entry["_source_channels"])
-        # Boost score by channel breadth: +5 per additional channel
-        entry["aggregate_score"] += (entry["channel_count"] - 1) * 5
-        # Pick best verdict from score
-        s = entry["aggregate_score"]
-        if s >= 65:
-            entry["aggregate_verdict"] = "BUY"
-        elif s >= 50:
-            entry["aggregate_verdict"] = "WATCH"
-        else:
-            entry["aggregate_verdict"] = "REJECT"
-        # Display name for source channel (use first one)
-        entry["_source_channel"] = entry["_source_channels"][0]
-        entry["_source_channels_display"] = [channel_names.get(ch, ch) for ch in entry["_source_channels"]]
-
-    return sorted(
-        agg.values(),
-        key=lambda x: (
-            x.get("aggregate_score", 0),
-            x.get("channel_count", 0),
-            x.get("appearances", 0),
-            _parse_timestamp(x.get("latest_checked_at", "") or "") or datetime.min.replace(tzinfo=timezone.utc),
-            x.get("ticker", ""),
-        ),
-        reverse=True,
+    return build_consensus_ranking(
+        channel_rankings,
+        channel_weights=channel_weights,
+        channel_names=channel_names,
     )

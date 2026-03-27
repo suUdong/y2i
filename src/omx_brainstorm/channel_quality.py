@@ -4,6 +4,16 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 
+def _clamp(value: float, lower: float, upper: float) -> float:
+    return max(lower, min(upper, value))
+
+
+def _mean(values: list[float]) -> float | None:
+    if not values:
+        return None
+    return sum(values) / len(values)
+
+
 @dataclass(slots=True)
 class ChannelQualityReport:
     """Combined quality assessment for one channel."""
@@ -11,13 +21,18 @@ class ChannelQualityReport:
     display_name: str
     actionable_ratio: float
     avg_signal_score: float  # average quality_scorecard.overall
+    hit_rate_1d: float | None
+    hit_rate_3d: float | None
     hit_rate_5d: float | None  # from signal tracker
     hit_rate_10d: float | None
+    avg_return_1d: float | None
+    avg_return_3d: float | None
     avg_return_5d: float | None
     avg_return_10d: float | None
     spearman_correlation: float | None
     ranking_predictive_power: float
     overall_quality_score: float
+    weight_multiplier: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -49,44 +64,47 @@ def compute_channel_quality(
         ranking_pp = float(scorecard.get("ranking_predictive_power", 0))
         spearman = info.get("ranking_spearman")
 
+        hit_rate_1d = accuracy.get("hit_rate_1d")
+        hit_rate_3d = accuracy.get("hit_rate_3d")
         hit_rate_5d = accuracy.get("hit_rate_5d")
         hit_rate_10d = accuracy.get("hit_rate_10d")
+        avg_return_1d = accuracy.get("avg_return_1d")
+        avg_return_3d = accuracy.get("avg_return_3d")
         avg_return_5d = accuracy.get("avg_return_5d")
         avg_return_10d = accuracy.get("avg_return_10d")
+        short_hit_rates = [float(value) for value in (hit_rate_1d, hit_rate_3d, hit_rate_5d) if value is not None]
+        short_returns = [float(value) for value in (avg_return_1d, avg_return_3d, avg_return_5d) if value is not None]
+        short_coverages = [
+            float(((accuracy.get("window_stats", {}) or {}).get(window, {}) or {}).get("coverage_pct", 0) or 0)
+            for window in ("1d", "3d", "5d")
+            if ((accuracy.get("window_stats", {}) or {}).get(window, {}) or {}).get("tracked", 0)
+        ]
+        avg_short_hit = _mean(short_hit_rates)
+        avg_short_return = _mean(short_returns)
+        avg_short_coverage = _mean(short_coverages)
 
-        # Overall quality = weighted combination of scorecard + accuracy
-        # Base: scorecard overall (0-100 scale)
-        quality = scorecard_overall * 0.4
-
-        # Actionable density bonus (channels that produce more signals are more useful)
-        quality += min(actionable_ratio * 100, 100) * 0.15
-
-        # Ranking predictive power from backtest
-        quality += ranking_pp * 0.2
-
-        # Signal tracker accuracy bonus (if data exists)
-        if hit_rate_5d is not None:
-            # hit_rate_5d is 0-100%, normalize
-            quality += min(hit_rate_5d, 100) * 0.15
-        else:
-            # No accuracy data yet, give neutral score
-            quality += 50 * 0.15
-
-        # Return quality bonus
-        if avg_return_5d is not None:
-            # Positive returns boost, cap at +-10%
-            return_factor = max(-10, min(10, avg_return_5d)) / 10 * 100
-            quality += max(0, return_factor) * 0.10
-        else:
-            quality += 50 * 0.10
+        # Overall quality blends structural scorecard and measured short-horizon accuracy.
+        quality = scorecard_overall * 0.35
+        quality += min(actionable_ratio * 100, 100) * 0.10
+        quality += ranking_pp * 0.20
+        quality += (avg_short_hit if avg_short_hit is not None else 50.0) * 0.20
+        return_score = 50.0
+        if avg_short_return is not None:
+            return_score = _clamp(50.0 + avg_short_return * 5.0, 0.0, 100.0)
+        quality += return_score * 0.10
+        quality += (avg_short_coverage if avg_short_coverage is not None else 50.0) * 0.05
 
         reports.append(ChannelQualityReport(
             slug=slug,
             display_name=info.get("display_name", slug),
             actionable_ratio=actionable_ratio,
             avg_signal_score=scorecard_overall,
+            hit_rate_1d=hit_rate_1d,
+            hit_rate_3d=hit_rate_3d,
             hit_rate_5d=hit_rate_5d,
             hit_rate_10d=hit_rate_10d,
+            avg_return_1d=avg_return_1d,
+            avg_return_3d=avg_return_3d,
             avg_return_5d=avg_return_5d,
             avg_return_10d=avg_return_10d,
             spearman_correlation=spearman,
@@ -105,26 +123,38 @@ def rank_channels(reports: list[ChannelQualityReport]) -> list[ChannelQualityRep
 def compute_dynamic_weights(
     ranked_reports: list[ChannelQualityReport],
 ) -> dict[str, float]:
-    """Derive per-channel weight multipliers from leaderboard ranking.
+    """Derive per-channel weight multipliers from measured quality and accuracy.
 
-    Top-ranked channels receive a boost (up to 1.5x), while bottom-ranked
-    channels receive a penalty (down to 0.7x).  The multiplier is applied to
-    signal_alert_min_channel_quality so that high-quality channels have a
-    lower effective threshold (more alerts pass) and low-quality channels
-    have a higher effective threshold (fewer alerts pass).
+    The multiplier remains centered near 1.0 for channels with sparse evidence,
+    boosts channels with strong short-horizon accuracy, and automatically
+    downweights channels with persistently weak hit rates or negative returns.
 
     Returns:
-        Dict mapping channel slug -> weight multiplier (0.7 – 1.5).
+        Dict mapping channel slug -> weight multiplier (0.4 – 1.5).
     """
     if not ranked_reports:
         return {}
-    n = len(ranked_reports)
     weights: dict[str, float] = {}
-    for idx, report in enumerate(ranked_reports):
-        if n == 1:
-            multiplier = 1.0
+    for report in ranked_reports:
+        multiplier = 0.55 + _clamp(report.overall_quality_score, 0.0, 100.0) / 100.0
+        short_hit_rates = [float(value) for value in (report.hit_rate_1d, report.hit_rate_3d, report.hit_rate_5d) if value is not None]
+        short_returns = [float(value) for value in (report.avg_return_1d, report.avg_return_3d, report.avg_return_5d) if value is not None]
+
+        if short_hit_rates:
+            avg_hit = sum(short_hit_rates) / len(short_hit_rates)
+            multiplier += (avg_hit - 50.0) / 200.0
+            if avg_hit < 45.0:
+                multiplier -= 0.15
+            elif avg_hit >= 60.0:
+                multiplier += 0.05
         else:
-            # Linear interpolation: rank 0 (best) -> 1.5, rank n-1 (worst) -> 0.7
-            multiplier = 1.5 - (idx / (n - 1)) * 0.8
-        weights[report.slug] = round(multiplier, 3)
+            multiplier = _clamp(multiplier, 0.9, 1.1)
+
+        if short_returns:
+            avg_return = sum(short_returns) / len(short_returns)
+            multiplier += _clamp(avg_return / 25.0, -0.2, 0.15)
+            if avg_return < 0:
+                multiplier -= min(0.15, abs(avg_return) / 20.0)
+
+        weights[report.slug] = round(_clamp(multiplier, 0.4, 1.5), 3)
     return weights

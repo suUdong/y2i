@@ -29,6 +29,7 @@ from dashboard.data_loader import (
     extract_type_distribution,
     extract_videos,
     get_available_channels,
+    get_all_rankings,
     get_last_update_time,
     get_live_feed_data,
     get_pipeline_activity,
@@ -95,8 +96,32 @@ def tmp_output(tmp_path: Path) -> Path:
             },
         ],
         "cross_video_ranking": [
-            {"ticker": "005930.KS", "company_name": "Samsung", "total_score": 85.0, "mention_count": 3, "final_verdict": "BUY"},
-            {"ticker": "000660.KS", "company_name": "SK Hynix", "total_score": 72.0, "mention_count": 2, "final_verdict": "HOLD"},
+            {
+                "ticker": "005930.KS",
+                "company_name": "Samsung",
+                "aggregate_score": 85.0,
+                "aggregate_verdict": "STRONG_BUY",
+                "appearances": 2,
+                "total_mentions": 3,
+                "latest_price": 60320.0,
+                "currency": "KRW",
+                "first_signal_at": "2026-03-20",
+                "last_signal_at": "2026-03-21",
+                "latest_checked_at": "2026-03-23T00:00:00+00:00",
+            },
+            {
+                "ticker": "000660.KS",
+                "company_name": "SK Hynix",
+                "aggregate_score": 72.0,
+                "aggregate_verdict": "BUY",
+                "appearances": 1,
+                "total_mentions": 2,
+                "latest_price": 120000.0,
+                "currency": "KRW",
+                "first_signal_at": "2026-03-18",
+                "last_signal_at": "2026-03-18",
+                "latest_checked_at": "2026-03-23T00:00:00+00:00",
+            },
         ],
         "quality_scorecard": {"overall": 0.6, "transcript_coverage": 0.8, "actionable_density": 0.4, "ranking_predictive_power": 0.5, "horizon_adequacy": 0.7},
     }
@@ -109,7 +134,21 @@ def tmp_output(tmp_path: Path) -> Path:
         "generated_at": "20260323T053248Z",
         "window_days": 30,
         "videos": [],
-        "cross_video_ranking": [],
+        "cross_video_ranking": [
+            {
+                "ticker": "005930.KS",
+                "company_name": "Samsung",
+                "aggregate_score": 74.0,
+                "aggregate_verdict": "BUY",
+                "appearances": 1,
+                "total_mentions": 1,
+                "latest_price": 60320.0,
+                "currency": "KRW",
+                "first_signal_at": "2026-03-22",
+                "last_signal_at": "2026-03-22",
+                "latest_checked_at": "2026-03-23T00:00:00+00:00",
+            },
+        ],
         "quality_scorecard": {"overall": 0.0},
     }
     (tmp_path / "itgod_30d_20260323T053248Z.json").write_text(json.dumps(itgod_30d), encoding="utf-8")
@@ -273,6 +312,7 @@ class TestLoadChannelComparison:
         assert "pipeline_summary" in comp
         assert comp["signal_accuracy"]["overall"]["total_signals"] == 2
         assert comp["channels"]["sampro"]["hit_rate_5d"] == 50.0
+        assert comp["channels"]["sampro"]["weight_multiplier"] is not None
         assert comp["channels"]["sampro"]["skipped_videos"] == 1
         assert comp["channels"]["sampro"]["strict_actionable_videos"] == 1
         assert comp["channels"]["sampro"]["latest_published_at"] == "20260321"
@@ -557,7 +597,18 @@ class TestLoadSignalAccuracySummary:
     def test_loads_embedded_or_fallback_tracker_summary(self, tmp_output: Path):
         summary = load_signal_accuracy_summary(tmp_output, load_channel_comparison(tmp_output))
         assert summary["overall"]["total_signals"] == 2
+        assert summary["overall"]["signals_with_price_3d"] == 2
         assert summary["overall"]["window_stats"]["5d"]["tracked"] == 2
+        assert summary["channel_leaderboard"][0]["weight_multiplier"] is not None
+
+
+class TestConsensusRanking:
+    def test_get_all_rankings_uses_weighted_consensus(self, tmp_output: Path):
+        rankings = get_all_rankings(tmp_output)
+        assert rankings[0]["ticker"] == "005930.KS"
+        assert rankings[0]["channel_count"] == 2
+        assert rankings[0]["channel_weight_sum"] > 0
+        assert rankings[0]["aggregate_score"] > rankings[0]["weighted_base_score"]
 
 
 class TestTrackerDerivedLoaders:

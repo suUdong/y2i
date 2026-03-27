@@ -159,8 +159,8 @@ def test_build_telegram_payload_includes_channel_summaries_and_leaderboard(tmp_p
         },
     }
     leaderboard = [
-        {"slug": "sampro", "display_name": "삼프로TV", "overall_quality_score": 77.5},
-        {"slug": "itgod", "display_name": "IT의 신", "overall_quality_score": 71.2},
+        {"slug": "sampro", "display_name": "삼프로TV", "overall_quality_score": 77.5, "weight_multiplier": 1.2},
+        {"slug": "itgod", "display_name": "IT의 신", "overall_quality_score": 71.2, "weight_multiplier": 0.95},
     ]
     context = RunContext(run_id="20260327T140000Z", today="2026-03-27", output_dir=tmp_path, window_days=30)
 
@@ -172,3 +172,4 @@ def test_build_telegram_payload_includes_channel_summaries_and_leaderboard(tmp_p
     assert summaries[0]["channel_name"] == "IT의 신"
     assert summaries[1]["signals"][0]["ticker"] == "NVDA"
     assert payload["analysis_summary"]["top_signals"][0]["ticker"] == "NVDA"
+    assert payload["analysis_summary"]["top_signals"][0]["channel_count"] == 1

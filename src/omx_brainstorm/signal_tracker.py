@@ -45,8 +45,15 @@ class AccuracyStats:
     """Accuracy statistics for a group of signals."""
     total_signals: int = 0
     signals_with_price: int = 0
+    signals_with_price_1d: int = 0
+    signals_with_price_3d: int = 0
+    signals_with_price_5d: int = 0
+    hit_rate_1d: float | None = None
+    hit_rate_3d: float | None = None
     hit_rate_5d: float | None = None  # % of signals with positive 5d return
     hit_rate_10d: float | None = None
+    avg_return_1d: float | None = None
+    avg_return_3d: float | None = None
     avg_return_5d: float | None = None
     avg_return_10d: float | None = None
     best_signal: str | None = None  # ticker of best performing signal
@@ -160,19 +167,36 @@ class SignalTrackerDB:
                 "avg_return": round(avg_return, 2),
             }
 
+        def _window_value(window_key: str, field: str) -> float | int | None:
+            return (window_stats.get(window_key, {}) or {}).get(field)
+
+        signals_with_price_1d = int(_window_value("1d", "tracked") or 0)
+        signals_with_price_3d = int(_window_value("3d", "tracked") or 0)
+        signals_with_price_5d = int(_window_value("5d", "tracked") or 0)
+        hit_rate_1d = _window_value("1d", "hit_rate")
+        hit_rate_3d = _window_value("3d", "hit_rate")
         hit_rate_5d = window_stats["5d"]["hit_rate"]
         avg_return_5d = window_stats["5d"]["avg_return"]
         hit_rate_10d = window_stats["10d"]["hit_rate"]
         avg_return_10d = window_stats["10d"]["avg_return"]
+        avg_return_1d = _window_value("1d", "avg_return")
+        avg_return_3d = _window_value("3d", "avg_return")
         with_5d = [r for r in filtered if r.returns.get("5d") is not None]
         best = max(with_5d, key=lambda r: r.returns.get("5d") or -999) if with_5d else None
         worst = min(with_5d, key=lambda r: r.returns.get("5d") or 999) if with_5d else None
 
         return AccuracyStats(
             total_signals=len(filtered),
-            signals_with_price=int(window_stats["5d"]["tracked"]),
+            signals_with_price=signals_with_price_5d,
+            signals_with_price_1d=signals_with_price_1d,
+            signals_with_price_3d=signals_with_price_3d,
+            signals_with_price_5d=signals_with_price_5d,
+            hit_rate_1d=hit_rate_1d,
+            hit_rate_3d=hit_rate_3d,
             hit_rate_5d=hit_rate_5d,
             hit_rate_10d=hit_rate_10d,
+            avg_return_1d=avg_return_1d,
+            avg_return_3d=avg_return_3d,
             avg_return_5d=avg_return_5d,
             avg_return_10d=avg_return_10d,
             best_signal=best.ticker if best else None,

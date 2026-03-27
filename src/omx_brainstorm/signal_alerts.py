@@ -342,12 +342,23 @@ def format_analysis_summary(
         lines.append("")
         lines.append("<b>🏆 주요 시그널</b>")
         for sig in top_signals[:5]:
-            channel_name = sig.get("channel_name")
             name = html.escape(sig.get("company_name") or sig.get("ticker", ""))
             score = float(sig.get("aggregate_score", 0))
             verdict = sig.get("aggregate_verdict", "")
-            channel_suffix = f" [{html.escape(str(channel_name))}]" if channel_name else ""
-            lines.append(f"  • {name}{channel_suffix} — {verdict} ({score:.1f})")
+            channel_count = int(sig.get("channel_count", 0) or 0)
+            source_channels = sig.get("_source_channels_display", [])
+            support_label = ""
+            if channel_count > 1:
+                support_label = f" | {channel_count}개 채널 합의"
+            elif source_channels:
+                support_label = f" | {len(source_channels)}개 채널"
+            support_channels = ""
+            if source_channels:
+                joined = ", ".join(str(item) for item in source_channels[:3] if item)
+                if joined:
+                    suffix = f" 외 {channel_count - 3}" if channel_count > 3 else ""
+                    support_channels = f" [{html.escape(joined + suffix)}]"
+            lines.append(f"  • {name}{support_channels} — {verdict} ({score:.1f}{support_label})")
 
     return "\n".join(lines)
 
@@ -372,12 +383,18 @@ def format_daily_leaderboard_summary(
     for idx, item in enumerate(leaderboard[:MAX_LEADERBOARD_ROWS], start=1):
         display = html.escape(str(item.get("display_name") or item.get("slug", "-")))
         quality = item.get("overall_quality_score")
+        weight_multiplier = item.get("weight_multiplier")
+        hit_rate_3d = item.get("hit_rate_3d")
         hit_rate = item.get("hit_rate_5d")
         avg_return = item.get("avg_return_5d")
         actionable_ratio = item.get("actionable_ratio")
         parts = []
         if quality is not None:
             parts.append(f"품질 {float(quality):.1f}")
+        if weight_multiplier is not None:
+            parts.append(f"가중치 {float(weight_multiplier):.2f}x")
+        if hit_rate_3d is not None:
+            parts.append(f"3d 적중률 {float(hit_rate_3d):.1f}%")
         if hit_rate is not None:
             parts.append(f"5d 적중률 {float(hit_rate):.1f}%")
         if avg_return is not None:

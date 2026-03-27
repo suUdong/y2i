@@ -1584,6 +1584,12 @@ with tabs[2]:
                 "종목": display,
                 "점수": round(score, 1),
                 "판단": verdict_label,
+                "합의채널": int(item.get("channel_count", 1) or 1),
+                "평균가중치": (
+                    f"{float(item.get('channel_weight_avg', 0) or 0):.2f}x"
+                    if item.get("channel_count")
+                    else EMPTY_TEXT
+                ),
                 "최근 시점": timing_display,
                 "현재가": price_label,
                 "출현": appearances,
@@ -1678,9 +1684,17 @@ with tabs[3]:
     if overall_accuracy:
         render_metrics_row([
             ("추적 신호", str(overall_accuracy.get("total_signals", 0))),
-            ("5일 표본", str(overall_accuracy.get("signals_with_price", 0))),
+            ("1일 표본", str(overall_accuracy.get("signals_with_price_1d", 0))),
+            ("3일 표본", str(overall_accuracy.get("signals_with_price_3d", 0))),
+            ("5일 표본", str(overall_accuracy.get("signals_with_price_5d", overall_accuracy.get("signals_with_price", 0)))),
+            ("1일 적중률", format_percent_metric(overall_accuracy.get("hit_rate_1d"))),
+            ("3일 적중률", format_percent_metric(overall_accuracy.get("hit_rate_3d"))),
             ("5일 적중률", format_percent_metric(overall_accuracy.get("hit_rate_5d"))),
-            ("10일 적중률", format_percent_metric(overall_accuracy.get("hit_rate_10d"))),
+        ], cols_desktop=6)
+
+        render_metrics_row([
+            ("1일 평균수익", format_percent_metric(overall_accuracy.get("avg_return_1d"), digits=2)),
+            ("3일 평균수익", format_percent_metric(overall_accuracy.get("avg_return_3d"), digits=2)),
             ("5일 평균수익", format_percent_metric(overall_accuracy.get("avg_return_5d"), digits=2)),
             (
                 "평균 점수",
@@ -1688,7 +1702,7 @@ with tabs[3]:
                 if overall_accuracy.get("avg_signal_score") is not None
                 else EMPTY_TEXT,
             ),
-        ], cols_desktop=6)
+        ], cols_desktop=4)
 
         if channel_leaderboard:
             st.markdown('<div class="section-kicker">Leaderboard Leaders</div>', unsafe_allow_html=True)
@@ -1700,6 +1714,7 @@ with tabs[3]:
                     {
                         "채널": item.get("display_name", item.get("slug", EMPTY_TEXT)),
                         "종합 품질": float(item.get("overall_quality_score", 0) or 0),
+                        "가중치": float(item.get("weight_multiplier", 1.0) or 1.0),
                         "5일 적중률": item.get("hit_rate_5d"),
                         "5일 평균수익률": item.get("avg_return_5d"),
                         "추적 신호": int(channel_accuracy.get("total_signals", 0) or 0),
@@ -1761,7 +1776,7 @@ with tabs[3]:
         if channel_leaderboard:
             leaderboard_sort = st.selectbox(
                 "정렬 기준",
-                ["종합 품질", "5일 적중률", "10일 적중률", "5일 평균수익률", "추적 신호"],
+                ["종합 품질", "가중치", "3일 적중률", "5일 적중률", "5일 평균수익률", "추적 신호"],
                 key="accuracy_leaderboard_sort",
             )
             by_channel = accuracy_summary.get("by_channel", {}) if isinstance(accuracy_summary, dict) else {}
@@ -1772,6 +1787,8 @@ with tabs[3]:
                     "순위": idx,
                     "채널": item.get("display_name", item.get("slug", EMPTY_TEXT)),
                     "종합 품질": float(item.get("overall_quality_score", 0) or 0),
+                    "가중치": float(item.get("weight_multiplier", 1.0) or 1.0),
+                    "3일 적중률": item.get("hit_rate_3d"),
                     "5일 적중률": item.get("hit_rate_5d"),
                     "10일 적중률": item.get("hit_rate_10d"),
                     "5일 평균수익률": item.get("avg_return_5d"),
@@ -1783,6 +1800,8 @@ with tabs[3]:
             df_leaderboard = pd.DataFrame(leaderboard_rows)
             sort_map = {
                 "종합 품질": ["종합 품질", "5일 적중률", "채널"],
+                "가중치": ["가중치", "종합 품질", "채널"],
+                "3일 적중률": ["3일 적중률", "종합 품질", "채널"],
                 "5일 적중률": ["5일 적중률", "종합 품질", "채널"],
                 "10일 적중률": ["10일 적중률", "종합 품질", "채널"],
                 "5일 평균수익률": ["5일 평균수익률", "종합 품질", "채널"],
@@ -1791,11 +1810,12 @@ with tabs[3]:
             df_leaderboard = df_leaderboard.sort_values(sort_map[leaderboard_sort], ascending=[False, False, True], na_position="last")
 
             display_leaderboard = df_leaderboard.copy()
-            for col in ["5일 적중률", "10일 적중률"]:
+            for col in ["3일 적중률", "5일 적중률", "10일 적중률"]:
                 display_leaderboard[col] = display_leaderboard[col].map(format_percent_metric)
             for col in ["5일 평균수익률", "10일 평균수익률"]:
                 display_leaderboard[col] = display_leaderboard[col].map(lambda value: format_percent_metric(value, digits=2))
             display_leaderboard["종합 품질"] = display_leaderboard["종합 품질"].map(lambda value: f"{value:.1f}")
+            display_leaderboard["가중치"] = display_leaderboard["가중치"].map(lambda value: f"{value:.2f}x")
             st.dataframe(display_leaderboard, use_container_width=True, hide_index=True)
 
             df_quality_chart = (

@@ -17,7 +17,7 @@ from omx_brainstorm.fundamentals import FundamentalsFetcher
 from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic
 from omx_brainstorm.logging_utils import configure_logging
 from omx_brainstorm.master_engine import validate_cross_stock_master_quality
-from omx_brainstorm.research import build_cross_video_ranking
+from omx_brainstorm.research import build_consensus_ranking, build_cross_video_ranking
 from omx_brainstorm.signal_alerts import (
     build_channel_signal_summary,
     send_high_confidence_signal_alerts,
@@ -158,7 +158,12 @@ def enrich_comparison_with_signal_accuracy(
 
     overall_accuracy = tracker_db.accuracy_report().to_dict()
     ranked_reports = rank_channels(compute_channel_quality(channel_comparison_data, accuracy_by_channel))
-    leaderboard = [report.to_dict() for report in ranked_reports]
+    weight_multipliers = compute_dynamic_weights(ranked_reports)
+    leaderboard = []
+    for report in ranked_reports:
+        item = report.to_dict()
+        item["weight_multiplier"] = weight_multipliers.get(report.slug)
+        leaderboard.append(item)
     quality_by_slug = {item["slug"]: item for item in leaderboard}
 
     for slug, info in channel_comparison_data.items():
@@ -172,6 +177,7 @@ def enrich_comparison_with_signal_accuracy(
         info["avg_return_10d"] = accuracy.get("avg_return_10d")
         info["tracked_signals"] = accuracy.get("total_signals", 0)
         info["tracked_signals_5d"] = accuracy.get("signals_with_price", 0)
+        info["weight_multiplier"] = quality.get("weight_multiplier")
 
     updated_at = max(
         (record.last_updated for record in tracker_db.records if record.last_updated),
@@ -379,11 +385,7 @@ def run_comparison_job(config: AppConfig) -> dict:
             accuracy_by_channel, leaderboard = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
             telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
         quality_scores = {item["slug"]: item["overall_quality_score"] for item in leaderboard}
-        ranked_reports = rank_channels(compute_channel_quality(
-            comparison.get("channels", {}),
-            {item["slug"]: item for item in leaderboard},
-        ))
-        dynamic_weights = compute_dynamic_weights(ranked_reports)
+        dynamic_weights = {item["slug"]: float(item.get("weight_multiplier", 1.0) or 1.0) for item in leaderboard}
         for slug, item in channel_payloads.items():
             ranking_dicts = [s.to_dict() for s in item["ranking"]]
             send_high_confidence_signal_alerts(
@@ -417,7 +419,11 @@ def build_telegram_payload(
 ) -> dict[str, object]:
     """Build a compact payload for scheduler-side Telegram notifications."""
     channel_signal_summaries: list[dict[str, object]] = []
-    top_signals: list[dict[str, object]] = []
+    channel_weights = {
+        str(item.get("slug", "")): float(item.get("weight_multiplier", 1.0) or 1.0)
+        for item in leaderboard
+        if item.get("slug")
+    }
 
     for slug, item in channel_payloads.items():
         ranking_dicts = [stock.to_dict() for stock in item.get("ranking", [])]
@@ -427,16 +433,15 @@ def build_telegram_payload(
             channel_name=item.get("display_name", slug),
         )
         channel_signal_summaries.append(summary)
-        for signal in summary.get("signals", []):
-            top_signals.append(
-                {
-                    **signal,
-                    "channel_slug": slug,
-                    "channel_name": item.get("display_name", slug),
-                }
-            )
 
-    top_signals.sort(key=lambda item: float(item.get("aggregate_score", 0)), reverse=True)
+    top_signals = build_consensus_ranking(
+        {
+            slug: [stock.to_dict() for stock in item.get("ranking", [])]
+            for slug, item in channel_payloads.items()
+        },
+        channel_weights=channel_weights,
+        channel_names={slug: item.get("display_name", slug) for slug, item in channel_payloads.items()},
+    )
     channel_signal_summaries.sort(key=lambda item: item.get("channel_name", ""))
     return {
         "generated_at": context.run_id,
@@ -491,13 +496,27 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
     if overall_accuracy:
         lines.append("[시그널 정확도]")
         lines.append(f"- 트래킹 신호 수: {overall_accuracy.get('total_signals', 0)}")
-        lines.append(f"- 5일 표본: {overall_accuracy.get('signals_with_price', 0)}")
+        lines.append(
+            f"- 1일/3일/5일 표본: "
+            f"{overall_accuracy.get('signals_with_price_1d', 0)} / "
+            f"{overall_accuracy.get('signals_with_price_3d', 0)} / "
+            f"{overall_accuracy.get('signals_with_price_5d', overall_accuracy.get('signals_with_price', 0))}"
+        )
         lines.append(f"- 평균 시그널 점수: {_fmt_scalar(overall_accuracy.get('avg_signal_score'))}")
+        lines.append(f"- 1일 적중률: {_fmt_percentage(overall_accuracy.get('hit_rate_1d'))}")
+        lines.append(f"- 3일 적중률: {_fmt_percentage(overall_accuracy.get('hit_rate_3d'))}")
         lines.append(f"- 5일 적중률: {_fmt_percentage(overall_accuracy.get('hit_rate_5d'))}")
         lines.append(f"- 10일 적중률: {_fmt_percentage(overall_accuracy.get('hit_rate_10d'))}")
+        lines.append(f"- 1일 평균수익률: {_fmt_percentage(overall_accuracy.get('avg_return_1d'))}")
+        lines.append(f"- 3일 평균수익률: {_fmt_percentage(overall_accuracy.get('avg_return_3d'))}")
         lines.append(f"- 5일 평균수익률: {_fmt_percentage(overall_accuracy.get('avg_return_5d'))}")
         lines.append(f"- 10일 평균수익률: {_fmt_percentage(overall_accuracy.get('avg_return_10d'))}")
-        lines.append(f"- 1일/3일/20일: {_fmt_window_stats(overall_accuracy.get('window_stats', {}), '1d')} | {_fmt_window_stats(overall_accuracy.get('window_stats', {}), '3d')} | {_fmt_window_stats(overall_accuracy.get('window_stats', {}), '20d')}")
+        lines.append(
+            f"- 윈도우 요약: "
+            f"{_fmt_window_stats(overall_accuracy.get('window_stats', {}), '1d')} | "
+            f"{_fmt_window_stats(overall_accuracy.get('window_stats', {}), '3d')} | "
+            f"{_fmt_window_stats(overall_accuracy.get('window_stats', {}), '5d')}"
+        )
         lines.append("")
     channel_leaderboard = signal_accuracy.get("channel_leaderboard", []) if isinstance(signal_accuracy, dict) else []
     if channel_leaderboard:
@@ -506,6 +525,7 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
             lines.append(
                 f"- {idx}. {item.get('display_name', item.get('slug', '-'))}"
                 f" | quality={_fmt_scalar(item.get('overall_quality_score'))}"
+                f" | weight={_fmt_scalar(item.get('weight_multiplier'))}"
                 f" | 5d hit={_fmt_percentage(item.get('hit_rate_5d'))}"
                 f" | 5d avg={_fmt_percentage(item.get('avg_return_5d'))}"
                 f" | actionable={_fmt_ratio(item.get('actionable_ratio'))}"
@@ -534,8 +554,13 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
             lines.append(f"- {SUMMARY_LABELS[key]}: {_fmt_summary_value(key, value)}")
         lines.append(f"- 추적 신호 수: {_fmt_scalar(info.get('tracked_signals', 0))}")
         lines.append(f"- 5일 표본: {_fmt_scalar(info.get('tracked_signals_5d', 0))}")
+        lines.append(f"- 채널 가중치: {_fmt_scalar(info.get('weight_multiplier'))}")
+        lines.append(f"- 1일 적중률: {_fmt_percentage(info.get('signal_accuracy', {}).get('hit_rate_1d'))}")
+        lines.append(f"- 3일 적중률: {_fmt_percentage(info.get('signal_accuracy', {}).get('hit_rate_3d'))}")
         lines.append(f"- 5일 적중률: {_fmt_percentage(info.get('hit_rate_5d'))}")
         lines.append(f"- 10일 적중률: {_fmt_percentage(info.get('hit_rate_10d'))}")
+        lines.append(f"- 1일 평균수익률: {_fmt_percentage(info.get('signal_accuracy', {}).get('avg_return_1d'))}")
+        lines.append(f"- 3일 평균수익률: {_fmt_percentage(info.get('signal_accuracy', {}).get('avg_return_3d'))}")
         lines.append(f"- 5일 평균수익률: {_fmt_percentage(info.get('avg_return_5d'))}")
         lines.append(f"- 10일 평균수익률: {_fmt_percentage(info.get('avg_return_10d'))}")
         lines.append(f"- 종합 품질 점수: {_fmt_scalar(info.get('overall_quality_score'))}")
