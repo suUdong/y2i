@@ -626,3 +626,15 @@ def test_streamlit_app_runs_without_session_errors(tmp_output: Path, monkeypatch
 
     assert not at.exception
     assert at.title[0].value == "Y2I 투자 시그널"
+
+
+def test_streamlit_app_blocks_without_auth(tmp_output: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(data_loader_module, "DEFAULT_OUTPUT_DIR", tmp_output)
+
+    at = AppTest.from_file("dashboard/app.py", default_timeout=60)
+    at.run(timeout=60)
+
+    assert not at.exception
+    assert len(at.title) == 0
+    assert len(at.markdown) == 1
+    assert "403 Forbidden" in at.markdown[0].value
