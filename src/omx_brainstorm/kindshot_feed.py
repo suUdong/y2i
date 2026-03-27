@@ -9,16 +9,27 @@ from .signal_tracker import SignalRecord, SignalTrackerDB
 
 _KR_MARKET_SUFFIXES = (".KS", ".KQ")
 _EXPORTABLE_VERDICTS = {"BUY", "STRONG_BUY"}
+_MIN_KINDSHOT_SIGNAL_SCORE = 65.0
+_MIN_KINDSHOT_HIGH_CONFIDENCE_SCORE = 80.0
 
 
 def _is_exportable_record(record: SignalRecord) -> bool:
     ticker = str(record.ticker or "").upper()
     verdict = str(record.verdict or "").upper()
-    return ticker.endswith(_KR_MARKET_SUFFIXES) and verdict in _EXPORTABLE_VERDICTS
+    score = float(record.signal_score or 0.0)
+    has_target = isinstance(record.price_target, dict) and record.price_target.get("target_price") is not None
+    has_strong_conviction = verdict == "STRONG_BUY" or score >= _MIN_KINDSHOT_HIGH_CONFIDENCE_SCORE
+    return (
+        ticker.endswith(_KR_MARKET_SUFFIXES)
+        and verdict in _EXPORTABLE_VERDICTS
+        and score >= _MIN_KINDSHOT_SIGNAL_SCORE
+        and (has_target or has_strong_conviction)
+    )
 
 
 def _record_to_kindshot_signal(record: SignalRecord) -> dict[str, Any]:
-    evidence: list[str] = []
+    verdict = str(record.verdict or "").upper()
+    evidence: list[str] = [f"점수 {float(record.signal_score or 0.0):.1f} | {verdict} | {record.channel_slug}"]
     if record.source_title:
         evidence.append(record.source_title)
     if record.price_target and record.price_target.get("target_price") is not None:
@@ -28,16 +39,24 @@ def _record_to_kindshot_signal(record: SignalRecord) -> dict[str, Any]:
         if currency:
             target_label = f"{target_label} {currency}"
         evidence.append(target_label)
+    if record.target_progress_pct is not None:
+        evidence.append(f"목표 진척 {float(record.target_progress_pct):.1f}%")
     if not evidence:
         evidence.append(f"{record.channel_slug} {record.signal_date} tracked signal")
+
+    confidence = float(record.signal_score or 0.0) / 100.0
+    if verdict == "STRONG_BUY":
+        confidence += 0.05
+    if record.price_target and record.price_target.get("target_price") is not None:
+        confidence += 0.03
 
     return {
         "ticker": record.ticker,
         "company_name": record.company_name,
         "signal_source": "y2i",
         "signal_date": record.signal_date,
-        "confidence": round(max(0.0, min(1.0, float(record.signal_score or 0.0) / 100.0)), 4),
-        "verdict": str(record.verdict or "").upper(),
+        "confidence": round(max(0.0, min(0.99, confidence)), 4),
+        "verdict": verdict,
         "channel": record.channel_slug,
         "evidence": evidence,
     }

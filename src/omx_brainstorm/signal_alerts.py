@@ -7,15 +7,22 @@ from typing import Any, Sequence
 from .app_config import NotificationConfig
 from .notifications import send_telegram_message
 from .reporting import format_number
+from .research import (
+    OPTIMIZED_CONSENSUS_MIN_CHANNEL_WEIGHT_SUM,
+    OPTIMIZED_CONSENSUS_MIN_CROSS_VALIDATION,
+    OPTIMIZED_CONSENSUS_MIN_SCORE,
+    qualifies_weighted_consensus,
+)
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_MIN_SCORE = 68.0
 DEFAULT_HIGH_CONFIDENCE_MIN_SCORE = 82.0
-DEFAULT_CONSENSUS_MIN_SCORE = 78.0
-DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION = 65.0
+DEFAULT_CONSENSUS_MIN_SCORE = OPTIMIZED_CONSENSUS_MIN_SCORE
+DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION = OPTIMIZED_CONSENSUS_MIN_CROSS_VALIDATION
+DEFAULT_CONSENSUS_MIN_CHANNEL_WEIGHT_SUM = OPTIMIZED_CONSENSUS_MIN_CHANNEL_WEIGHT_SUM
 DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_SCORE = DEFAULT_HIGH_CONFIDENCE_MIN_SCORE
-DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_CROSS_VALIDATION = 66.0
+DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_CROSS_VALIDATION = DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION + 2.0
 DEFAULT_MIN_CHANNEL_QUALITY = 50.0
 DEFAULT_TARGET_ALERT_MIN_PROGRESS = 80.0
 DEFAULT_TARGET_ALERT_MIN_CHANNEL_HIT_RATE = 55.0
@@ -224,17 +231,21 @@ def filter_consensus_signals(
     min_score: float = DEFAULT_CONSENSUS_MIN_SCORE,
     min_cross_validation_score: float = DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION,
     min_channel_count: int = 2,
+    min_channel_weight_sum: float = DEFAULT_CONSENSUS_MIN_CHANNEL_WEIGHT_SUM,
+    allowed_strengths: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Return only explicit multi-channel consensus signals."""
     signals: list[dict[str, Any]] = []
     for stock in ranked_stocks:
-        if int(stock.get("channel_count", 0) or 0) < min_channel_count:
-            continue
-        if float(stock.get("aggregate_score", 0) or 0) < min_score:
-            continue
-        if float(stock.get("cross_validation_score", 0) or 0) < min_cross_validation_score:
-            continue
-        signals.append(stock)
+        if qualifies_weighted_consensus(
+            stock,
+            min_score=min_score,
+            min_cross_validation_score=min_cross_validation_score,
+            min_channel_count=min_channel_count,
+            min_channel_weight_sum=min_channel_weight_sum,
+            allowed_strengths=allowed_strengths,
+        ):
+            signals.append(stock)
     return signals
 
 
@@ -244,19 +255,19 @@ def filter_high_confidence_consensus_signals(
     min_score: float = DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_SCORE,
     min_cross_validation_score: float = DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_CROSS_VALIDATION,
     min_channel_count: int = 2,
+    min_channel_weight_sum: float = DEFAULT_CONSENSUS_MIN_CHANNEL_WEIGHT_SUM,
     allowed_strengths: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Return only higher-confidence consensus signals suitable for immediate alerts."""
     allowed_strengths = allowed_strengths or {"MODERATE", "STRONG"}
-    return [
-        stock for stock in filter_consensus_signals(
-            ranked_stocks,
-            min_score=min_score,
-            min_cross_validation_score=min_cross_validation_score,
-            min_channel_count=min_channel_count,
-        )
-        if str(stock.get("consensus_strength", "")).upper() in allowed_strengths
-    ]
+    return filter_consensus_signals(
+        ranked_stocks,
+        min_score=min_score,
+        min_cross_validation_score=min_cross_validation_score,
+        min_channel_count=min_channel_count,
+        min_channel_weight_sum=min_channel_weight_sum,
+        allowed_strengths=allowed_strengths,
+    )
 
 
 def send_signal_alerts(

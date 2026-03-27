@@ -626,7 +626,8 @@ class TestConsensusRanking:
         rankings = get_all_rankings(tmp_output)
         assert rankings[0]["ticker"] == "005930.KS"
         assert rankings[0]["channel_count"] == 2
-        assert rankings[0]["consensus_signal"] is True
+        assert rankings[0]["consensus_candidate"] is True
+        assert rankings[0]["consensus_signal"] is False
         assert rankings[0]["cross_validation_status"] == "CONFIRMED"
         assert rankings[0]["consensus_strength"] in {"MODERATE", "STRONG"}
         assert rankings[0]["cross_validation_score"] >= 70.0

@@ -189,6 +189,33 @@ class TestComputeDynamicWeights:
         weights = compute_dynamic_weights([report])
         assert 0.9 <= weights["sparse"] <= 1.1
 
+    def test_sparse_high_hit_rate_does_not_outweigh_mature_winner(self):
+        sparse = ChannelQualityReport(
+            slug="sparse", display_name="sparse", actionable_ratio=0.6,
+            avg_signal_score=72.0, hit_rate_1d=100.0, hit_rate_3d=100.0,
+            hit_rate_5d=100.0, hit_rate_10d=None,
+            avg_return_1d=4.0, avg_return_3d=6.0,
+            avg_return_5d=8.0, avg_return_10d=None,
+            spearman_correlation=0.6, ranking_predictive_power=62.0,
+            overall_quality_score=74.0,
+            signals_with_price_1d=1, signals_with_price_3d=1, signals_with_price_5d=1,
+            avg_directional_return_1d=4.0, avg_directional_return_3d=6.0, avg_directional_return_5d=8.0,
+        )
+        mature = ChannelQualityReport(
+            slug="mature", display_name="mature", actionable_ratio=0.55,
+            avg_signal_score=68.0, hit_rate_1d=66.0, hit_rate_3d=68.0,
+            hit_rate_5d=70.0, hit_rate_10d=64.0,
+            avg_return_1d=1.0, avg_return_3d=2.0,
+            avg_return_5d=4.5, avg_return_10d=3.5,
+            spearman_correlation=0.55, ranking_predictive_power=58.0,
+            overall_quality_score=71.0,
+            signals_with_price_1d=12, signals_with_price_3d=11, signals_with_price_5d=10,
+            avg_directional_return_1d=1.0, avg_directional_return_3d=2.0, avg_directional_return_5d=4.5,
+        )
+        weights = compute_dynamic_weights([sparse, mature])
+        assert 0.95 <= weights["sparse"] <= 1.15
+        assert weights["mature"] > weights["sparse"]
+
     def test_weights_are_bounded(self):
         reports = [self._make_report(f"ch{i}", 90.0 - i * 10) for i in range(6)]
         weights = compute_dynamic_weights(reports)

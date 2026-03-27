@@ -816,6 +816,39 @@ def test_export_signals_for_kindshot_filters_to_kr_buy_signals(tmp_path: Path):
     )
     db.add_record(
         SignalRecord(
+            ticker="035420.KS",
+            company_name="NAVER",
+            channel_slug="itgod",
+            signal_date="2026-03-21",
+            signal_score=64.0,
+            verdict="BUY",
+            source_title="네이버 단기 반등",
+        )
+    )
+    db.add_record(
+        SignalRecord(
+            ticker="035720.KS",
+            company_name="Kakao",
+            channel_slug="itgod",
+            signal_date="2026-03-21",
+            signal_score=76.0,
+            verdict="BUY",
+            source_title="카카오 점검",
+        )
+    )
+    db.add_record(
+        SignalRecord(
+            ticker="012450.KS",
+            company_name="Hanwha Aerospace",
+            channel_slug="hsacademy",
+            signal_date="2026-03-22",
+            signal_score=81.0,
+            verdict="STRONG_BUY",
+            source_title="방산 강세 지속",
+        )
+    )
+    db.add_record(
+        SignalRecord(
             ticker="000660.KS",
             company_name="SK hynix",
             channel_slug="itgod",
@@ -831,8 +864,9 @@ def test_export_signals_for_kindshot_filters_to_kr_buy_signals(tmp_path: Path):
     written = json.loads(output_path.read_text(encoding="utf-8"))
 
     assert payload["path"] == str(output_path)
-    assert payload["signal_count"] == 1
-    assert written["signals"][0]["ticker"] == "005930.KS"
+    assert payload["signal_count"] == 2
+    assert [item["ticker"] for item in written["signals"]] == ["012450.KS", "005930.KS"]
     assert written["signals"][0]["signal_source"] == "y2i"
-    assert written["signals"][0]["channel"] == "sampro"
-    assert "목표가 70000 KRW" in written["signals"][0]["evidence"]
+    assert "점수" in written["signals"][0]["evidence"][0]
+    assert written["signals"][1]["channel"] == "sampro"
+    assert "목표가 70000 KRW" in written["signals"][1]["evidence"]

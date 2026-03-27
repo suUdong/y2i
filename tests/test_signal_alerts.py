@@ -167,12 +167,20 @@ class TestFilterHighConfidenceSignals:
 class TestFilterConsensusSignals:
     def test_requires_multi_channel_score_and_cross_validation(self):
         signals = [
-            {**_make_stock(score=88.0), "channel_count": 2, "cross_validation_score": 81.0},
+            {**_make_stock(score=88.0), "channel_count": 2, "cross_validation_score": 81.0, "channel_weight_sum": 2.3, "consensus_strength": "STRONG"},
             {**_make_stock(ticker="LOW", score=74.0), "channel_count": 2, "cross_validation_score": 90.0},
             {**_make_stock(ticker="SOLO", score=91.0), "channel_count": 1, "cross_validation_score": 90.0},
         ]
         result = filter_consensus_signals(signals)
         assert [item["ticker"] for item in result] == ["005930.KS"]
+
+    def test_rejects_weak_weighted_support(self):
+        signals = [
+            {**_make_stock(score=88.0), "ticker": "WEAKSUM", "channel_count": 2, "cross_validation_score": 82.0, "channel_weight_sum": 2.0, "consensus_strength": "STRONG"},
+            {**_make_stock(score=89.0), "ticker": "PASS", "channel_count": 2, "cross_validation_score": 83.0, "channel_weight_sum": 2.25, "consensus_strength": "STRONG"},
+        ]
+        result = filter_consensus_signals(signals)
+        assert [item["ticker"] for item in result] == ["PASS"]
 
 
 class TestFilterHighConfidenceConsensusSignals:
@@ -336,6 +344,7 @@ class TestConsensusSignalAlerts:
                 {
                     **_make_stock(score=91.0, verdict="STRONG_BUY"),
                     "channel_count": 2,
+                    "channel_weight_sum": 2.3,
                     "cross_validation_score": 82.0,
                     "cross_validation_status": "CONFIRMED",
                     "consensus_strength": "MODERATE",

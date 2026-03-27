@@ -17,10 +17,44 @@ CONSENSUS_FORMULA = (
     "aggregate_score = weighted_base_score + quality_weight_adjustment "
     "+ consensus_weight_bonus + consensus_density_bonus"
 )
+OPTIMIZED_CONSENSUS_MIN_SCORE = 80.0
+OPTIMIZED_CONSENSUS_MIN_CROSS_VALIDATION = 70.0
+OPTIMIZED_CONSENSUS_MIN_CHANNEL_WEIGHT_SUM = 2.15
+OPTIMIZED_CONSENSUS_ALLOWED_STRENGTHS = frozenset({"MODERATE", "STRONG"})
 
 BULLISH_VERDICTS = {"STRONG_BUY", "BUY"}
 CAUTIOUS_VERDICTS = {"WATCH", "HOLD"}
 BEARISH_VERDICTS = {"REJECT", "SELL", "AVOID"}
+
+
+def qualifies_weighted_consensus(
+    stock: dict[str, Any],
+    *,
+    min_score: float = OPTIMIZED_CONSENSUS_MIN_SCORE,
+    min_cross_validation_score: float = OPTIMIZED_CONSENSUS_MIN_CROSS_VALIDATION,
+    min_channel_count: int = 2,
+    min_channel_weight_sum: float = OPTIMIZED_CONSENSUS_MIN_CHANNEL_WEIGHT_SUM,
+    allowed_strengths: frozenset[str] | set[str] | None = OPTIMIZED_CONSENSUS_ALLOWED_STRENGTHS,
+) -> bool:
+    """Return True when a multi-channel signal clears the ROI-tuned consensus bar."""
+    channel_count = int(stock.get("channel_count", 0) or 0)
+    if channel_count < min_channel_count:
+        return False
+    if float(stock.get("aggregate_score", 0) or 0) < min_score:
+        return False
+    if float(stock.get("cross_validation_score", 0) or 0) < min_cross_validation_score:
+        return False
+
+    weight_sum = stock.get("channel_weight_sum")
+    effective_weight_sum = float(weight_sum if weight_sum is not None else channel_count)
+    if effective_weight_sum < min_channel_weight_sum:
+        return False
+
+    if allowed_strengths:
+        strength = str(stock.get("consensus_strength", "")).upper()
+        if strength and strength not in allowed_strengths:
+            return False
+    return True
 
 
 @dataclass(slots=True)
@@ -237,46 +271,46 @@ def build_consensus_ranking(
         density_bonus = min(4.0, max(0, bucket["appearances"] - channel_count) * 0.75)
         aggregate_score = min(100.0, max(0.0, weighted_base_score + consensus_bonus + quality_adjustment + density_bonus))
 
-        consensus_ranking.append(
-            {
-                "ticker": bucket["ticker"],
-                "company_name": bucket["company_name"],
-                "aggregate_score": round(aggregate_score, 1),
-                "aggregate_verdict": aggregate_verdict(aggregate_score),
-                "appearances": bucket["appearances"],
-                "total_mentions": bucket["total_mentions"],
-                "latest_price": bucket["latest_price"],
-                "currency": bucket["currency"],
-                "price_target": price_target,
-                "last_signal_at": bucket["last_signal_at"],
-                "first_signal_at": bucket["first_signal_at"],
-                "latest_checked_at": bucket["latest_checked_at"],
-                "source_video_titles": bucket["source_video_titles"],
-                "_source_channel": bucket["_source_channels"][0] if bucket["_source_channels"] else "",
-                "_source_channels": bucket["_source_channels"],
-                "_source_channels_display": [channel_names.get(slug, slug) for slug in bucket["_source_channels"]],
-                "channel_count": channel_count,
-                "consensus_signal": channel_count > 1,
-                "signal_kind": "CONSENSUS" if channel_count > 1 else "SINGLE_SOURCE",
-                "consensus_strength": cross_validation["consensus_strength"],
-                "cross_validation_status": cross_validation["status"],
-                "cross_validation_score": cross_validation["score"],
-                "cross_validation_majority_ratio": cross_validation["majority_ratio"],
-                "verdict_alignment_ratio": cross_validation["verdict_alignment_ratio"],
-                "score_spread": cross_validation["score_spread"],
-                "majority_direction": cross_validation["majority_direction"],
-                "majority_verdict": cross_validation["majority_verdict"],
-                "channel_weight_sum": round(weight_sum, 3),
-                "channel_weight_avg": round(weight_sum / channel_count, 3) if channel_count else 0.0,
-                "weighted_base_score": round(weighted_base_score, 1),
-                "consensus_bonus": round(consensus_bonus, 1),
-                "quality_weight_adjustment": round(quality_adjustment, 1),
-                "consensus_density_bonus": round(density_bonus, 1),
-                "channel_scores": bucket["_channel_scores"],
-                "channel_weights": bucket["_channel_weights"],
-                "channel_verdicts": bucket["_channel_verdicts"],
-            }
-        )
+        item = {
+            "ticker": bucket["ticker"],
+            "company_name": bucket["company_name"],
+            "aggregate_score": round(aggregate_score, 1),
+            "aggregate_verdict": aggregate_verdict(aggregate_score),
+            "appearances": bucket["appearances"],
+            "total_mentions": bucket["total_mentions"],
+            "latest_price": bucket["latest_price"],
+            "currency": bucket["currency"],
+            "price_target": price_target,
+            "last_signal_at": bucket["last_signal_at"],
+            "first_signal_at": bucket["first_signal_at"],
+            "latest_checked_at": bucket["latest_checked_at"],
+            "source_video_titles": bucket["source_video_titles"],
+            "_source_channel": bucket["_source_channels"][0] if bucket["_source_channels"] else "",
+            "_source_channels": bucket["_source_channels"],
+            "_source_channels_display": [channel_names.get(slug, slug) for slug in bucket["_source_channels"]],
+            "channel_count": channel_count,
+            "consensus_candidate": channel_count > 1,
+            "consensus_strength": cross_validation["consensus_strength"],
+            "cross_validation_status": cross_validation["status"],
+            "cross_validation_score": cross_validation["score"],
+            "cross_validation_majority_ratio": cross_validation["majority_ratio"],
+            "verdict_alignment_ratio": cross_validation["verdict_alignment_ratio"],
+            "score_spread": cross_validation["score_spread"],
+            "majority_direction": cross_validation["majority_direction"],
+            "majority_verdict": cross_validation["majority_verdict"],
+            "channel_weight_sum": round(weight_sum, 3),
+            "channel_weight_avg": round(weight_sum / channel_count, 3) if channel_count else 0.0,
+            "weighted_base_score": round(weighted_base_score, 1),
+            "consensus_bonus": round(consensus_bonus, 1),
+            "quality_weight_adjustment": round(quality_adjustment, 1),
+            "consensus_density_bonus": round(density_bonus, 1),
+            "channel_scores": bucket["_channel_scores"],
+            "channel_weights": bucket["_channel_weights"],
+            "channel_verdicts": bucket["_channel_verdicts"],
+        }
+        item["consensus_signal"] = qualifies_weighted_consensus(item)
+        item["signal_kind"] = "CONSENSUS" if channel_count > 1 else "SINGLE_SOURCE"
+        consensus_ranking.append(item)
 
     return sorted(
         consensus_ranking,

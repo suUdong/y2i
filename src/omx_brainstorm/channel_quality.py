@@ -32,6 +32,14 @@ class ChannelQualityReport:
     spearman_correlation: float | None
     ranking_predictive_power: float
     overall_quality_score: float
+    avg_directional_return_1d: float | None = None
+    avg_directional_return_3d: float | None = None
+    avg_directional_return_5d: float | None = None
+    avg_directional_return_10d: float | None = None
+    signals_with_price_1d: int = 0
+    signals_with_price_3d: int = 0
+    signals_with_price_5d: int = 0
+    signals_with_price_10d: int = 0
     weight_multiplier: float | None = None
     target_count: int = 0
     target_hit_rate: float | None = None
@@ -79,6 +87,11 @@ def compute_channel_quality(
         avg_directional_return_1d = accuracy.get("avg_directional_return_1d", avg_return_1d)
         avg_directional_return_3d = accuracy.get("avg_directional_return_3d", avg_return_3d)
         avg_directional_return_5d = accuracy.get("avg_directional_return_5d", avg_return_5d)
+        avg_directional_return_10d = accuracy.get("avg_directional_return_10d", avg_return_10d)
+        signals_with_price_1d = int(accuracy.get("signals_with_price_1d", 0) or 0)
+        signals_with_price_3d = int(accuracy.get("signals_with_price_3d", 0) or 0)
+        signals_with_price_5d = int(accuracy.get("signals_with_price_5d", accuracy.get("signals_with_price", 0)) or 0)
+        signals_with_price_10d = int(((accuracy.get("window_stats", {}) or {}).get("10d", {}) or {}).get("tracked", 0) or 0)
         target_count = int(accuracy.get("target_count", 0) or 0)
         target_hit_rate = accuracy.get("target_hit_rate")
         avg_target_progress_pct = accuracy.get("avg_target_progress_pct")
@@ -122,6 +135,14 @@ def compute_channel_quality(
             avg_return_3d=avg_return_3d,
             avg_return_5d=avg_return_5d,
             avg_return_10d=avg_return_10d,
+            avg_directional_return_1d=avg_directional_return_1d,
+            avg_directional_return_3d=avg_directional_return_3d,
+            avg_directional_return_5d=avg_directional_return_5d,
+            avg_directional_return_10d=avg_directional_return_10d,
+            signals_with_price_1d=signals_with_price_1d,
+            signals_with_price_3d=signals_with_price_3d,
+            signals_with_price_5d=signals_with_price_5d,
+            signals_with_price_10d=signals_with_price_10d,
             target_count=target_count,
             target_hit_rate=target_hit_rate,
             avg_target_progress_pct=avg_target_progress_pct,
@@ -155,25 +176,56 @@ def compute_dynamic_weights(
         return {}
     weights: dict[str, float] = {}
     for report in ranked_reports:
-        multiplier = 0.55 + _clamp(report.overall_quality_score, 0.0, 100.0) / 100.0
+        quality_anchor = _clamp((float(report.overall_quality_score) - 60.0) / 100.0, -0.12, 0.16)
         short_hit_rates = [float(value) for value in (report.hit_rate_1d, report.hit_rate_3d, report.hit_rate_5d) if value is not None]
-        short_returns = [float(value) for value in (report.avg_return_1d, report.avg_return_3d, report.avg_return_5d) if value is not None]
+        short_returns = [
+            float(value)
+            for value in (
+                report.avg_directional_return_1d,
+                report.avg_directional_return_3d,
+                report.avg_directional_return_5d,
+            )
+            if value is not None
+        ]
+        evidence_score = (
+            float(report.signals_with_price_5d or 0)
+            + float(report.signals_with_price_3d or 0) * 0.35
+            + float(report.signals_with_price_1d or 0) * 0.15
+        )
+        evidence_factor = _clamp(evidence_score / 10.0, 0.0, 1.0)
+        if evidence_factor == 0.0 and (short_hit_rates or short_returns):
+            evidence_factor = 0.65
 
-        if short_hit_rates:
-            avg_hit = sum(short_hit_rates) / len(short_hit_rates)
-            multiplier += (avg_hit - 50.0) / 200.0
-            if avg_hit < 45.0:
-                multiplier -= 0.15
-            elif avg_hit >= 60.0:
-                multiplier += 0.05
-        else:
-            multiplier = _clamp(multiplier, 0.9, 1.1)
+        multiplier = 1.0 + quality_anchor * (0.4 + evidence_factor * 0.6)
+        if not short_hit_rates and not short_returns:
+            weights[report.slug] = round(_clamp(multiplier, 0.9, 1.1), 3)
+            continue
 
+        avg_hit = _mean(short_hit_rates)
         if short_returns:
-            avg_return = sum(short_returns) / len(short_returns)
-            multiplier += _clamp(avg_return / 25.0, -0.2, 0.15)
+            avg_return = _mean(short_returns)
+        else:
+            avg_return = None
+
+        if avg_hit is not None:
+            hit_adjustment = _clamp((avg_hit - 50.0) / 45.0, -0.28, 0.28)
+            multiplier += hit_adjustment * max(0.2, evidence_factor)
+            if avg_hit < 45.0:
+                multiplier -= 0.08 * max(0.5, evidence_factor)
+            elif avg_hit >= 65.0:
+                multiplier += 0.05 * evidence_factor
+
+        if avg_return is not None:
+            return_adjustment = _clamp(avg_return / 12.0, -0.22, 0.22)
+            multiplier += return_adjustment * max(0.25, evidence_factor)
             if avg_return < 0:
-                multiplier -= min(0.15, abs(avg_return) / 20.0)
+                multiplier -= min(0.12, abs(avg_return) / 20.0) * max(0.5, evidence_factor)
+            elif avg_return >= 2.0:
+                multiplier += min(0.08, avg_return / 40.0) * evidence_factor
+
+        if evidence_factor < 0.35:
+            multiplier = 1.0 + (multiplier - 1.0) * evidence_factor
+            multiplier += quality_anchor * 0.15
 
         weights[report.slug] = round(_clamp(multiplier, 0.4, 1.5), 3)
     return weights

@@ -227,11 +227,39 @@ def test_build_consensus_ranking_flags_divergent_channels():
         },
         channel_weights={"sampro": 1.2, "macroview": 1.0},
     )
-    assert ranking[0]["consensus_signal"] is True
+    assert ranking[0]["consensus_candidate"] is True
+    assert ranking[0]["consensus_signal"] is False
     assert ranking[0]["cross_validation_status"] == "DIVERGENT"
     assert ranking[0]["consensus_strength"] == "WEAK"
     assert ranking[0]["score_spread"] >= 30.0
     assert ranking[0]["cross_validation_score"] < 66.0
+
+
+def test_build_consensus_ranking_requires_weighted_support_for_consensus_flag():
+    ranking = build_consensus_ranking(
+        {
+            "sampro": [{
+                "ticker": "005930.KS",
+                "company_name": "Samsung Electronics",
+                "aggregate_score": 84.0,
+                "aggregate_verdict": "BUY",
+                "appearances": 1,
+                "total_mentions": 2,
+            }],
+            "macroview": [{
+                "ticker": "005930.KS",
+                "company_name": "Samsung Electronics",
+                "aggregate_score": 82.0,
+                "aggregate_verdict": "BUY",
+                "appearances": 1,
+                "total_mentions": 2,
+            }],
+        },
+        channel_weights={"sampro": 1.0, "macroview": 1.0},
+    )
+    assert ranking[0]["consensus_candidate"] is True
+    assert ranking[0]["consensus_signal"] is False
+    assert ranking[0]["channel_weight_sum"] == 2.0
 
 
 # --- render_cross_video_ranking_text ---
