@@ -175,6 +175,7 @@ def build_consensus_ranking(
                     "latest_checked_at": None,
                     "latest_price": None,
                     "currency": item.get("currency"),
+                    "price_targets": [],
                     "source_video_titles": [],
                     "_source_channels": [],
                     "_channel_scores": {},
@@ -194,6 +195,8 @@ def build_consensus_ranking(
             bucket["_channel_verdicts"][slug] = verdict
             bucket["_channel_directions"][slug] = _verdict_direction(verdict)
             bucket["source_video_titles"].extend(item.get("source_video_titles", []))
+            if item.get("price_target"):
+                bucket["price_targets"].append(dict(item["price_target"]))
 
             if score >= max((value for key, value in bucket["_channel_scores"].items() if key != slug), default=-1.0):
                 bucket["company_name"] = item.get("company_name") or bucket["company_name"]
@@ -215,6 +218,11 @@ def build_consensus_ranking(
         weight_sum = float(bucket["channel_weight_sum"] or 0.0)
         weighted_base_score = bucket["weighted_score_sum"] / weight_sum if weight_sum > 0 else 0.0
         quality_adjustment = max(-10.0, min(10.0, (weight_sum - channel_count) * 6.0))
+        price_target = aggregate_price_targets(
+            bucket["price_targets"],
+            latest_price=bucket["latest_price"],
+            currency=bucket["currency"],
+        )
         cross_validation = _cross_validate_channel_signals(
             bucket["_channel_scores"],
             bucket["_channel_weights"],
@@ -239,6 +247,7 @@ def build_consensus_ranking(
                 "total_mentions": bucket["total_mentions"],
                 "latest_price": bucket["latest_price"],
                 "currency": bucket["currency"],
+                "price_target": price_target,
                 "last_signal_at": bucket["last_signal_at"],
                 "first_signal_at": bucket["first_signal_at"],
                 "latest_checked_at": bucket["latest_checked_at"],

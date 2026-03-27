@@ -14,6 +14,8 @@ DEFAULT_MIN_SCORE = 68.0
 DEFAULT_HIGH_CONFIDENCE_MIN_SCORE = 82.0
 DEFAULT_CONSENSUS_MIN_SCORE = 78.0
 DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION = 65.0
+DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_SCORE = DEFAULT_HIGH_CONFIDENCE_MIN_SCORE
+DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_CROSS_VALIDATION = 66.0
 DEFAULT_MIN_CHANNEL_QUALITY = 50.0
 DEFAULT_TARGET_ALERT_MIN_PROGRESS = 80.0
 DEFAULT_TARGET_ALERT_MIN_CHANNEL_HIT_RATE = 55.0
@@ -234,6 +236,27 @@ def filter_consensus_signals(
             continue
         signals.append(stock)
     return signals
+
+
+def filter_high_confidence_consensus_signals(
+    ranked_stocks: Sequence[dict[str, Any]],
+    *,
+    min_score: float = DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_SCORE,
+    min_cross_validation_score: float = DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_CROSS_VALIDATION,
+    min_channel_count: int = 2,
+    allowed_strengths: set[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Return only higher-confidence consensus signals suitable for immediate alerts."""
+    allowed_strengths = allowed_strengths or {"MODERATE", "STRONG"}
+    return [
+        stock for stock in filter_consensus_signals(
+            ranked_stocks,
+            min_score=min_score,
+            min_cross_validation_score=min_cross_validation_score,
+            min_channel_count=min_channel_count,
+        )
+        if str(stock.get("consensus_strength", "")).upper() in allowed_strengths
+    ]
 
 
 def send_signal_alerts(
@@ -466,8 +489,8 @@ def _send_telegram_html(config: NotificationConfig, text: str) -> bool:
 def format_consensus_telegram_alert(
     signals: Sequence[dict[str, Any]],
     *,
-    title: str = "🤝 Y2I 합의 시그널 알림",
-    footer_threshold: float = DEFAULT_CONSENSUS_MIN_SCORE,
+    title: str = "🚨 Y2I 고신뢰 합의 시그널 알림",
+    footer_threshold: float = DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_SCORE,
 ) -> str:
     """Format a dedicated consensus-signal Telegram alert."""
     if not signals:
@@ -486,15 +509,30 @@ def format_consensus_telegram_alert(
         strength = CONSENSUS_STRENGTH_LABELS.get(str(stock.get("consensus_strength", "")), str(stock.get("consensus_strength", "")))
         status = CONSENSUS_STATUS_LABELS.get(str(stock.get("cross_validation_status", "")), str(stock.get("cross_validation_status", "")))
         channels = ", ".join(str(item) for item in stock.get("_source_channels_display", [])[:3] if item)
+        price_target = dict(stock.get("price_target") or {})
         if ticker and label and ticker != label:
             heading = f"{label} ({ticker})"
         else:
             heading = label or ticker
 
         lines.append(f"<b>{idx}. {html.escape(str(heading))}</b>")
+        target_price = price_target.get("target_price")
+        if target_price is not None:
+            target_currency = price_target.get("currency") or stock.get("currency")
+            target_text = html.escape(format_number(target_price, target_currency))
+            current_text = html.escape(format_number(price_target.get("current_price"), target_currency))
+            delta = price_target.get("current_vs_target_pct")
+            target_parts = [f"🎯 목표가 <b>{target_text}</b>"]
+            if price_target.get("current_price") is not None:
+                target_parts.append(f"현재 {current_text}")
+            if delta is not None:
+                target_parts.append(f"괴리 {float(delta):+.1f}%")
+            lines.append(f"   {' | '.join(target_parts)}")
+        else:
+            lines.append("   🎯 목표가 미제공")
         lines.append(
             f"   🤝 {channel_count}개 채널 | 점수 <b>{score:.1f}</b> | "
-            f"{html.escape(str(strength))} | {html.escape(str(status))} | XVAL <b>{xval_score:.1f}</b>"
+            f"{html.escape(str(strength))} | {html.escape(str(status))} | 신뢰도 <b>{xval_score:.1f}</b>"
         )
         if channels:
             lines.append(f"   📺 {html.escape(channels)}")
@@ -650,17 +688,17 @@ def send_consensus_signal_alerts(
     config: NotificationConfig,
     ranked_stocks: Sequence[dict[str, Any]],
     *,
-    min_score: float = DEFAULT_CONSENSUS_MIN_SCORE,
-    min_cross_validation_score: float = DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION,
+    min_score: float = DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_SCORE,
+    min_cross_validation_score: float = DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_CROSS_VALIDATION,
 ) -> bool:
-    """Send a dedicated consensus-signal Telegram alert when strong agreement exists."""
-    signals = filter_consensus_signals(
+    """Send a dedicated Telegram alert when higher-confidence consensus signals appear."""
+    signals = filter_high_confidence_consensus_signals(
         ranked_stocks,
         min_score=min_score,
         min_cross_validation_score=min_cross_validation_score,
     )
     if not signals:
-        logger.info("No consensus signals to alert")
+        logger.info("No high-confidence consensus signals to alert")
         return False
     message = format_consensus_telegram_alert(signals, footer_threshold=min_score)
     if not message:

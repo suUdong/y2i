@@ -417,6 +417,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         send_consensus_signal_alerts(
             config.notifications,
             telegram_payload.get("analysis_summary", {}).get("consensus_signals", []),
+            min_score=config.strategy.high_confidence_min_score,
         )
         send_high_accuracy_target_alerts(
             config.notifications,

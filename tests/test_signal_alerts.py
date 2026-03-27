@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
@@ -8,6 +8,7 @@ from omx_brainstorm.app_config import NotificationConfig
 from omx_brainstorm.signal_alerts import (
     build_channel_signal_summary,
     filter_consensus_signals,
+    filter_high_confidence_consensus_signals,
     filter_high_accuracy_targets,
     filter_high_confidence_signals,
     filter_high_quality_signals,
@@ -22,11 +23,9 @@ from omx_brainstorm.signal_alerts import (
     send_high_confidence_signal_alerts,
     send_analysis_summary_alert,
     send_signal_alerts,
-    DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION,
-    DEFAULT_CONSENSUS_MIN_SCORE,
+    DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_CROSS_VALIDATION,
+    DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_SCORE,
     DEFAULT_HIGH_CONFIDENCE_MIN_SCORE,
-    DEFAULT_MIN_SCORE,
-    DEFAULT_MIN_CHANNEL_QUALITY,
 )
 
 
@@ -42,6 +41,12 @@ def _make_stock(ticker: str = "005930.KS", name: str = "삼성전자", score: fl
         "currency": currency,
         "appearances": appearances,
         "total_mentions": mentions,
+        "price_target": {
+            "target_price": round(price * 1.12, 2),
+            "current_price": price,
+            "currency": currency,
+            "current_vs_target_pct": 12.0,
+        },
     }
 
 
@@ -167,6 +172,17 @@ class TestFilterConsensusSignals:
             {**_make_stock(ticker="SOLO", score=91.0), "channel_count": 1, "cross_validation_score": 90.0},
         ]
         result = filter_consensus_signals(signals)
+        assert [item["ticker"] for item in result] == ["005930.KS"]
+
+
+class TestFilterHighConfidenceConsensusSignals:
+    def test_requires_high_score_and_non_weak_consensus(self):
+        signals = [
+            {**_make_stock(score=88.0), "channel_count": 3, "cross_validation_score": 84.0, "consensus_strength": "STRONG"},
+            {**_make_stock(ticker="LOW", score=79.0), "channel_count": 3, "cross_validation_score": 84.0, "consensus_strength": "STRONG"},
+            {**_make_stock(ticker="WEAK", score=90.0), "channel_count": 2, "cross_validation_score": 65.0, "consensus_strength": "WEAK"},
+        ]
+        result = filter_high_confidence_consensus_signals(signals)
         assert [item["ticker"] for item in result] == ["005930.KS"]
 
 
@@ -304,10 +320,12 @@ class TestConsensusSignalAlerts:
                 "_source_channels_display": ["삼프로TV", "IT의 신"],
             }
         ])
-        assert "합의 시그널" in msg
+        assert "고신뢰 합의 시그널" in msg
         assert "3개 채널" in msg
         assert "강한 합의" in msg
         assert "84.0" in msg
+        assert "목표가" in msg
+        assert "신뢰도" in msg
 
     @patch("omx_brainstorm.signal_alerts._send_telegram_html")
     def test_send_consensus_signal_alerts(self, mock_send):
@@ -326,12 +344,22 @@ class TestConsensusSignalAlerts:
         )
         assert result is True
         msg = mock_send.call_args[0][1]
-        assert f"{DEFAULT_CONSENSUS_MIN_SCORE:g}" in msg
+        assert f"{DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_SCORE:g}" in msg
+        assert "목표가" in msg
+        assert "2개 채널" in msg
+        assert "신뢰도" in msg
 
     def test_send_consensus_signal_alerts_returns_false_when_no_match(self):
         result = send_consensus_signal_alerts(
             NotificationConfig(telegram_bot_token="tok", telegram_chat_id="123"),
-            [{**_make_stock(score=75.0), "channel_count": 2, "cross_validation_score": DEFAULT_CONSENSUS_MIN_CROSS_VALIDATION - 1}],
+            [
+                {
+                    **_make_stock(score=90.0),
+                    "channel_count": 2,
+                    "cross_validation_score": DEFAULT_HIGH_CONFIDENCE_CONSENSUS_MIN_CROSS_VALIDATION - 1,
+                    "consensus_strength": "WEAK",
+                }
+            ],
         )
         assert result is False
 

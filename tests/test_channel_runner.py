@@ -192,26 +192,37 @@ def test_build_telegram_payload_includes_channel_summaries_and_leaderboard(tmp_p
 
 def test_build_telegram_payload_exposes_consensus_signals(tmp_path):
     class RankedStockStub:
-        def __init__(self, ticker: str, company_name: str, score: float, verdict: str):
+        def __init__(self, ticker: str, company_name: str, score: float, verdict: str, *, target_price: float | None = None):
             self.ticker = ticker
             self.company_name = company_name
             self.aggregate_score = score
             self.aggregate_verdict = verdict
+            self.target_price = target_price
 
         def to_dict(self):
-            return {
+            payload = {
                 "ticker": self.ticker,
                 "company_name": self.company_name,
                 "aggregate_score": self.aggregate_score,
                 "aggregate_verdict": self.aggregate_verdict,
                 "total_mentions": 2,
                 "appearances": 1,
+                "latest_price": 100.0,
+                "currency": "USD",
             }
+            if self.target_price is not None:
+                payload["price_target"] = {
+                    "target_price": self.target_price,
+                    "current_price": 100.0,
+                    "currency": "USD",
+                    "current_vs_target_pct": round((self.target_price - 100.0) / 100.0 * 100, 1),
+                }
+            return payload
 
     payload = build_telegram_payload(
         {
-            "sampro": {"display_name": "삼프로TV", "ranking": [RankedStockStub("NVDA", "NVIDIA", 89.0, "STRONG_BUY")]},
-            "itgod": {"display_name": "IT의 신", "ranking": [RankedStockStub("NVDA", "NVIDIA", 83.0, "BUY")]},
+            "sampro": {"display_name": "삼프로TV", "ranking": [RankedStockStub("NVDA", "NVIDIA", 89.0, "STRONG_BUY", target_price=130.0)]},
+            "itgod": {"display_name": "IT의 신", "ranking": [RankedStockStub("NVDA", "NVIDIA", 83.0, "BUY", target_price=150.0)]},
         },
         [
             {"slug": "sampro", "display_name": "삼프로TV", "overall_quality_score": 77.5, "weight_multiplier": 1.2},
@@ -225,3 +236,4 @@ def test_build_telegram_payload_exposes_consensus_signals(tmp_path):
     assert consensus[0]["consensus_signal"] is True
     assert consensus[0]["cross_validation_status"] == "CONFIRMED"
     assert consensus[0]["cross_validation_score"] >= 70.0
+    assert consensus[0]["price_target"]["target_price"] == 140.0
