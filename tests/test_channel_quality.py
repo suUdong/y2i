@@ -1,0 +1,111 @@
+from __future__ import annotations
+
+import pytest
+
+from omx_brainstorm.channel_quality import (
+    ChannelQualityReport,
+    compute_channel_quality,
+    rank_channels,
+)
+
+
+def _make_channel_info(
+    display_name: str = "Test",
+    actionable_ratio: float = 0.5,
+    overall: float = 60.0,
+    ranking_pp: float = 50.0,
+    ranking_spearman: float | None = 0.5,
+) -> dict:
+    return {
+        "display_name": display_name,
+        "actionable_ratio": actionable_ratio,
+        "ranking_spearman": ranking_spearman,
+        "quality_scorecard": {
+            "overall": overall,
+            "transcript_coverage": 100.0,
+            "actionable_density": actionable_ratio * 120,
+            "ranking_predictive_power": ranking_pp,
+            "horizon_adequacy": 50.0,
+        },
+    }
+
+
+class TestComputeChannelQuality:
+    def test_basic_computation(self):
+        channels = {
+            "itgod": _make_channel_info("IT의 신", 0.733, 67.3, 47.6, -0.0877),
+            "syuka": _make_channel_info("슈카월드", 0.267, 70.2, 73.9, 1.0),
+        }
+        reports = compute_channel_quality(channels)
+        assert len(reports) == 2
+        for r in reports:
+            assert r.overall_quality_score > 0
+            assert r.hit_rate_5d is None  # no accuracy data
+
+    def test_with_accuracy_data(self):
+        channels = {
+            "itgod": _make_channel_info("IT의 신", 0.733, 67.3, 47.6),
+        }
+        accuracy = {
+            "itgod": {
+                "hit_rate_5d": 80.0,
+                "hit_rate_10d": 75.0,
+                "avg_return_5d": 8.0,
+                "avg_return_10d": 6.0,
+            },
+        }
+        reports = compute_channel_quality(channels, accuracy)
+        assert len(reports) == 1
+        assert reports[0].hit_rate_5d == 80.0
+        assert reports[0].avg_return_5d == 8.0
+        # With real accuracy data, score should differ from no-data case
+        no_acc_reports = compute_channel_quality(channels)
+        # Scores will differ because accuracy bonus changes
+        assert reports[0].overall_quality_score != no_acc_reports[0].overall_quality_score
+
+    def test_empty_channels(self):
+        reports = compute_channel_quality({})
+        assert reports == []
+
+    def test_missing_scorecard(self):
+        channels = {"test": {"display_name": "Test", "actionable_ratio": 0.5}}
+        reports = compute_channel_quality(channels)
+        assert len(reports) == 1
+        assert reports[0].ranking_predictive_power == 0
+
+
+class TestRankChannels:
+    def test_ranking_order(self):
+        channels = {
+            "low": _make_channel_info("Low", 0.1, 30.0, 10.0),
+            "high": _make_channel_info("High", 0.8, 80.0, 80.0),
+            "mid": _make_channel_info("Mid", 0.5, 60.0, 50.0),
+        }
+        reports = compute_channel_quality(channels)
+        ranked = rank_channels(reports)
+        assert ranked[0].slug == "high"
+        assert ranked[-1].slug == "low"
+
+    def test_stable_sort_on_tie(self):
+        channels = {
+            "b_channel": _make_channel_info("B", 0.5, 60.0, 50.0),
+            "a_channel": _make_channel_info("A", 0.5, 60.0, 50.0),
+        }
+        reports = compute_channel_quality(channels)
+        ranked = rank_channels(reports)
+        # Equal scores, should sort by slug alphabetically
+        assert ranked[0].slug == "a_channel"
+        assert ranked[1].slug == "b_channel"
+
+
+class TestChannelQualityReport:
+    def test_to_dict(self):
+        report = ChannelQualityReport(
+            slug="itgod", display_name="IT의 신", actionable_ratio=0.733,
+            avg_signal_score=67.3, hit_rate_5d=60.0, hit_rate_10d=55.0,
+            avg_return_5d=3.5, avg_return_10d=2.0, spearman_correlation=0.5,
+            ranking_predictive_power=47.6, overall_quality_score=65.0,
+        )
+        d = report.to_dict()
+        assert d["slug"] == "itgod"
+        assert d["overall_quality_score"] == 65.0

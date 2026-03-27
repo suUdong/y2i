@@ -9,6 +9,7 @@ from urllib.request import urlopen
 from xml.etree import ElementTree as ET
 
 from omx_brainstorm.app_config import AppConfig, load_app_config
+from omx_brainstorm.channel_quality import compute_channel_quality, rank_channels
 from omx_brainstorm.comparison import RunContext, compare_channels, quality_scorecard, save_channel_artifacts
 from omx_brainstorm.evaluation import ranking_validation
 from omx_brainstorm.fundamentals import FundamentalsFetcher
@@ -16,6 +17,8 @@ from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic
 from omx_brainstorm.logging_utils import configure_logging
 from omx_brainstorm.master_engine import validate_cross_stock_master_quality
 from omx_brainstorm.research import build_cross_video_ranking
+from omx_brainstorm.signal_alerts import send_signal_alerts
+from omx_brainstorm.signal_tracker import SignalTrackerDB, record_signals_from_output, update_price_snapshots
 from omx_brainstorm.transcript_cache import TranscriptCache
 from omx_brainstorm.youtube import ChannelRegistry, TranscriptFetcher, YoutubeResolver
 
@@ -290,6 +293,47 @@ def run_comparison_job(config: AppConfig) -> dict:
         dashboard_markdown = str(generate_dashboard(output_dir, output_dir.parent / "DASHBOARD.md"))
     except Exception as exc:
         logger.warning("Dashboard markdown generation failed: %s", exc)
+    # --- Signal tracking and quality alerts ---
+    try:
+        tracker_db = SignalTrackerDB()
+        total_tracked = 0
+        for slug, item in channel_payloads.items():
+            json_path_obj = Path(item["json_path"])
+            if json_path_obj.exists():
+                total_tracked += record_signals_from_output(tracker_db, json_path_obj)
+        if total_tracked:
+            logger.info("Tracked %d new signals", total_tracked)
+        updated = update_price_snapshots(tracker_db)
+        if updated:
+            logger.info("Updated price snapshots for %d signals", updated)
+    except Exception as exc:
+        logger.warning("Signal tracking failed (non-fatal): %s", exc)
+
+    try:
+        channel_comparison_data = comparison.get("channels", {})
+        accuracy_by_channel = {}
+        try:
+            for slug in channel_comparison_data:
+                stats = tracker_db.accuracy_report(slug)
+                accuracy_by_channel[slug] = stats.to_dict()
+        except Exception:
+            pass
+        quality_reports = compute_channel_quality(channel_comparison_data, accuracy_by_channel)
+        quality_scores = {r.slug: r.overall_quality_score for r in quality_reports}
+        for slug, item in channel_payloads.items():
+            ranking_dicts = [s.to_dict() for s in item["ranking"]]
+            send_signal_alerts(
+                config.notifications,
+                ranking_dicts,
+                channel_name=item["display_name"],
+                channel_slug=slug,
+                channel_quality_scores=quality_scores,
+                min_score=config.strategy.signal_alert_min_score,
+                min_channel_quality=config.strategy.signal_alert_min_channel_quality,
+            )
+    except Exception as exc:
+        logger.warning("Signal alerts failed (non-fatal): %s", exc)
+
     payload = {
         "channels": {slug: {"json_path": item["json_path"], "txt_path": item["txt_path"]} for slug, item in channel_payloads.items()},
         "comparison_json": str(compare_json),

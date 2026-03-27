@@ -45,6 +45,8 @@ window_days = 30
 max_scan = 300
 top_n = 5
 paper_trade_capital = 10000.0
+signal_alert_min_score = 68.0
+signal_alert_min_channel_quality = 50.0
 
 [notifications]
 telegram_bot_token = ""
