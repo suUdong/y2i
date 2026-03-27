@@ -11,6 +11,7 @@ from omx_brainstorm.scheduler import (
     HEALTH_PATH,
     build_scheduler_command,
     daily_run_due,
+    processed_ids_from_payload,
     run_scheduled_job,
     run_scheduler_iteration,
     scan_channels_for_new_videos,
@@ -144,11 +145,17 @@ def test_run_scheduler_iteration_triggers_and_updates_state(monkeypatch, tmp_pat
 
     class Resolver:
         def resolve_channel_videos(self, channel_url, limit):
-            return [VideoInput(video_id="vid-new", title="New", url="u", published_at="20260327")]
+            return [
+                VideoInput(video_id="vid-new", title="New", url="u", published_at="20260327"),
+                VideoInput(video_id="vid-blocked", title="Blocked", url="u", published_at="20260327"),
+            ]
+
+    artifact_path = tmp_path / "sampro_30d_test.json"
+    artifact_path.write_text(json.dumps({"videos": [{"video_id": "vid-new"}]}), encoding="utf-8")
 
     class Proc:
         returncode = 0
-        stdout = "ok"
+        stdout = json.dumps({"channels": {"sampro": {"json_path": str(artifact_path), "txt_path": str(tmp_path / "sampro_30d_test.txt")}}})
         stderr = ""
 
     monkeypatch.setattr("omx_brainstorm.scheduler.subprocess.run", lambda *a, **k: Proc())
@@ -159,6 +166,13 @@ def test_run_scheduler_iteration_triggers_and_updates_state(monkeypatch, tmp_pat
     assert result["reason"] == "daily_and_new_videos"
     assert state["channels"]["sampro"]["processed_video_ids"] == ["vid-new"]
     assert state["last_daily_run_local_date"] == "2026-03-27"
+
+
+def test_processed_ids_from_payload_reads_channel_artifacts(tmp_path):
+    artifact_path = tmp_path / "sampro_30d_test.json"
+    artifact_path.write_text(json.dumps({"videos": [{"video_id": "vid-1"}, {"video_id": "vid-2"}]}), encoding="utf-8")
+    payload = {"channels": {"sampro": {"json_path": str(artifact_path)}}}
+    assert processed_ids_from_payload(payload) == {"sampro": ["vid-1", "vid-2"]}
 
 
 def test_seconds_until_next_run_for_late_target_is_small(monkeypatch):

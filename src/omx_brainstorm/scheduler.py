@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import json
 import subprocess
 import sys
 import time
@@ -31,12 +32,18 @@ def build_scheduler_command(config: AppConfig, target: str = DEFAULT_COMPARISON_
     return command
 
 
-def run_scheduled_job(config: AppConfig, script_path: str = DEFAULT_COMPARISON_TARGET) -> int:
+def _run_scheduled_job_result(config: AppConfig, script_path: str = DEFAULT_COMPARISON_TARGET) -> tuple[int, dict | None]:
     logger.info("Running scheduled comparison job")
     state = read_json(HEALTH_PATH, {"error_count": 0})
     proc = subprocess.run(build_scheduler_command(config, script_path), text=True, capture_output=True, check=False)
     state["last_run_at"] = datetime.now(timezone.utc).isoformat()
     state["last_exit_code"] = proc.returncode
+    payload = None
+    if proc.stdout.strip():
+        try:
+            payload = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            logger.warning("Scheduled job stdout was not valid JSON; processed-id update will be skipped")
     if proc.returncode == 0:
         state["last_success_at"] = state["last_run_at"]
         state["status"] = "ok"
@@ -48,7 +55,11 @@ def run_scheduled_job(config: AppConfig, script_path: str = DEFAULT_COMPARISON_T
         logger.error("Scheduled job failed: %s", proc.stderr.strip() or proc.stdout.strip())
         notify_all(config.notifications, "Scheduled job failed. Check server logs for details.")
     write_json(HEALTH_PATH, state)
-    return proc.returncode
+    return proc.returncode, payload
+
+
+def run_scheduled_job(config: AppConfig, script_path: str = DEFAULT_COMPARISON_TARGET) -> int:
+    return _run_scheduled_job_result(config, script_path=script_path)[0]
 
 
 def seconds_until_next_run(daily_time: str, timezone_name: str) -> float:
@@ -120,16 +131,30 @@ def scan_channels_for_new_videos(
 
 def mark_channels_processed(
     state: dict,
-    current_ids_by_channel: dict[str, list[str]],
+    processed_ids_by_channel: dict[str, list[str]],
     *,
     now: datetime | None = None,
 ) -> None:
     now = now or datetime.now(timezone.utc)
     channel_state = state.setdefault("channels", {})
-    for slug, current_ids in current_ids_by_channel.items():
+    for slug, processed_ids in processed_ids_by_channel.items():
         entry = channel_state.setdefault(slug, {})
-        entry["processed_video_ids"] = list(current_ids)
+        entry["processed_video_ids"] = list(processed_ids)
         entry["last_processed_at"] = now.isoformat()
+
+
+def processed_ids_from_payload(payload: dict | None) -> dict[str, list[str]]:
+    if not payload:
+        return {}
+    processed: dict[str, list[str]] = {}
+    for slug, channel_info in payload.get("channels", {}).items():
+        json_path = channel_info.get("json_path")
+        if not json_path:
+            continue
+        channel_payload = read_json(Path(json_path), {})
+        videos = channel_payload.get("videos", []) if isinstance(channel_payload, dict) else []
+        processed[slug] = [video.get("video_id") for video in videos if video.get("video_id")]
+    return processed
 
 
 def run_scheduler_iteration(
@@ -158,9 +183,13 @@ def run_scheduler_iteration(
     state["last_trigger"] = trigger
     state["last_new_videos"] = new_ids_by_channel
 
-    exit_code = run_scheduled_job(config, script_path=script_path)
+    exit_code, payload = _run_scheduled_job_result(config, script_path=script_path)
     if exit_code == 0:
-        mark_channels_processed(state, current_ids_by_channel, now=now)
+        processed_ids = processed_ids_from_payload(payload)
+        if processed_ids:
+            mark_channels_processed(state, processed_ids, now=now)
+        else:
+            logger.warning("Scheduled job succeeded but did not yield processed video ids; retaining prior processed state")
         if should_run_daily:
             localized_now = now.astimezone(ZoneInfo(config.schedule.timezone))
             state["last_daily_run_local_date"] = localized_now.date().isoformat()
