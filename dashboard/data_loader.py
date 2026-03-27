@@ -353,13 +353,17 @@ def load_signal_accuracy_summary(
     if isinstance(embedded, dict) and embedded:
         return embedded
 
+    standalone = _latest_file(output_dir, "signal_accuracy_report_*.json")
+    standalone_payload = _load_json(standalone)
+    if isinstance(standalone_payload, dict) and standalone_payload:
+        return standalone_payload
+
     tracker_path = _tracker_db_path(output_dir)
     if not tracker_path.exists():
         return {}
 
     try:
-        from omx_brainstorm.channel_quality import compute_channel_quality, compute_dynamic_weights, rank_channels
-        from omx_brainstorm.signal_tracker import SignalTrackerDB
+        from omx_brainstorm.signal_tracker import SignalTrackerDB, build_signal_accuracy_summary
     except Exception:
         return {}
 
@@ -367,29 +371,7 @@ def load_signal_accuracy_summary(
     channels = comparison.get("channels", {}) if isinstance(comparison, dict) else {}
     if not isinstance(channels, dict):
         channels = {}
-
-    accuracy_by_channel = {
-        slug: tracker_db.accuracy_report(slug).to_dict()
-        for slug in channels
-    }
-    ranked_reports = rank_channels(compute_channel_quality(channels, accuracy_by_channel))
-    weight_multipliers = compute_dynamic_weights(ranked_reports)
-    leaderboard = []
-    for report in ranked_reports:
-        item = report.to_dict()
-        item["weight_multiplier"] = weight_multipliers.get(report.slug)
-        leaderboard.append(item)
-    updated_at = max(
-        (record.last_updated for record in tracker_db.records if record.last_updated),
-        default="",
-    )
-    return {
-        "updated_at": updated_at,
-        "overall": tracker_db.accuracy_report().to_dict(),
-        "by_channel": accuracy_by_channel,
-        "recent_signals": tracker_db.recent_records(limit=12),
-        "channel_leaderboard": leaderboard,
-    }
+    return build_signal_accuracy_summary(tracker_db, channel_metadata=channels)
 
 
 def load_tracker_records(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[dict[str, Any]]:

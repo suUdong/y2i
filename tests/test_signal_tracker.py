@@ -10,7 +10,9 @@ from omx_brainstorm.signal_tracker import (
     SignalRecord,
     SignalTrackerDB,
     AccuracyStats,
+    build_signal_accuracy_summary,
     record_signals_from_output,
+    save_signal_accuracy_report,
     update_price_snapshots,
     TRACKING_WINDOWS,
 )
@@ -245,6 +247,65 @@ class TestSignalTrackerDB:
         assert stats.target_hits == 1
         assert stats.pending_targets == 0
         assert stats.target_hit_rate == 100.0
+
+    def test_accuracy_report_respects_bearish_verdict_direction(self, db: SignalTrackerDB):
+        db.add_record(
+            SignalRecord(
+                ticker="TSLA", company_name="Tesla", channel_slug="itgod",
+                signal_date="2026-03-01", signal_score=82.0, verdict="SELL",
+                returns={"1d": -1.0, "3d": -2.0, "5d": -4.0, "10d": -6.0, "20d": None},
+            )
+        )
+        stats = db.accuracy_report("itgod")
+        assert stats.hit_rate_1d == 100.0
+        assert stats.hit_rate_5d == 100.0
+        assert stats.avg_return_5d == -4.0
+        assert stats.avg_directional_return_5d == 4.0
+
+    def test_ticker_accuracy_summary_groups_across_channels(self, db: SignalTrackerDB):
+        db.add_record(
+            SignalRecord(
+                ticker="NVDA", company_name="NVIDIA", channel_slug="itgod",
+                signal_date="2026-03-01", signal_score=90.0, verdict="BUY",
+                returns={"1d": 1.0, "3d": 2.0, "5d": 5.0, "10d": 7.0, "20d": None},
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="NVDA", company_name="NVIDIA", channel_slug="sampro",
+                signal_date="2026-03-03", signal_score=75.0, verdict="SELL",
+                returns={"1d": -1.0, "3d": -3.0, "5d": -2.0, "10d": -4.0, "20d": None},
+            )
+        )
+        summary = db.ticker_accuracy_summary()
+        assert summary[0]["ticker"] == "NVDA"
+        assert summary[0]["channel_count"] == 2
+        assert summary[0]["bullish_signals"] == 1
+        assert summary[0]["bearish_signals"] == 1
+        assert summary[0]["hit_rate_5d"] == 100.0
+        assert summary[0]["avg_directional_return_5d"] == 3.5
+
+    def test_build_and_save_signal_accuracy_report(self, db: SignalTrackerDB, tmp_path: Path):
+        db.add_record(
+            SignalRecord(
+                ticker="005930.KS", company_name="삼성전자", channel_slug="itgod",
+                signal_date="2026-03-01", signal_score=70.0, verdict="BUY",
+                returns={"1d": 1.0, "3d": 2.0, "5d": 3.0, "10d": 4.0, "20d": None},
+            )
+        )
+        summary = build_signal_accuracy_summary(
+            db,
+            channel_metadata={"itgod": {"display_name": "IT의 신", "actionable_ratio": 0.5, "quality_scorecard": {"overall": 60.0}}},
+            top_tickers=10,
+        )
+        json_path, txt_path = save_signal_accuracy_report(summary, tmp_path, "20260327T220000Z")
+        payload = json.loads(json_path.read_text(encoding="utf-8"))
+        text = txt_path.read_text(encoding="utf-8")
+        assert payload["overall"]["total_signals"] == 1
+        assert "005930.KS" in payload["by_ticker"]
+        assert payload["ticker_leaderboard"][0]["ticker"] == "005930.KS"
+        assert "종목 리더보드" in text
+        assert "삼성전자" in text
 
     def test_recent_records_target_only_filters_before_limit(self, db: SignalTrackerDB):
         db.add_record(

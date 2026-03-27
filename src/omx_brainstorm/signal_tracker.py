@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -64,6 +65,10 @@ class AccuracyStats:
     avg_return_3d: float | None = None
     avg_return_5d: float | None = None
     avg_return_10d: float | None = None
+    avg_directional_return_1d: float | None = None
+    avg_directional_return_3d: float | None = None
+    avg_directional_return_5d: float | None = None
+    avg_directional_return_10d: float | None = None
     best_signal: str | None = None  # ticker of best performing signal
     worst_signal: str | None = None
     avg_signal_score: float | None = None
@@ -163,80 +168,47 @@ class SignalTrackerDB:
     def accuracy_report(self, channel_slug: str | None = None) -> AccuracyStats:
         """Compute accuracy stats, optionally filtered by channel."""
         filtered = [r for r in self._records if channel_slug is None or r.channel_slug == channel_slug]
-        if not filtered:
-            return AccuracyStats()
+        return _build_accuracy_stats(filtered)
 
-        window_stats: dict[str, dict[str, float | int | None]] = {}
-        for window in TRACKING_WINDOWS:
-            key = f"{window}d"
-            with_window = [r for r in filtered if r.returns.get(key) is not None]
-            if not with_window:
-                window_stats[key] = {
-                    "tracked": 0,
-                    "coverage_pct": 0.0,
-                    "hit_rate": None,
-                    "avg_return": None,
-                }
+    def ticker_accuracy_summary(self, *, limit: int | None = None, min_signals: int = 1) -> list[dict[str, Any]]:
+        """Compute per-ticker accuracy summaries ranked by mature sample size and hit rate."""
+        grouped: dict[str, list[SignalRecord]] = defaultdict(list)
+        company_names: dict[str, str | None] = {}
+        for record in self._records:
+            grouped[record.ticker].append(record)
+            company_names.setdefault(record.ticker, record.company_name)
+
+        summaries: list[dict[str, Any]] = []
+        for ticker, records in grouped.items():
+            stats = _build_accuracy_stats(records).to_dict()
+            total_signals = int(stats.get("total_signals", 0) or 0)
+            if total_signals < min_signals:
                 continue
-            hits = sum(1 for r in with_window if (r.returns.get(key) or 0) > 0)
-            avg_return = sum(float(r.returns[key] or 0) for r in with_window) / len(with_window)
-            window_stats[key] = {
-                "tracked": len(with_window),
-                "coverage_pct": round(len(with_window) / len(filtered) * 100, 1),
-                "hit_rate": round(hits / len(with_window) * 100, 1),
-                "avg_return": round(avg_return, 2),
-            }
+            channels = sorted({record.channel_slug for record in records if record.channel_slug})
+            stats.update(
+                {
+                    "ticker": ticker,
+                    "company_name": company_names.get(ticker),
+                    "channel_count": len(channels),
+                    "channels": channels,
+                    "bullish_signals": sum(1 for record in records if _signal_direction(record.verdict) > 0),
+                    "bearish_signals": sum(1 for record in records if _signal_direction(record.verdict) < 0),
+                    "first_signal_at": min((record.signal_date for record in records), default=None),
+                    "last_signal_at": max((record.signal_date for record in records), default=None),
+                }
+            )
+            summaries.append(stats)
 
-        def _window_value(window_key: str, field: str) -> float | int | None:
-            return (window_stats.get(window_key, {}) or {}).get(field)
-
-        signals_with_price_1d = int(_window_value("1d", "tracked") or 0)
-        signals_with_price_3d = int(_window_value("3d", "tracked") or 0)
-        signals_with_price_5d = int(_window_value("5d", "tracked") or 0)
-        hit_rate_1d = _window_value("1d", "hit_rate")
-        hit_rate_3d = _window_value("3d", "hit_rate")
-        hit_rate_5d = window_stats["5d"]["hit_rate"]
-        avg_return_5d = window_stats["5d"]["avg_return"]
-        hit_rate_10d = window_stats["10d"]["hit_rate"]
-        avg_return_10d = window_stats["10d"]["avg_return"]
-        avg_return_1d = _window_value("1d", "avg_return")
-        avg_return_3d = _window_value("3d", "avg_return")
-        with_5d = [r for r in filtered if r.returns.get("5d") is not None]
-        best = max(with_5d, key=lambda r: r.returns.get("5d") or -999) if with_5d else None
-        worst = min(with_5d, key=lambda r: r.returns.get("5d") or 999) if with_5d else None
-        target_records = [r for r in filtered if _target_price_from_record(r) is not None]
-        progressed_targets = [r for r in target_records if r.target_progress_pct is not None]
-        best_target = max(progressed_targets, key=lambda r: r.target_progress_pct or -999) if progressed_targets else None
-        target_hits = sum(1 for r in target_records if _record_target_hit(r))
-
-        return AccuracyStats(
-            total_signals=len(filtered),
-            signals_with_price=signals_with_price_5d,
-            signals_with_price_1d=signals_with_price_1d,
-            signals_with_price_3d=signals_with_price_3d,
-            signals_with_price_5d=signals_with_price_5d,
-            hit_rate_1d=hit_rate_1d,
-            hit_rate_3d=hit_rate_3d,
-            hit_rate_5d=hit_rate_5d,
-            hit_rate_10d=hit_rate_10d,
-            avg_return_1d=avg_return_1d,
-            avg_return_3d=avg_return_3d,
-            avg_return_5d=avg_return_5d,
-            avg_return_10d=avg_return_10d,
-            best_signal=best.ticker if best else None,
-            worst_signal=worst.ticker if worst else None,
-            avg_signal_score=round(sum(r.signal_score for r in filtered) / len(filtered), 1) if filtered else None,
-            window_stats=window_stats,
-            target_count=len(target_records),
-            target_hits=target_hits,
-            pending_targets=sum(1 for r in target_records if not _record_target_hit(r)),
-            target_hit_rate=round(target_hits / len(target_records) * 100, 1) if target_records else None,
-            avg_target_progress_pct=(
-                round(sum(float(r.target_progress_pct or 0) for r in progressed_targets) / len(progressed_targets), 2)
-                if progressed_targets else None
-            ),
-            best_target_ticker=best_target.ticker if best_target else None,
+        summaries.sort(
+            key=lambda item: (
+                -int(item.get("signals_with_price_5d", 0) or 0),
+                -int(item.get("total_signals", 0) or 0),
+                -(float(item.get("hit_rate_5d")) if item.get("hit_rate_5d") is not None else -1.0),
+                -(float(item.get("avg_directional_return_5d")) if item.get("avg_directional_return_5d") is not None else -999.0),
+                str(item.get("ticker", "")),
+            )
         )
+        return summaries[:limit] if limit is not None else summaries
 
     def recent_records(self, limit: int = 10, channel_slug: str | None = None, *, target_only: bool = False) -> list[dict[str, Any]]:
         """Return recent tracked signals, newest signal_date first."""
@@ -449,6 +421,243 @@ def _target_price_from_record(record: SignalRecord) -> float | None:
 
 def _record_target_hit(record: SignalRecord) -> bool:
     return bool(record.target_hit or record.target_hit_date)
+
+
+def _signal_direction(verdict: str | None) -> int:
+    normalized = str(verdict or "").strip().upper()
+    if normalized in {"SELL", "STRONG_SELL", "UNDERPERFORM", "AVOID", "SHORT"}:
+        return -1
+    return 1
+
+
+def _directional_return(record: SignalRecord, window_key: str) -> float | None:
+    value = record.returns.get(window_key)
+    if value is None:
+        return None
+    return round(float(value) * _signal_direction(record.verdict), 2)
+
+
+def _window_value(window_stats: dict[str, dict[str, float | int | None]], window_key: str, field: str) -> float | int | None:
+    return (window_stats.get(window_key, {}) or {}).get(field)
+
+
+def _build_accuracy_stats(filtered: list[SignalRecord]) -> AccuracyStats:
+    if not filtered:
+        return AccuracyStats()
+
+    window_stats: dict[str, dict[str, float | int | None]] = {}
+    for window in TRACKING_WINDOWS:
+        key = f"{window}d"
+        with_window = [record for record in filtered if record.returns.get(key) is not None]
+        if not with_window:
+            window_stats[key] = {
+                "tracked": 0,
+                "coverage_pct": 0.0,
+                "hit_rate": None,
+                "avg_return": None,
+                "avg_directional_return": None,
+            }
+            continue
+
+        raw_returns = [float(record.returns.get(key) or 0) for record in with_window]
+        directional_returns = [float(_directional_return(record, key) or 0) for record in with_window]
+        hits = sum(1 for value in directional_returns if value > 0)
+        window_stats[key] = {
+            "tracked": len(with_window),
+            "coverage_pct": round(len(with_window) / len(filtered) * 100, 1),
+            "hit_rate": round(hits / len(with_window) * 100, 1),
+            "avg_return": round(sum(raw_returns) / len(raw_returns), 2),
+            "avg_directional_return": round(sum(directional_returns) / len(directional_returns), 2),
+        }
+
+    signals_with_price_1d = int(_window_value(window_stats, "1d", "tracked") or 0)
+    signals_with_price_3d = int(_window_value(window_stats, "3d", "tracked") or 0)
+    signals_with_price_5d = int(_window_value(window_stats, "5d", "tracked") or 0)
+    with_5d = [record for record in filtered if record.returns.get("5d") is not None]
+    best = max(with_5d, key=lambda record: _directional_return(record, "5d") or -999) if with_5d else None
+    worst = min(with_5d, key=lambda record: _directional_return(record, "5d") or 999) if with_5d else None
+    target_records = [record for record in filtered if _target_price_from_record(record) is not None]
+    progressed_targets = [record for record in target_records if record.target_progress_pct is not None]
+    best_target = max(progressed_targets, key=lambda record: record.target_progress_pct or -999) if progressed_targets else None
+    target_hits = sum(1 for record in target_records if _record_target_hit(record))
+
+    return AccuracyStats(
+        total_signals=len(filtered),
+        signals_with_price=signals_with_price_5d,
+        signals_with_price_1d=signals_with_price_1d,
+        signals_with_price_3d=signals_with_price_3d,
+        signals_with_price_5d=signals_with_price_5d,
+        hit_rate_1d=_window_value(window_stats, "1d", "hit_rate"),
+        hit_rate_3d=_window_value(window_stats, "3d", "hit_rate"),
+        hit_rate_5d=_window_value(window_stats, "5d", "hit_rate"),
+        hit_rate_10d=_window_value(window_stats, "10d", "hit_rate"),
+        avg_return_1d=_window_value(window_stats, "1d", "avg_return"),
+        avg_return_3d=_window_value(window_stats, "3d", "avg_return"),
+        avg_return_5d=_window_value(window_stats, "5d", "avg_return"),
+        avg_return_10d=_window_value(window_stats, "10d", "avg_return"),
+        avg_directional_return_1d=_window_value(window_stats, "1d", "avg_directional_return"),
+        avg_directional_return_3d=_window_value(window_stats, "3d", "avg_directional_return"),
+        avg_directional_return_5d=_window_value(window_stats, "5d", "avg_directional_return"),
+        avg_directional_return_10d=_window_value(window_stats, "10d", "avg_directional_return"),
+        best_signal=best.ticker if best else None,
+        worst_signal=worst.ticker if worst else None,
+        avg_signal_score=round(sum(record.signal_score for record in filtered) / len(filtered), 1) if filtered else None,
+        window_stats=window_stats,
+        target_count=len(target_records),
+        target_hits=target_hits,
+        pending_targets=sum(1 for record in target_records if not _record_target_hit(record)),
+        target_hit_rate=round(target_hits / len(target_records) * 100, 1) if target_records else None,
+        avg_target_progress_pct=(
+            round(sum(float(record.target_progress_pct or 0) for record in progressed_targets) / len(progressed_targets), 2)
+            if progressed_targets else None
+        ),
+        best_target_ticker=best_target.ticker if best_target else None,
+    )
+
+
+def build_signal_accuracy_summary(
+    db: SignalTrackerDB,
+    *,
+    channel_metadata: dict[str, dict[str, Any]] | None = None,
+    top_tickers: int = 20,
+    recent_limit: int = 12,
+    recent_targets_limit: int = 20,
+) -> dict[str, Any]:
+    """Build a report payload from tracked signals."""
+    channel_metadata = channel_metadata or {}
+    channel_slugs = sorted(channel_metadata) or sorted({record.channel_slug for record in db.records if record.channel_slug})
+    accuracy_by_channel = {slug: db.accuracy_report(slug).to_dict() for slug in channel_slugs}
+    ticker_summaries = db.ticker_accuracy_summary(limit=None)
+
+    channel_leaderboard: list[dict[str, Any]] = []
+    if channel_slugs:
+        from .channel_quality import compute_channel_quality, compute_dynamic_weights, rank_channels
+
+        quality_input = {
+            slug: {
+                "display_name": (channel_metadata.get(slug, {}) or {}).get("display_name", slug),
+                "actionable_ratio": float((channel_metadata.get(slug, {}) or {}).get("actionable_ratio", 0) or 0),
+                "ranking_spearman": (channel_metadata.get(slug, {}) or {}).get("ranking_spearman"),
+                "quality_scorecard": dict((channel_metadata.get(slug, {}) or {}).get("quality_scorecard") or {}),
+            }
+            for slug in channel_slugs
+        }
+        ranked_reports = rank_channels(compute_channel_quality(quality_input, accuracy_by_channel))
+        weight_multipliers = compute_dynamic_weights(ranked_reports)
+        for report in ranked_reports:
+            item = report.to_dict()
+            item["weight_multiplier"] = weight_multipliers.get(report.slug)
+            channel_leaderboard.append(item)
+
+    updated_at = max((record.last_updated for record in db.records if record.last_updated), default="")
+    return {
+        "updated_at": updated_at,
+        "overall": db.accuracy_report().to_dict(),
+        "by_channel": accuracy_by_channel,
+        "by_ticker": {item["ticker"]: item for item in ticker_summaries},
+        "channel_leaderboard": channel_leaderboard,
+        "ticker_leaderboard": ticker_summaries[:top_tickers],
+        "recent_signals": db.recent_records(limit=recent_limit),
+        "recent_targets": db.recent_records(limit=recent_targets_limit, target_only=True),
+    }
+
+
+def save_signal_accuracy_report(summary: dict[str, Any], output_dir: Path, run_id: str) -> tuple[Path, Path]:
+    """Persist the signal accuracy summary as JSON and text."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / f"signal_accuracy_report_{run_id}.json"
+    txt_path = output_dir / f"signal_accuracy_report_{run_id}.txt"
+    payload = dict(summary)
+    payload.setdefault("generated_at", run_id)
+    payload["report_files"] = {
+        "json_path": str(json_path),
+        "txt_path": str(txt_path),
+    }
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    txt_path.write_text(render_signal_accuracy_report_text(payload), encoding="utf-8")
+    summary.clear()
+    summary.update(payload)
+    return json_path, txt_path
+
+
+def render_signal_accuracy_report_text(summary: dict[str, Any]) -> str:
+    """Render a human-readable signal accuracy report."""
+    overall = summary.get("overall", {}) if isinstance(summary, dict) else {}
+    lines = [
+        f"시그널 정확도 리포트 ({summary.get('generated_at', summary.get('updated_at', '-'))})",
+        f"업데이트 시각: {summary.get('updated_at', '-')}",
+        "",
+        "[전체 정확도]",
+        f"- 트래킹 신호 수: {int(overall.get('total_signals', 0) or 0)}",
+        f"- 1일/3일/5일 표본: {int(overall.get('signals_with_price_1d', 0) or 0)} / {int(overall.get('signals_with_price_3d', 0) or 0)} / {int(overall.get('signals_with_price_5d', 0) or 0)}",
+        f"- 1일 적중률: {_fmt_pct(overall.get('hit_rate_1d'))}",
+        f"- 3일 적중률: {_fmt_pct(overall.get('hit_rate_3d'))}",
+        f"- 5일 적중률: {_fmt_pct(overall.get('hit_rate_5d'))}",
+        f"- 10일 적중률: {_fmt_pct(overall.get('hit_rate_10d'))}",
+        f"- 5일 평균 실제수익률: {_fmt_pct(overall.get('avg_return_5d'))}",
+        f"- 5일 평균 방향수익률: {_fmt_pct(overall.get('avg_directional_return_5d'))}",
+        f"- 평균 시그널 점수: {_fmt_scalar(overall.get('avg_signal_score'))}",
+        "",
+        "[채널 리더보드]",
+    ]
+
+    channel_leaderboard = summary.get("channel_leaderboard", []) if isinstance(summary, dict) else []
+    if channel_leaderboard:
+        for idx, item in enumerate(channel_leaderboard[:10], start=1):
+            lines.append(
+                f"- {idx}. {item.get('display_name', item.get('slug', '-'))}"
+                f" | 5d 적중률 {_fmt_pct(item.get('hit_rate_5d'))}"
+                f" | 5d 방향수익률 {_fmt_pct(item.get('avg_directional_return_5d'))}"
+                f" | 가중치 {_fmt_scalar(item.get('weight_multiplier'))}"
+                f" | 표본 {int(item.get('signals_with_price_5d', 0) or 0)}"
+            )
+    else:
+        lines.append("- 채널 데이터 없음")
+
+    lines.extend(["", "[종목 리더보드]"])
+    ticker_leaderboard = summary.get("ticker_leaderboard", []) if isinstance(summary, dict) else []
+    if ticker_leaderboard:
+        for idx, item in enumerate(ticker_leaderboard[:15], start=1):
+            display_name = item.get("company_name") or item.get("ticker", "-")
+            lines.append(
+                f"- {idx}. {display_name} ({item.get('ticker', '-')})"
+                f" | 5d 적중률 {_fmt_pct(item.get('hit_rate_5d'))}"
+                f" | 5d 방향수익률 {_fmt_pct(item.get('avg_directional_return_5d'))}"
+                f" | 채널 {int(item.get('channel_count', 0) or 0)}"
+                f" | 표본 {int(item.get('signals_with_price_5d', 0) or 0)}"
+            )
+    else:
+        lines.append("- 종목 데이터 없음")
+
+    lines.extend(["", "[최근 추적 시그널]"])
+    recent_signals = summary.get("recent_signals", []) if isinstance(summary, dict) else []
+    if recent_signals:
+        for item in recent_signals[:10]:
+            returns = item.get("returns", {}) if isinstance(item.get("returns"), dict) else {}
+            lines.append(
+                f"- {item.get('ticker', '-')} | {item.get('channel_slug', '-')}"
+                f" | {item.get('verdict', '-')}"
+                f" | 5d {_fmt_pct(returns.get('5d'))}"
+                f" | 날짜 {item.get('signal_date', '-')}"
+            )
+    else:
+        lines.append("- 최근 시그널 없음")
+
+    return "\n".join(lines).strip() + "\n"
+
+
+def _fmt_pct(value: object) -> str:
+    if value is None or value == "":
+        return "미제공"
+    return f"{float(value):.2f}%"
+
+
+def _fmt_scalar(value: object) -> str:
+    if value is None or value == "":
+        return "미제공"
+    if isinstance(value, float):
+        return f"{value:.2f}".rstrip("0").rstrip(".")
+    return str(value)
 
 
 def _update_target_tracking(record: SignalRecord, *, latest_price: float | None, latest_price_date: str | None) -> None:

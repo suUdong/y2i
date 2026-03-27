@@ -11,7 +11,6 @@ from xml.etree import ElementTree as ET
 
 from omx_brainstorm.app_config import AppConfig, load_app_config
 from omx_brainstorm.backtest import YFinanceHistoryProvider
-from omx_brainstorm.channel_quality import compute_channel_quality, compute_dynamic_weights, rank_channels
 from omx_brainstorm.comparison import RunContext, compare_channels, quality_scorecard, save_channel_artifacts
 from omx_brainstorm.daily_report import (
     build_daily_report_payload,
@@ -30,7 +29,13 @@ from omx_brainstorm.signal_alerts import (
     send_high_accuracy_target_alerts,
     send_high_confidence_signal_alerts,
 )
-from omx_brainstorm.signal_tracker import SignalTrackerDB, record_signals_from_output, update_price_snapshots
+from omx_brainstorm.signal_tracker import (
+    SignalTrackerDB,
+    build_signal_accuracy_summary,
+    record_signals_from_output,
+    save_signal_accuracy_report,
+    update_price_snapshots,
+)
 from omx_brainstorm.transcript_cache import TranscriptCache
 from omx_brainstorm.youtube import ChannelRegistry, TranscriptFetcher, YoutubeResolver
 
@@ -168,25 +173,17 @@ def _fmt_window_stats(window_stats: dict[str, object], key: str) -> str:
 def enrich_comparison_with_signal_accuracy(
     comparison: dict[str, object],
     tracker_db: SignalTrackerDB,
-) -> tuple[dict[str, dict[str, object]], list[dict[str, object]]]:
+) -> tuple[dict[str, dict[str, object]], list[dict[str, object]], dict[str, object]]:
     channel_comparison_data = comparison.get("channels", {})
     if not isinstance(channel_comparison_data, dict):
         comparison["signal_accuracy"] = {}
-        return {}, []
+        return {}, [], {}
 
-    accuracy_by_channel: dict[str, dict[str, object]] = {}
-    for slug in channel_comparison_data:
-        accuracy_by_channel[slug] = tracker_db.accuracy_report(slug).to_dict()
-
-    overall_accuracy = tracker_db.accuracy_report().to_dict()
-    ranked_reports = rank_channels(compute_channel_quality(channel_comparison_data, accuracy_by_channel))
-    weight_multipliers = compute_dynamic_weights(ranked_reports)
-    leaderboard = []
-    for report in ranked_reports:
-        item = report.to_dict()
-        item["weight_multiplier"] = weight_multipliers.get(report.slug)
-        leaderboard.append(item)
-    quality_by_slug = {item["slug"]: item for item in leaderboard}
+    summary = build_signal_accuracy_summary(tracker_db, channel_metadata=channel_comparison_data)
+    comparison["signal_accuracy"] = summary
+    accuracy_by_channel = summary.get("by_channel", {})
+    leaderboard = summary.get("channel_leaderboard", [])
+    quality_by_slug = {item["slug"]: item for item in leaderboard if item.get("slug")}
 
     for slug, info in channel_comparison_data.items():
         accuracy = accuracy_by_channel.get(slug, {})
@@ -204,20 +201,7 @@ def enrich_comparison_with_signal_accuracy(
         info["avg_target_progress_pct"] = accuracy.get("avg_target_progress_pct")
         info["pending_targets"] = accuracy.get("pending_targets", 0)
         info["weight_multiplier"] = quality.get("weight_multiplier")
-
-    updated_at = max(
-        (record.last_updated for record in tracker_db.records if record.last_updated),
-        default="",
-    )
-    comparison["signal_accuracy"] = {
-        "updated_at": updated_at,
-        "overall": overall_accuracy,
-        "by_channel": accuracy_by_channel,
-        "recent_signals": tracker_db.recent_records(limit=12),
-        "recent_targets": tracker_db.recent_records(limit=20, target_only=True),
-        "channel_leaderboard": leaderboard,
-    }
-    return accuracy_by_channel, leaderboard
+    return accuracy_by_channel, leaderboard, summary
 
 
 def _fmt_scorecard(scorecard: dict[str, object]) -> str:
@@ -401,6 +385,8 @@ def run_comparison_job(config: AppConfig) -> dict:
     history_provider = YFinanceHistoryProvider()
     accuracy_by_channel: dict[str, dict[str, object]] = {}
     leaderboard: list[dict[str, object]] = []
+    signal_accuracy_summary: dict[str, object] = {}
+    signal_accuracy_report: dict[str, str] | None = None
     try:
         total_tracked = 0
         for item in channel_payloads.values():
@@ -412,14 +398,20 @@ def run_comparison_job(config: AppConfig) -> dict:
         updated = update_price_snapshots(tracker_db, history_provider=history_provider)
         if updated:
             logger.info("Updated price snapshots for %d signals", updated)
-        accuracy_by_channel, leaderboard = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
+        accuracy_by_channel, leaderboard, signal_accuracy_summary = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
+        accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, output_dir, context.run_id)
+        signal_accuracy_report = {"json_path": str(accuracy_json), "txt_path": str(accuracy_txt)}
+        comparison["signal_accuracy"] = signal_accuracy_summary
     except Exception as exc:
         logger.warning("Signal tracking failed (non-fatal): %s", exc)
 
     telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
     if not accuracy_by_channel:
         try:
-            accuracy_by_channel, leaderboard = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
+            accuracy_by_channel, leaderboard, signal_accuracy_summary = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
+            accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, output_dir, context.run_id)
+            signal_accuracy_report = {"json_path": str(accuracy_json), "txt_path": str(accuracy_txt)}
+            comparison["signal_accuracy"] = signal_accuracy_summary
             telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
         except Exception as exc:
             logger.warning("Signal accuracy enrichment retry failed (non-fatal): %s", exc)
@@ -481,6 +473,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         "dashboard_markdown": dashboard_markdown,
         "telegram": telegram_payload,
         "daily_report": daily_report_payload,
+        "signal_accuracy_report": signal_accuracy_report,
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return payload
@@ -665,6 +658,19 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
                 f" | 5d hit={_fmt_percentage(item.get('hit_rate_5d'))}"
                 f" | 5d avg={_fmt_percentage(item.get('avg_return_5d'))}"
                 f" | actionable={_fmt_ratio(item.get('actionable_ratio'))}"
+            )
+        lines.append("")
+    ticker_leaderboard = signal_accuracy.get("ticker_leaderboard", []) if isinstance(signal_accuracy, dict) else []
+    if ticker_leaderboard:
+        lines.append("[종목 적중률 리더보드]")
+        for idx, item in enumerate(ticker_leaderboard[:15], start=1):
+            display_name = item.get("company_name") or item.get("ticker", "-")
+            lines.append(
+                f"- {idx}. {display_name} ({item.get('ticker', '-')})"
+                f" | 5d hit={_fmt_percentage(item.get('hit_rate_5d'))}"
+                f" | 5d dir={_fmt_percentage(item.get('avg_directional_return_5d'))}"
+                f" | channels={_fmt_scalar(item.get('channel_count'))}"
+                f" | sample={_fmt_scalar(item.get('signals_with_price_5d'))}"
             )
         lines.append("")
     consensus_signals = comparison.get("consensus_signals", [])

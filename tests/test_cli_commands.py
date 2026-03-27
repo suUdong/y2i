@@ -192,6 +192,39 @@ def test_cli_backtest_artifact(monkeypatch, tmp_path, capsys):
     assert output["result"] == "ok"
 
 
+def test_cli_signal_accuracy_report(monkeypatch, tmp_path, capsys):
+    tracker_dir = tmp_path / ".omx" / "state"
+    tracker_dir.mkdir(parents=True, exist_ok=True)
+    tracker_path = tracker_dir / "signal_tracker.json"
+    tracker_path.write_text(json.dumps({
+        "signals": [
+            {
+                "ticker": "NVDA",
+                "company_name": "NVIDIA",
+                "channel_slug": "itgod",
+                "signal_date": "2026-03-20",
+                "signal_score": 80.0,
+                "verdict": "BUY",
+                "returns": {"1d": 1.0, "3d": 2.0, "5d": 4.0, "10d": None, "20d": None},
+                "recorded_at": "2026-03-21T00:00:00+00:00",
+                "last_updated": "2026-03-21T00:00:00+00:00",
+            }
+        ]
+    }), encoding="utf-8")
+    monkeypatch.setattr("dashboard.data_loader.load_channel_comparison", lambda *_: {"channels": {"itgod": {"display_name": "IT의 신", "actionable_ratio": 0.4, "quality_scorecard": {"overall": 61.0}}}})
+    monkeypatch.setattr(sys, "argv", [
+        "omx-brainstorm", "--output-dir", str(tmp_path),
+        "signal-accuracy-report", "--tracker-db", str(tracker_path),
+    ])
+
+    main()
+    output = json.loads(capsys.readouterr().out)
+    assert output["total_signals"] == 1
+    assert output["ticker_count"] == 1
+    assert Path(output["json_path"]).exists()
+    assert Path(output["txt_path"]).exists()
+
+
 def test_cli_error_exits_with_code_1(monkeypatch, tmp_path):
     monkeypatch.setattr("omx_brainstorm.cli.OMXPipeline", MagicMock(side_effect=RuntimeError("boom")))
     monkeypatch.setattr(sys, "argv", [

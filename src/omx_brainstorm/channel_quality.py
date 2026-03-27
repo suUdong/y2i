@@ -76,12 +76,19 @@ def compute_channel_quality(
         avg_return_3d = accuracy.get("avg_return_3d")
         avg_return_5d = accuracy.get("avg_return_5d")
         avg_return_10d = accuracy.get("avg_return_10d")
+        avg_directional_return_1d = accuracy.get("avg_directional_return_1d", avg_return_1d)
+        avg_directional_return_3d = accuracy.get("avg_directional_return_3d", avg_return_3d)
+        avg_directional_return_5d = accuracy.get("avg_directional_return_5d", avg_return_5d)
         target_count = int(accuracy.get("target_count", 0) or 0)
         target_hit_rate = accuracy.get("target_hit_rate")
         avg_target_progress_pct = accuracy.get("avg_target_progress_pct")
         pending_targets = int(accuracy.get("pending_targets", 0) or 0)
         short_hit_rates = [float(value) for value in (hit_rate_1d, hit_rate_3d, hit_rate_5d) if value is not None]
-        short_returns = [float(value) for value in (avg_return_1d, avg_return_3d, avg_return_5d) if value is not None]
+        short_returns = [
+            float(value)
+            for value in (avg_directional_return_1d, avg_directional_return_3d, avg_directional_return_5d)
+            if value is not None
+        ]
         short_coverages = [
             float(((accuracy.get("window_stats", {}) or {}).get(window, {}) or {}).get("coverage_pct", 0) or 0)
             for window in ("1d", "3d", "5d")

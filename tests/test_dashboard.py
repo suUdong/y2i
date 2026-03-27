@@ -449,6 +449,7 @@ class TestExtractHelpers:
         leaderboard = extract_channel_leaderboard(comp)
         recent = extract_recent_tracked_signals(comp)
         assert accuracy["overall"]["hit_rate_5d"] == 50.0
+        assert "005930.KS" in accuracy["by_ticker"]
         assert leaderboard[0]["slug"] == "sampro"
         assert recent[0]["ticker"] == "005930.KS"
 
@@ -600,6 +601,24 @@ class TestLoadSignalAccuracySummary:
         assert summary["overall"]["signals_with_price_3d"] == 2
         assert summary["overall"]["window_stats"]["5d"]["tracked"] == 2
         assert summary["channel_leaderboard"][0]["weight_multiplier"] is not None
+        assert summary["ticker_leaderboard"][0]["ticker"] == "005930.KS"
+
+    def test_prefers_standalone_signal_accuracy_report(self, tmp_output: Path):
+        report = {
+            "generated_at": "20260328T000000Z",
+            "updated_at": "2026-03-28T00:00:00+00:00",
+            "overall": {"total_signals": 99},
+            "by_channel": {},
+            "by_ticker": {"NVDA": {"ticker": "NVDA"}},
+            "channel_leaderboard": [],
+            "ticker_leaderboard": [{"ticker": "NVDA"}],
+            "recent_signals": [],
+            "recent_targets": [],
+        }
+        (tmp_output / "signal_accuracy_report_20260328T000000Z.json").write_text(json.dumps(report), encoding="utf-8")
+        summary = load_signal_accuracy_summary(tmp_output, {})
+        assert summary["overall"]["total_signals"] == 99
+        assert summary["ticker_leaderboard"][0]["ticker"] == "NVDA"
 
 
 class TestConsensusRanking:

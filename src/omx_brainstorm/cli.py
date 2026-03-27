@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .app_config import load_app_config
@@ -10,6 +11,7 @@ from .backtest import BacktestEngine, BacktestIdea
 from .backtest_automation import run_backtest_for_artifact
 from .logging_utils import configure_logging
 from .scheduler import run_scheduled_job, run_scheduler_forever
+from .signal_tracker import SignalTrackerDB, build_signal_accuracy_summary, save_signal_accuracy_report
 from .pipeline import OMXPipeline
 from .youtube import ChannelRegistry, YoutubeResolver
 
@@ -63,6 +65,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_health = sub.add_parser("run-healthcheck", help="Read scheduler health state")
     p_health.add_argument("--path", default=".omx/state/scheduler_health.json")
+
+    p_accuracy = sub.add_parser("signal-accuracy-report", help="Generate a tracked signal accuracy report")
+    p_accuracy.add_argument("--tracker-db", default=".omx/state/signal_tracker.json")
+    p_accuracy.add_argument("--top-tickers", type=int, default=20)
 
     p_all = sub.add_parser("analyze-all", help="Analyze all enabled channels from config")
     p_all.add_argument("--config", default="config.toml")
@@ -184,8 +190,36 @@ def main() -> None:
             print(json.dumps(read_health_state(args.path), ensure_ascii=False, indent=2))
             return
 
+        if args.command == "signal-accuracy-report":
+            tracker_db = SignalTrackerDB(Path(args.tracker_db))
+            comparison_payload: dict = {}
+            try:
+                from dashboard.data_loader import load_channel_comparison
+
+                comparison_payload = load_channel_comparison(Path(args.output_dir))
+            except Exception:
+                comparison_payload = {}
+            channels = comparison_payload.get("channels", {}) if isinstance(comparison_payload, dict) else {}
+            summary = build_signal_accuracy_summary(
+                tracker_db,
+                channel_metadata=channels if isinstance(channels, dict) else {},
+                top_tickers=args.top_tickers,
+            )
+            run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            json_path, txt_path = save_signal_accuracy_report(summary, Path(args.output_dir), run_id)
+            print(json.dumps({
+                "generated_at": summary.get("generated_at", run_id),
+                "tracker_db": str(Path(args.tracker_db)),
+                "json_path": str(json_path),
+                "txt_path": str(txt_path),
+                "total_signals": summary.get("overall", {}).get("total_signals", 0),
+                "channel_count": len(summary.get("by_channel", {})),
+                "ticker_count": len(summary.get("by_ticker", {})),
+            }, ensure_ascii=False, indent=2))
+            return
+
         if args.command == "analyze-channel-30d":
-            from datetime import date, datetime, timezone as tz
+            from datetime import date, timezone as tz
             from .comparison import RunContext, quality_scorecard, save_channel_artifacts
             from .evaluation import ranking_validation
             from .fundamentals import FundamentalsFetcher

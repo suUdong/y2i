@@ -79,6 +79,27 @@ class TestComputeChannelQuality:
         # Scores will differ because accuracy bonus changes
         assert reports[0].overall_quality_score != no_acc_reports[0].overall_quality_score
 
+    def test_prefers_directional_returns_when_available(self):
+        channels = {
+            "itgod": _make_channel_info("IT의 신", 0.6, 65.0, 50.0),
+        }
+        accuracy = {
+            "itgod": {
+                "hit_rate_1d": 100.0,
+                "hit_rate_3d": 100.0,
+                "hit_rate_5d": 100.0,
+                "avg_return_1d": -1.0,
+                "avg_return_3d": -2.0,
+                "avg_return_5d": -4.0,
+                "avg_directional_return_1d": 1.0,
+                "avg_directional_return_3d": 2.0,
+                "avg_directional_return_5d": 4.0,
+            },
+        }
+        report = compute_channel_quality(channels, accuracy)[0]
+        assert report.avg_return_5d == -4.0
+        assert report.overall_quality_score > compute_channel_quality(channels)[0].overall_quality_score
+
     def test_empty_channels(self):
         reports = compute_channel_quality({})
         assert reports == []
