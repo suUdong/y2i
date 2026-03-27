@@ -101,11 +101,16 @@ def main() -> None:
     try:
         if args.command == "register-channel":
             resolver = YoutubeResolver()
-            videos = resolver.resolve_channel_videos(args.url, limit=1)
-            channel_title = videos[0].channel_title if videos else None
-            channel_id = videos[0].channel_id if videos else None
+            discovery = resolver.discover_channel(args.url)
             registry = ChannelRegistry(Path(args.registry))
-            row = registry.register(args.url, {"channel_id": channel_id, "channel_title": channel_title})
+            row = registry.register(
+                str(discovery.get("url") or args.url),
+                {
+                    "channel_id": discovery.get("channel_id"),
+                    "channel_title": discovery.get("channel_title"),
+                    "source_url": args.url,
+                },
+            )
             print(json.dumps(row, ensure_ascii=False, indent=2))
             return
 

@@ -20,6 +20,11 @@ DEFAULT_CHANNELS = {
     "sosumonkey": "소수몽키",
     "itgod": "IT의 신 이형수",
     "kimjakgatv": "김작가TV",
+    "jeoningoo": "전인구경제연구소",
+    "moneyinside": "머니인사이드",
+    "mickeypedia": "미키피디아",
+    "talentinvest": "달란트투자",
+    "kimdante": "내일은 투자왕 - 김단테",
 }
 
 REFERENCE_KIND_LABELS = {

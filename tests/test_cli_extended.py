@@ -14,13 +14,14 @@ def test_cli_register_channel(monkeypatch, tmp_path, capsys):
     registry_path = tmp_path / "channels.json"
 
     mock_resolver = MagicMock()
-    mock_video = MagicMock()
-    mock_video.channel_title = "Test Channel"
-    mock_video.channel_id = "UC123"
-    mock_resolver.resolve_channel_videos.return_value = [mock_video]
+    mock_resolver.discover_channel.return_value = {
+        "url": "https://www.youtube.com/channel/UC123/videos",
+        "channel_title": "Test Channel",
+        "channel_id": "UC123",
+    }
 
     mock_registry = MagicMock()
-    mock_registry.register.return_value = {"url": "https://youtube.com/@test", "channel_id": "UC123"}
+    mock_registry.register.return_value = {"url": "https://www.youtube.com/channel/UC123/videos", "channel_id": "UC123"}
 
     monkeypatch.setattr("omx_brainstorm.cli.YoutubeResolver", lambda: mock_resolver)
     monkeypatch.setattr("omx_brainstorm.cli.ChannelRegistry", lambda p: mock_registry)
@@ -36,10 +37,14 @@ def test_cli_register_channel(monkeypatch, tmp_path, capsys):
 
 def test_cli_register_channel_no_videos(monkeypatch, tmp_path, capsys):
     mock_resolver = MagicMock()
-    mock_resolver.resolve_channel_videos.return_value = []
+    mock_resolver.discover_channel.return_value = {
+        "url": "https://youtube.com/@test/videos",
+        "channel_title": None,
+        "channel_id": None,
+    }
 
     mock_registry = MagicMock()
-    mock_registry.register.return_value = {"url": "https://youtube.com/@test", "channel_id": None}
+    mock_registry.register.return_value = {"url": "https://youtube.com/@test/videos", "channel_id": None}
 
     monkeypatch.setattr("omx_brainstorm.cli.YoutubeResolver", lambda: mock_resolver)
     monkeypatch.setattr("omx_brainstorm.cli.ChannelRegistry", lambda p: mock_registry)

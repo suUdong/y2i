@@ -82,6 +82,11 @@ DEFAULT_CHANNELS = [
     ChannelConfig(slug="syuka", display_name="슈카월드", url="https://www.youtube.com/@syukaworld/videos"),
     ChannelConfig(slug="hsacademy", display_name="이효석아카데미", url="https://www.youtube.com/@hs_academy/videos"),
     ChannelConfig(slug="sosumonkey", display_name="소수몽키", url="https://www.youtube.com/@sosumonkey/videos"),
+    ChannelConfig(slug="jeoningoo", display_name="전인구경제연구소", url="https://www.youtube.com/channel/UCznImSIaxZR7fdLCICLdgaQ/videos"),
+    ChannelConfig(slug="moneyinside", display_name="머니인사이드", url="https://www.youtube.com/channel/UCxfko2YOD6DODYRGzeOPhIQ/videos"),
+    ChannelConfig(slug="mickeypedia", display_name="미키피디아", url="https://www.youtube.com/channel/UCt9m3iBPn0e0z0B_t-Va7sw/videos"),
+    ChannelConfig(slug="talentinvest", display_name="달란트투자", url="https://www.youtube.com/channel/UCBM86JVoHLqg9irpR2XKvGw/videos"),
+    ChannelConfig(slug="kimdante", display_name="내일은 투자왕 - 김단테", url="https://www.youtube.com/channel/UCKTMvIu9a4VGSrpWy-8bUrQ/videos"),
 ]
 
 

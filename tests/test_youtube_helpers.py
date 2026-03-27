@@ -1,7 +1,7 @@
 """Tests for youtube.py helper functions and ChannelRegistry."""
 import json
 
-from omx_brainstorm.youtube import ChannelRegistry, extract_video_id, _parse_upload_date
+from omx_brainstorm.youtube import ChannelRegistry, canonical_channel_url, extract_video_id, _parse_upload_date
 
 
 def test_extract_video_id_from_bare_id():
@@ -78,3 +78,16 @@ def test_channel_registry_keeps_different_urls(tmp_path):
     registry.register("https://youtube.com/channel/B", {"title": "B"})
     loaded = registry.load()
     assert len(loaded) == 2
+
+
+def test_canonical_channel_url_adds_videos_suffix():
+    assert canonical_channel_url("https://youtube.com/@demo") == "https://youtube.com/@demo/videos"
+
+
+def test_channel_registry_replaces_same_channel_id_across_urls(tmp_path):
+    registry = ChannelRegistry(tmp_path / "channels.json")
+    registry.register("https://youtube.com/@demo/videos", {"channel_id": "UC123", "channel_title": "Demo"})
+    registry.register("https://www.youtube.com/channel/UC123/videos", {"channel_id": "UC123", "channel_title": "Demo Updated"})
+    loaded = registry.load()
+    assert len(loaded) == 1
+    assert loaded[0]["channel_title"] == "Demo Updated"

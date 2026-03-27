@@ -176,10 +176,11 @@ provider = "mock"
 """, encoding="utf-8")
 
     config = load_app_config(str(config_path))
-    assert len(config.channels) == 6  # DEFAULT_CHANNELS
+    assert len(config.channels) == 11  # DEFAULT_CHANNELS
     slugs = {ch.slug for ch in config.channels}
     assert "itgod" in slugs
     assert "sampro" in slugs
+    assert "kimdante" in slugs
 
 
 def test_config_invalid_channel_missing_field(tmp_path):

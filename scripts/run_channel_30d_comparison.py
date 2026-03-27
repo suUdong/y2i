@@ -265,15 +265,41 @@ def register_channels(channels: dict[str, dict], registry_path: Path) -> dict[st
     rows = {}
     for slug, config in channels.items():
         try:
-            videos = resolver.resolve_channel_videos(config["url"], limit=1)
-            channel_title = videos[0].channel_title if videos else config["display_name"]
-            channel_id = videos[0].channel_id if videos else None
+            discovery = resolver.discover_channel(config["url"])
+            channel_title = discovery.get("channel_title") or config["display_name"]
+            channel_id = discovery.get("channel_id")
+            channel_url = discovery.get("url") or config["url"]
         except Exception as exc:
             logger.warning("Channel registration metadata lookup failed for %s: %s", slug, exc)
             channel_title = config["display_name"]
             channel_id = None
-        rows[slug] = registry.register(config["url"], {"channel_id": channel_id, "channel_title": channel_title})
+            channel_url = config["url"]
+        rows[slug] = registry.register(
+            channel_url,
+            {"channel_id": channel_id, "channel_title": channel_title, "source_url": config["url"]},
+        )
     return rows
+
+
+def discover_recent_video_ids(
+    channel_url: str,
+    channel_id: str | None,
+    *,
+    days: int = 30,
+    today: str | None = None,
+    resolver: YoutubeResolver | None = None,
+) -> list[str]:
+    resolver = resolver or YoutubeResolver()
+    rss_ids = recent_feed_video_ids(channel_id or "", days=days, today=today)
+    if rss_ids:
+        return list(dict.fromkeys(rss_ids))
+    try:
+        reference_date = date.fromisoformat(today or date.today().isoformat())
+        fallback_videos = resolver.resolve_channel_videos_since(channel_url, days=days, reference_date=reference_date)
+    except Exception as exc:
+        logger.warning("Fallback channel discovery failed for %s: %s", channel_url, exc)
+        return []
+    return list(dict.fromkeys(video.video_id for video in fallback_videos if video.video_id))
 
 
 def recent_feed_video_ids(channel_id: str, days: int = 30, *, today: str | None = None) -> list[str]:
@@ -329,8 +355,15 @@ def run_comparison_job(config: AppConfig) -> dict:
     channel_payloads: dict[str, dict] = {}
     for slug, channel in configured_channels.items():
         logger.info("Starting channel run: %s", slug)
-        channel_id = registry_rows[slug].get("channel_id")
-        video_ids = recent_feed_video_ids(channel_id, days=window_days, today=context.today)
+        registry_row = registry_rows[slug]
+        channel_id = registry_row.get("channel_id")
+        channel_url = registry_row.get("url") or channel["url"]
+        video_ids = discover_recent_video_ids(
+            str(channel_url),
+            str(channel_id or ""),
+            days=window_days,
+            today=context.today,
+        )
         logger.info("Collected %s videos for %s", len(video_ids), slug)
         rows = _analyze_channel_rows(video_ids, cache, config)
         validate_cross_stock_master_quality([stock for row in rows for stock in row["stocks"]])
@@ -340,7 +373,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         json_path, txt_path = save_channel_artifacts(
             slug,
             channel["display_name"],
-            channel["url"],
+            str(channel_url),
             rows,
             ranking,
             validation,

@@ -7,6 +7,7 @@ from omx_brainstorm.youtube import (
     ChannelRegistry,
     YoutubeResolver,
     TranscriptFetcher,
+    canonical_channel_url,
     extract_video_id,
     _parse_upload_date,
 )
@@ -80,6 +81,16 @@ def test_channel_registry_deduplicates(tmp_path):
     loaded = registry.load()
     assert len(loaded) == 1
     assert loaded[0]["channel_id"] == "C1_updated"
+
+
+def test_channel_registry_deduplicates_by_channel_id(tmp_path):
+    registry = ChannelRegistry(tmp_path / "channels.json")
+    registry.register("https://youtube.com/@test/videos", {"channel_id": "C1", "channel_title": "Old"})
+    registry.register("https://youtube.com/channel/C1/videos", {"channel_id": "C1", "channel_title": "New"})
+    loaded = registry.load()
+    assert len(loaded) == 1
+    assert loaded[0]["url"] == "https://youtube.com/channel/C1/videos"
+    assert loaded[0]["channel_title"] == "New"
 
 
 # --- YoutubeResolver with mocked yt_dlp ---
@@ -196,6 +207,60 @@ def test_resolve_channel_videos_skips_no_id(monkeypatch):
     assert len(videos) == 1
 
 
+def test_discover_channel_mocked(monkeypatch):
+    fake_info = {
+        "id": "UC123",
+        "title": "테스트 채널 - Videos",
+        "uploader_id": "@testhandle",
+        "entries": [{"id": "vid1", "channel_id": "UC123", "channel": "테스트 채널"}],
+    }
+
+    class FakeYDL:
+        def __init__(self, opts):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            pass
+        def extract_info(self, url, download=False):
+            return fake_info
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+
+    resolver = YoutubeResolver()
+    channel = resolver.discover_channel("https://youtube.com/@testhandle")
+
+    assert channel["channel_id"] == "UC123"
+    assert channel["channel_title"] == "테스트 채널"
+    assert channel["url"] == "https://www.youtube.com/channel/UC123/videos"
+
+
+def test_discover_channel_uses_handle_when_channel_id_missing(monkeypatch):
+    fake_info = {
+        "title": "테스트 채널 - Videos",
+        "uploader_id": "@testhandle",
+        "entries": [{"id": "vid1", "uploader_id": "@testhandle", "channel": "테스트 채널"}],
+    }
+
+    class FakeYDL:
+        def __init__(self, opts):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            pass
+        def extract_info(self, url, download=False):
+            return fake_info
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+
+    resolver = YoutubeResolver()
+    channel = resolver.discover_channel("https://youtube.com/@testhandle")
+
+    assert channel["channel_id"] is None
+    assert channel["url"] == "https://www.youtube.com/@testhandle/videos"
+
+
 def test_resolve_channel_videos_since_mocked(monkeypatch):
     entries = [
         {"id": "vid1", "upload_date": "20260320", "title": "V1"},
@@ -222,6 +287,14 @@ def test_resolve_channel_videos_since_mocked(monkeypatch):
     assert len(result) == 2
     assert result[0].video_id == "vid1"
     assert result[1].video_id == "vid2"
+
+
+def test_canonical_channel_url_prefers_channel_id():
+    assert canonical_channel_url(
+        "https://youtube.com/@testhandle",
+        channel_id="UC123",
+        uploader_id="@testhandle",
+    ) == "https://www.youtube.com/channel/UC123/videos"
 
 
 def test_resolve_channel_videos_since_skips_no_date(monkeypatch):

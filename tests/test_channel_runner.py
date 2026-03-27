@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from scripts.run_channel_30d_comparison import (
     build_telegram_payload,
+    discover_recent_video_ids,
     quality_scorecard,
     recent_feed_video_ids,
     run_comparison_job,
@@ -40,6 +41,26 @@ def test_quality_scorecard_zero_horizon_without_positions():
 
 def test_recent_feed_video_ids_returns_empty_without_channel_id():
     assert recent_feed_video_ids("", days=30) == []
+
+
+def test_discover_recent_video_ids_falls_back_to_channel_listing(monkeypatch):
+    class ResolverStub:
+        def resolve_channel_videos_since(self, channel_url, days=30, reference_date=None):
+            return [
+                type("Video", (), {"video_id": "vid2"})(),
+                type("Video", (), {"video_id": "vid2"})(),
+                type("Video", (), {"video_id": "vid1"})(),
+            ]
+
+    monkeypatch.setattr("scripts.run_channel_30d_comparison.recent_feed_video_ids", lambda *args, **kwargs: [])
+    video_ids = discover_recent_video_ids(
+        "https://youtube.com/@test/videos",
+        "UC123",
+        days=30,
+        today="2026-03-27",
+        resolver=ResolverStub(),
+    )
+    assert video_ids == ["vid2", "vid1"]
 
 
 def test_quality_scorecard_transcript_coverage_counts_cache():

@@ -16,6 +16,8 @@ from .utils import ensure_dir, normalize_ws, read_json, write_json
 
 VIDEO_ID_RE = re.compile(r"(?:v=|youtu\.be/|/shorts/)([A-Za-z0-9_-]{11})")
 CHANNEL_ID_RE = re.compile(r"/channel/([A-Za-z0-9_-]+)")
+CHANNEL_HANDLE_RE = re.compile(r"/@([^/?#]+)")
+CHANNEL_SUFFIX_RE = re.compile(r"/(?:videos|featured|streams|shorts)/?$")
 SAFE_CACHE_KEY_RE = re.compile(r"[^A-Za-z0-9_-]")
 DEFAULT_VIDEO_CACHE_HOURS = 24
 
@@ -33,7 +35,11 @@ class ChannelRegistry:
     def register(self, url: str, metadata: dict) -> dict:
         rows = self.load()
         normalized = {"url": url, **metadata}
-        existing = [r for r in rows if r.get("url") != url]
+        channel_id = normalized.get("channel_id")
+        existing = [
+            row for row in rows
+            if row.get("url") != url and (not channel_id or row.get("channel_id") != channel_id)
+        ]
         existing.append(normalized)
         self.save(existing)
         return normalized
@@ -145,6 +151,38 @@ class YoutubeResolver:
             )
         return videos
 
+    def discover_channel(self, channel_url: str) -> dict[str, str | None]:
+        opts = {**self._ydl_opts, "playlistend": 1}
+        with YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(channel_url, download=False)
+        first_entry = next((entry for entry in info.get("entries") or [] if isinstance(entry, dict)), {})
+        channel_id = (
+            info.get("channel_id")
+            or info.get("id")
+            or first_entry.get("channel_id")
+        )
+        uploader_id = info.get("uploader_id") or first_entry.get("uploader_id")
+        channel_title = _clean_channel_title(
+            info.get("channel")
+            or info.get("uploader")
+            or info.get("title")
+            or first_entry.get("channel")
+            or first_entry.get("uploader")
+            or ""
+        )
+        canonical_url = canonical_channel_url(
+            channel_url,
+            channel_id=str(channel_id or "").strip() or None,
+            uploader_id=str(uploader_id or "").strip() or None,
+        )
+        return {
+            "url": canonical_url,
+            "source_url": channel_url,
+            "channel_id": str(channel_id or "").strip() or None,
+            "channel_title": channel_title or None,
+            "uploader_id": str(uploader_id or "").strip() or None,
+        }
+
     def _fetch_channel_entries(self, channel_url: str, max_entries: int = 80) -> list[dict]:
         opts = {**self._ydl_opts, "playlistend": max_entries}
         with YoutubeDL(opts) as ydl:
@@ -217,3 +255,31 @@ def _parse_upload_date(value: str | None) -> date | None:
     if len(value) != 8 or not value.isdigit():
         return None
     return date(int(value[:4]), int(value[4:6]), int(value[6:8]))
+
+
+def canonical_channel_url(
+    url: str,
+    *,
+    channel_id: str | None = None,
+    uploader_id: str | None = None,
+) -> str:
+    clean_url = url.strip().rstrip("/")
+    if channel_id:
+        return f"https://www.youtube.com/channel/{channel_id}/videos"
+    if uploader_id:
+        handle = uploader_id if uploader_id.startswith("@") else f"@{uploader_id}"
+        return f"https://www.youtube.com/{handle}/videos"
+    if CHANNEL_SUFFIX_RE.search(clean_url):
+        return clean_url
+    if CHANNEL_ID_RE.search(clean_url) or CHANNEL_HANDLE_RE.search(clean_url) or "/c/" in clean_url or "/user/" in clean_url:
+        return f"{CHANNEL_SUFFIX_RE.sub('', clean_url)}/videos"
+    return clean_url
+
+
+def _clean_channel_title(value: str | None) -> str:
+    if not value:
+        return ""
+    clean_value = normalize_ws(value)
+    if clean_value.endswith(" - Videos"):
+        clean_value = clean_value[:-9]
+    return clean_value.strip()

@@ -40,6 +40,36 @@ display_name = "소수몽키"
 url = "https://www.youtube.com/@sosumonkey/videos"
 enabled = true
 
+[[channels]]
+slug = "jeoningoo"
+display_name = "전인구경제연구소"
+url = "https://www.youtube.com/channel/UCznImSIaxZR7fdLCICLdgaQ/videos"
+enabled = true
+
+[[channels]]
+slug = "moneyinside"
+display_name = "머니인사이드"
+url = "https://www.youtube.com/channel/UCxfko2YOD6DODYRGzeOPhIQ/videos"
+enabled = true
+
+[[channels]]
+slug = "mickeypedia"
+display_name = "미키피디아"
+url = "https://www.youtube.com/channel/UCt9m3iBPn0e0z0B_t-Va7sw/videos"
+enabled = true
+
+[[channels]]
+slug = "talentinvest"
+display_name = "달란트투자"
+url = "https://www.youtube.com/channel/UCBM86JVoHLqg9irpR2XKvGw/videos"
+enabled = true
+
+[[channels]]
+slug = "kimdante"
+display_name = "내일은 투자왕 - 김단테"
+url = "https://www.youtube.com/channel/UCKTMvIu9a4VGSrpWy-8bUrQ/videos"
+enabled = true
+
 [strategy]
 window_days = 30
 max_scan = 300
