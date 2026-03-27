@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import logging
 from typing import Any, Sequence
 
@@ -68,12 +69,12 @@ def format_telegram_alert(
         "",
     ]
     if channel_name:
-        lines.append(f"📺 채널: <b>{channel_name}</b>")
+        lines.append(f"📺 채널: <b>{html.escape(channel_name)}</b>")
         lines.append("")
 
     for idx, stock in enumerate(signals[:MAX_SIGNALS_PER_MESSAGE], start=1):
-        ticker = stock.get("ticker", "")
-        name = stock.get("company_name") or "unknown"
+        ticker = html.escape(stock.get("ticker", ""))
+        name = html.escape(stock.get("company_name") or "unknown")
         score = float(stock.get("aggregate_score", 0))
         verdict = stock.get("aggregate_verdict", "")
         price = stock.get("latest_price")
@@ -97,7 +98,7 @@ def format_telegram_alert(
                 master = op.get("master", "")
                 one_liner = op.get("one_liner", "")
                 if master and one_liner:
-                    lines.append(f"   🎯 {master}: <i>{one_liner}</i>")
+                    lines.append(f"   🎯 {html.escape(master)}: <i>{html.escape(one_liner)}</i>")
 
         lines.append("")
 

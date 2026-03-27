@@ -316,8 +316,8 @@ def run_comparison_job(config: AppConfig) -> dict:
             for slug in channel_comparison_data:
                 stats = tracker_db.accuracy_report(slug)
                 accuracy_by_channel[slug] = stats.to_dict()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Accuracy report aggregation skipped: %s", exc)
         quality_reports = compute_channel_quality(channel_comparison_data, accuracy_by_channel)
         quality_scores = {r.slug: r.overall_quality_score for r in quality_reports}
         for slug, item in channel_payloads.items():
