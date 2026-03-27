@@ -3,9 +3,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 
 import pytest
+from streamlit.testing.v1 import AppTest
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import dashboard.data_loader as data_loader_module
 from dashboard.data_loader import (
     _latest_file,
     _load_json,
@@ -484,3 +489,16 @@ class TestBuildOverviewReport:
     def test_includes_channel_labels_in_per_video(self, tmp_output: Path):
         report = build_overview_report(tmp_output)
         assert report["per_video"][0]["channel"] in {"Test Channel", "IT God"}
+
+
+def test_streamlit_app_runs_without_session_errors(tmp_output: Path, monkeypatch: pytest.MonkeyPatch):
+    token = "test-dashboard-token"
+    monkeypatch.setenv("DASHBOARD_TOKEN", token)
+    monkeypatch.setattr(data_loader_module, "DEFAULT_OUTPUT_DIR", tmp_output)
+
+    at = AppTest.from_file("dashboard/app.py", default_timeout=60)
+    at.query_params["token"] = token
+    at.run(timeout=60)
+
+    assert not at.exception
+    assert at.title[0].value == "Y2I 투자 시그널"

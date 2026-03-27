@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from streamlit_autorefresh import st_autorefresh
 
-from data_loader import (
+from dashboard.data_loader import (
     DEFAULT_OUTPUT_DIR,
     build_overview_report,
     extract_actionable_signals,
