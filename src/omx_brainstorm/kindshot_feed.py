@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -10,10 +11,11 @@ from .signal_tracker import SignalRecord, SignalTrackerDB
 
 _KR_MARKET_SUFFIXES = (".KS", ".KQ")
 _EXPORTABLE_VERDICTS = {"BUY", "STRONG_BUY"}
-_MIN_KINDSHOT_SIGNAL_SCORE = 68.0
-_MIN_KINDSHOT_HIGH_CONFIDENCE_SCORE = 80.0
+_MIN_KINDSHOT_SIGNAL_SCORE = 58.0
+_MIN_KINDSHOT_HIGH_CONFIDENCE_SCORE = 72.0
 _KINDSHOT_DIRECTIONAL_WINDOWS = ("3d", "5d")
 _MIN_KINDSHOT_CHANNEL_WEIGHT = 0.9
+_TICKER_CHANNEL_COOLDOWN_DAYS = 7
 
 
 def _is_exportable_record(
@@ -175,6 +177,29 @@ def _build_consensus_by_ticker(
     return by_ticker
 
 
+def _dedup_signals(records: list[SignalRecord]) -> list[SignalRecord]:
+    """Keep only the highest-scoring signal per ticker+channel within the cooldown window."""
+    best: dict[tuple[str, str], SignalRecord] = {}
+    for record in records:
+        key = (str(record.ticker or "").upper(), record.channel_slug)
+        existing = best.get(key)
+        if existing is None:
+            best[key] = record
+            continue
+        try:
+            existing_dt = datetime.fromisoformat(existing.signal_date[:10])
+            record_dt = datetime.fromisoformat(record.signal_date[:10])
+        except (ValueError, TypeError):
+            best[key] = record
+            continue
+        if abs((existing_dt - record_dt).days) <= _TICKER_CHANNEL_COOLDOWN_DAYS:
+            if float(record.signal_score or 0) > float(existing.signal_score or 0):
+                best[key] = record
+        else:
+            best[key] = record
+    return list(best.values())
+
+
 def export_signals_for_kindshot(
     db: SignalTrackerDB,
     output_path: Path,
@@ -182,6 +207,19 @@ def export_signals_for_kindshot(
     channel_weights: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     consensus_by_ticker = _build_consensus_by_ticker(db, channel_weights=channel_weights)
+    exportable = sorted(
+        (
+            item for item in db.records
+            if _is_exportable_record(
+                item,
+                channel_weights=channel_weights,
+                consensus_by_ticker=consensus_by_ticker,
+            )
+        ),
+        key=lambda item: (item.signal_date, item.signal_score, item.channel_slug, item.ticker),
+        reverse=True,
+    )
+    deduped = _dedup_signals(exportable)
     signals = [
         _record_to_kindshot_signal(
             record,
@@ -189,14 +227,7 @@ def export_signals_for_kindshot(
             consensus=consensus_by_ticker.get(str(record.ticker or "").upper()),
         )
         for record in sorted(
-            (
-                item for item in db.records
-                if _is_exportable_record(
-                    item,
-                    channel_weights=channel_weights,
-                    consensus_by_ticker=consensus_by_ticker,
-                )
-            ),
+            deduped,
             key=lambda item: (item.signal_date, item.signal_score, item.channel_slug, item.ticker),
             reverse=True,
         )

@@ -916,12 +916,13 @@ def test_export_signals_for_kindshot_filters_to_kr_buy_signals(tmp_path: Path):
     written = json.loads(output_path.read_text(encoding="utf-8"))
 
     assert payload["path"] == str(output_path)
-    assert payload["signal_count"] == 2
-    assert [item["ticker"] for item in written["signals"]] == ["012450.KS", "005930.KS"]
+    assert payload["signal_count"] == 3
+    exported_tickers = [item["ticker"] for item in written["signals"]]
+    assert exported_tickers == ["012450.KS", "035720.KS", "005930.KS"]
     assert written["signals"][0]["signal_source"] == "y2i"
     assert "점수" in written["signals"][0]["evidence"][0]
-    assert written["signals"][1]["channel"] == "sampro"
-    assert "목표가 70000 KRW" in written["signals"][1]["evidence"]
+    assert written["signals"][2]["channel"] == "sampro"
+    assert "목표가 70000 KRW" in written["signals"][2]["evidence"]
 
 
 def test_export_signals_for_kindshot_excludes_negative_mature_signals(tmp_path: Path):

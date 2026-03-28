@@ -169,11 +169,11 @@ def basic_assessment(snapshot: FundamentalSnapshot) -> tuple[float, str, str, st
 def final_verdict(scores: list[float]) -> tuple[float, str]:
     """Collapse individual framework scores into a single aggregate verdict."""
     total = sum(scores) / len(scores)
-    if total >= 80:
+    if total >= 72:
         return total, "STRONG_BUY"
-    if total >= 68:
+    if total >= 60:
         return total, "BUY"
-    if total >= 55:
+    if total >= 48:
         return total, "WATCH"
     return total, "REJECT"
 
