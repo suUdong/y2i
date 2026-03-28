@@ -1709,11 +1709,7 @@ with tabs[2]:
 
 with tabs[3]:
     st.markdown("#### 시그널 정확도")
-    try:
-        accuracy_comp = load_channel_comparison(OUTPUT_DIR)
-    except Exception as _e:
-        st.error(f"정확도 데이터 로딩 오류: {_e}")
-        accuracy_comp = {}
+    accuracy_comp = comparison_snapshot
 
     accuracy_summary = extract_signal_accuracy_summary(accuracy_comp or {})
     overall_accuracy = accuracy_summary.get("overall", {}) if isinstance(accuracy_summary, dict) else {}
@@ -2505,11 +2501,7 @@ for idx, ch_slug in enumerate(available_channels):
 
 with tabs[-2]:
     st.markdown("#### 채널 비교")
-    try:
-        comp_data = load_channel_comparison(OUTPUT_DIR)
-    except Exception as _e:
-        st.error(f"채널 비교 데이터 로딩 오류: {_e}")
-        comp_data = None
+    comp_data = comparison_snapshot
 
     if comp_data and "channels" in comp_data:
         channels_info = comp_data["channels"]
@@ -2714,11 +2706,7 @@ with tabs[-1]:
             ("채널 수", str(len(available_channels))),
         ], cols_desktop=4)
 
-    try:
-        comp_status = load_channel_comparison(OUTPUT_DIR)
-    except Exception as _e:
-        st.error(f"파이프라인 상태 로딩 오류: {_e}")
-        comp_status = None
+    comp_status = comparison_snapshot
 
     pipeline_summary = (comp_status or {}).get("pipeline_summary", {})
     if pipeline_summary:
