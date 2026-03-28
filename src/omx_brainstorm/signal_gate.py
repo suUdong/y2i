@@ -29,6 +29,7 @@ ACTIONABLE_TITLE_ANCHORS = {
     '2차전지', '바이오', '전력기기', '원전', '밸류업', '저pbr', '지주사',
     '관세전쟁', '무역전쟁', '트럼프',
 }
+GENERIC_INDIRECT_ONLY_MACRO_SIGNALS = {"semiconductor_cycle", "ai_theme"}
 NO_TICKER_SKIP_REASON = '종목 추출 근거가 부족해 종목 분석을 건너뜀'
 
 
@@ -98,7 +99,16 @@ def assess_video_signal(
     has_actionable_anchor = any(keyword in title_description_text for keyword in ACTIONABLE_TITLE_ANCHORS)
     title_has_actionable_anchor = any(keyword in title_only_text for keyword in ACTIONABLE_TITLE_ANCHORS)
     has_generic_title_cue = any(keyword in title_description_text for keyword in GENERIC_TITLE_CUES)
-    has_specific_stock_path = title_description_company_hits >= 1 or macro_stock_candidates >= 1
+    has_only_generic_indirect_macro_path = (
+        macro_stock_candidates >= 1
+        and title_description_company_hits == 0
+        and company_hits == 0
+        and macro_signal_count > 0
+        and all(signal["name"] in GENERIC_INDIRECT_ONLY_MACRO_SIGNALS for signal in macro_signals)
+    )
+    has_specific_stock_path = title_description_company_hits >= 1 or (
+        macro_stock_candidates >= 2 and not has_only_generic_indirect_macro_path
+    )
 
     score = 0.0
     score += min(finance_hits * 4, 40)
@@ -116,7 +126,7 @@ def assess_video_signal(
         score = max(score, 55.0)
     if has_actionable_anchor and actionable_macro_count >= 1 and finance_hits >= 3:
         score = max(score, 55.0)
-    if has_actionable_anchor and actionable_macro_count >= 1 and macro_stock_candidates >= 2:
+    if has_actionable_anchor and actionable_macro_count >= 1 and has_specific_stock_path:
         score = max(score, 70.0)
     if title_description_company_hits >= 2 and finance_hits >= 4:
         score = max(score, 70.0)
@@ -132,13 +142,17 @@ def assess_video_signal(
         klass = 'NON_EQUITY'
         should = False
         reason = '주식/산업 분석보다 비주식성 콘텐츠 신호가 강함'
-    elif score >= 70 or (score >= 55 and has_actionable_anchor and actionable_macro_count >= 1 and macro_stock_candidates >= 2):
+    elif (
+        score >= 70 and not has_only_generic_indirect_macro_path
+    ) or (
+        score >= 55 and has_actionable_anchor and actionable_macro_count >= 1 and has_specific_stock_path
+    ):
         klass = 'ACTIONABLE'
         should = True
         reason = '직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음'
     elif score >= 55:
         klass = 'SECTOR_ONLY'
-        should = title_description_company_hits >= 1 or macro_stock_candidates >= 2
+        should = has_specific_stock_path
         reason = '섹터 중심이지만 종목 단서가 충분해 분석 가치가 있음'
     elif score >= 35:
         klass = 'LOW_SIGNAL'
@@ -179,5 +193,7 @@ def assess_video_signal(
             'has_actionable_anchor': has_actionable_anchor,
             'title_has_actionable_anchor': title_has_actionable_anchor,
             'has_generic_title_cue': has_generic_title_cue,
+            'has_specific_stock_path': has_specific_stock_path,
+            'has_only_generic_indirect_macro_path': has_only_generic_indirect_macro_path,
         },
     )

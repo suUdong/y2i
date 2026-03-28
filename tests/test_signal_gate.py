@@ -53,3 +53,20 @@ def test_signal_gate_recognizes_spaced_korean_company_names():
     assert result.should_analyze_stocks is True
     assert result.metrics["title_description_company_hits"] >= 1
     assert result.metrics["company_hits"] >= 1
+
+
+def test_signal_gate_keeps_generic_semiconductor_theme_as_sector_only_without_direct_company_path():
+    result = assess_video_signal(
+        title="반도체 수혜주 총정리, 다음 주도주는?",
+        transcript_text=" ".join(
+            ["반도체 메모리 hbm ai 데이터센터 투자 수혜주 종목 실적 매출 이익"]
+            * 220
+        ),
+        description="업황과 밸류체인 전반을 훑는 섹터 점검 영상",
+        tags=["반도체", "HBM", "AI", "데이터센터", "수혜주"],
+    )
+
+    assert result.video_signal_class == "SECTOR_ONLY"
+    assert result.should_analyze_stocks is False
+    assert result.metrics["macro_stock_candidates"] >= 2
+    assert result.metrics["has_only_generic_indirect_macro_path"] is True

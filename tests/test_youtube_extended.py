@@ -533,6 +533,11 @@ def test_canonical_channel_url_prefers_channel_id():
     ) == "https://www.youtube.com/channel/UC123/videos"
 
 
+def test_canonical_channel_url_normalizes_live_suffix():
+    assert canonical_channel_url("https://www.youtube.com/@testhandle/live") == "https://www.youtube.com/@testhandle/videos"
+    assert canonical_channel_url("https://www.youtube.com/channel/UC123/live") == "https://www.youtube.com/channel/UC123/videos"
+
+
 def test_resolve_channel_videos_since_skips_no_date(monkeypatch):
     entries = [{"id": "vid1", "title": "V1"}]
 

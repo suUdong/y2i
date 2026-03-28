@@ -20,7 +20,7 @@ from .utils import ensure_dir, normalize_ws, read_json, write_json
 VIDEO_ID_RE = re.compile(r"(?:v=|youtu\.be/|/shorts/)([A-Za-z0-9_-]{11})")
 CHANNEL_ID_RE = re.compile(r"/channel/([A-Za-z0-9_-]+)")
 CHANNEL_HANDLE_RE = re.compile(r"/@([^/?#]+)")
-CHANNEL_SUFFIX_RE = re.compile(r"/(?:videos|featured|streams|shorts)/?$")
+CHANNEL_SUFFIX_RE = re.compile(r"/(?:videos|featured|streams|shorts|live)/?$")
 SAFE_CACHE_KEY_RE = re.compile(r"[^A-Za-z0-9_-]")
 DEFAULT_VIDEO_CACHE_HOURS = 24
 DEFAULT_YOUTUBE_FETCH_MAX_ATTEMPTS = 3
@@ -433,6 +433,8 @@ def canonical_channel_url(
     uploader_id: str | None = None,
 ) -> str:
     clean_url = url.strip().rstrip("/")
+    if clean_url.endswith("/live"):
+        clean_url = CHANNEL_SUFFIX_RE.sub("", clean_url)
     if channel_id:
         return f"https://www.youtube.com/channel/{channel_id}/videos"
     if uploader_id:
