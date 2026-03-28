@@ -230,6 +230,52 @@ def test_cli_signal_accuracy_report(monkeypatch, tmp_path, capsys):
     assert Path(output["txt_path"]).exists()
 
 
+def test_cli_signal_accuracy_report_falls_back_without_dashboard_data(monkeypatch, tmp_path, capsys):
+    tracker_dir = tmp_path / ".omx" / "state"
+    tracker_dir.mkdir(parents=True, exist_ok=True)
+    tracker_path = tracker_dir / "signal_tracker.json"
+    tracker_path.write_text(json.dumps({"signals": []}), encoding="utf-8")
+    fake_dashboard = types.ModuleType("dashboard")
+    fake_loader = types.ModuleType("dashboard.data_loader")
+
+    def _boom(*_args, **_kwargs):
+        raise RuntimeError("dashboard unavailable")
+
+    fake_loader.load_channel_comparison = _boom
+    monkeypatch.setitem(sys.modules, "dashboard", fake_dashboard)
+    monkeypatch.setitem(sys.modules, "dashboard.data_loader", fake_loader)
+
+    def _fake_summary(tracker_db, channel_metadata, top_tickers):
+        assert channel_metadata == {}
+        assert top_tickers == 5
+        return {
+            "generated_at": "20260328T101500Z",
+            "overall": {"total_signals": 0},
+            "by_channel": {},
+            "by_ticker": {},
+        }
+
+    def _fake_save(summary, output_dir, run_id):
+        json_path = output_dir / f"{run_id}.json"
+        txt_path = output_dir / f"{run_id}.txt"
+        json_path.write_text(json.dumps(summary), encoding="utf-8")
+        txt_path.write_text("ok", encoding="utf-8")
+        return json_path, txt_path
+
+    monkeypatch.setattr("omx_brainstorm.cli.build_signal_accuracy_summary", _fake_summary)
+    monkeypatch.setattr("omx_brainstorm.cli.save_signal_accuracy_report", _fake_save)
+    monkeypatch.setattr(sys, "argv", [
+        "omx-brainstorm", "--output-dir", str(tmp_path),
+        "signal-accuracy-report", "--tracker-db", str(tracker_path), "--top-tickers", "5",
+    ])
+
+    main()
+    output = json.loads(capsys.readouterr().out)
+    assert output["total_signals"] == 0
+    assert output["channel_count"] == 0
+    assert output["ticker_count"] == 0
+
+
 def test_cli_signal_backtest_report(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(
         "omx_brainstorm.cli.run_signal_backtest_workflow",
@@ -265,6 +311,32 @@ retention_days = 7
     assert output["lookback_days"] == 90
     assert output["total_signals"] == 12
     assert output["backfill"]["new_records"] == 8
+
+
+def test_cli_run_scheduler_forever(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.toml"
+    config_path.write_text("""
+[app]
+provider = "mock"
+
+[logging]
+json = false
+log_dir = "logs"
+retention_days = 7
+""", encoding="utf-8")
+
+    called = {}
+
+    def _fake_run_scheduler_forever(config):
+        called["provider"] = config.provider
+
+    monkeypatch.setattr("omx_brainstorm.cli.run_scheduler_forever", _fake_run_scheduler_forever)
+    monkeypatch.setattr(sys, "argv", [
+        "omx-brainstorm", "run-scheduler", "--config", str(config_path),
+    ])
+
+    main()
+    assert called["provider"] == "mock"
 
 
 def test_cli_error_exits_with_code_1(monkeypatch, tmp_path):

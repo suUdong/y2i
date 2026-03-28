@@ -228,3 +228,25 @@ def test_fundamentals_missing_price_adds_note(monkeypatch):
     snapshot = fetcher.fetch(mention)
     assert "missing_current_price" in snapshot.notes
     assert "missing_revenue_growth" in snapshot.notes
+
+
+def test_fundamentals_bounds_memory_cache(monkeypatch, tmp_path):
+    class _FakeTicker:
+        def __init__(self, ticker):
+            self.info = {
+                "longName": f"{ticker} Corp",
+                "currency": "USD",
+                "currentPrice": 100.0,
+            }
+            self.fast_info = None
+
+    fake_yf = MagicMock()
+    fake_yf.Ticker = _FakeTicker
+    monkeypatch.setitem(__import__("sys").modules, "yfinance", fake_yf)
+
+    fetcher = FundamentalsFetcher(cache_root=tmp_path / "fundamentals", max_memory_entries=2)
+    fetcher.fetch(TickerMention(ticker="NVDA", company_name="NVIDIA"))
+    fetcher.fetch(TickerMention(ticker="AAPL", company_name="Apple"))
+    fetcher.fetch(TickerMention(ticker="MSFT", company_name="Microsoft"))
+
+    assert list(fetcher._memory_cache) == ["AAPL", "MSFT"]

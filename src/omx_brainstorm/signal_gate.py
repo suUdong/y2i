@@ -20,12 +20,14 @@ FINANCE_KEYWORDS = {
 NON_EQUITY_KEYWORDS = {'브이로그', '먹방', '여행', '일상', '운동', '게임', '리뷰만', '광고'}
 GENERIC_TITLE_CUES = {
     '폭락', '현금', '조심하세요', '개인투자자', '이 실수', '이 주식만', '부자되는', '위험 신호', '위험신호',
-    '희비', '이상 현상', '기회 왔다', '사야 할 것들', '지금 사야'
+    '희비', '이상 현상', '기회 왔다', '사야 할 것들', '지금 사야',
+    '인터뷰', '대담', '토론', '라이브',
 }
 ACTIONABLE_TITLE_ANCHORS = {
     '반도체', '메모리', '전쟁', '방산', '금리', '환율', '유가',
     '건설', '부동산', '증권', '조선', '정유', 'ai 반도체', '데이터센터', 'gpu',
-    '2차전지', '바이오', '전력기기', '원전', '밸류업', '저pbr', '지주사'
+    '2차전지', '바이오', '전력기기', '원전', '밸류업', '저pbr', '지주사',
+    '관세전쟁', '무역전쟁', '트럼프',
 }
 NO_TICKER_SKIP_REASON = '종목 추출 근거가 부족해 종목 분석을 건너뜀'
 
@@ -136,7 +138,7 @@ def assess_video_signal(
         reason = '직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음'
     elif score >= 55:
         klass = 'SECTOR_ONLY'
-        should = has_specific_stock_path
+        should = title_description_company_hits >= 1 or macro_stock_candidates >= 2
         reason = '섹터 중심이지만 종목 단서가 충분해 분석 가치가 있음'
     elif score >= 35:
         klass = 'LOW_SIGNAL'

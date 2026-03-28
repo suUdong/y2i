@@ -957,3 +957,149 @@ def test_export_signals_for_kindshot_excludes_negative_mature_signals(tmp_path: 
 
     assert [item["ticker"] for item in written["signals"]] == ["005930.KS"]
     assert any("5d 방향수익률 6.00%" in evidence for evidence in written["signals"][0]["evidence"])
+
+
+def test_export_signals_for_kindshot_includes_consensus_metadata(tmp_path: Path):
+    db = SignalTrackerDB(tmp_path / "tracker.json")
+    db.add_record(
+        SignalRecord(
+            ticker="005930.KS",
+            company_name="삼성전자",
+            channel_slug="sampro",
+            signal_date="2026-03-20",
+            signal_score=90.0,
+            verdict="STRONG_BUY",
+            source_title="삼성전자 핵심 논리",
+            price_target={"target_price": 70000, "currency": "KRW"},
+        )
+    )
+    db.add_record(
+        SignalRecord(
+            ticker="005930.KS",
+            company_name="삼성전자",
+            channel_slug="itgod",
+            signal_date="2026-03-21",
+            signal_score=84.0,
+            verdict="BUY",
+            source_title="삼성전자 추세 확인",
+            price_target={"target_price": 69000, "currency": "KRW"},
+        )
+    )
+
+    output_path = tmp_path / "kindshot_feed.json"
+    export_signals_for_kindshot(db, output_path, channel_weights={"sampro": 1.2, "itgod": 1.05})
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert written["signals"][0]["ticker"] == "005930.KS"
+    assert written["signals"][0]["consensus_signal"] is True
+    assert written["signals"][0]["consensus_strength"] in {"MODERATE", "STRONG"}
+    assert written["signals"][0]["consensus_channel_count"] == 2
+    assert any("합의 통과" in evidence for evidence in written["signals"][0]["evidence"])
+
+
+def test_export_signals_for_kindshot_skips_low_weight_single_channel_signal(tmp_path: Path):
+    db = SignalTrackerDB(tmp_path / "tracker.json")
+    db.add_record(
+        SignalRecord(
+            ticker="035420.KS",
+            company_name="NAVER",
+            channel_slug="lowconviction",
+            signal_date="2026-03-21",
+            signal_score=88.0,
+            verdict="BUY",
+            source_title="네이버 단일 매수",
+            price_target={"target_price": 250000, "currency": "KRW"},
+        )
+    )
+
+    output_path = tmp_path / "kindshot_feed.json"
+    payload = export_signals_for_kindshot(db, output_path, channel_weights={"lowconviction": 0.75})
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert payload["signal_count"] == 0
+    assert written["signals"] == []
+
+
+def test_export_signals_for_kindshot_penalizes_low_weight_channels(tmp_path: Path):
+    db = SignalTrackerDB(tmp_path / "tracker.json")
+    for idx, score in enumerate((88.0, 90.0, 87.0), start=1):
+        db.add_record(
+            SignalRecord(
+                ticker=f"GOOD{idx:02d}.KS",
+                company_name=f"Good {idx}",
+                channel_slug="sampro",
+                signal_date=f"2026-03-0{idx}",
+                signal_score=score,
+                verdict="BUY",
+                price_target={"target_price": 70000 + idx * 1000, "currency": "KRW"},
+                returns={"1d": 1.2, "3d": 2.8, "5d": 5.5, "10d": None, "20d": None},
+            )
+        )
+    for idx, score in enumerate((82.0, 79.0, 81.0), start=1):
+        db.add_record(
+            SignalRecord(
+                ticker=f"BAD{idx:02d}.KS",
+                company_name=f"Bad {idx}",
+                channel_slug="macroview",
+                signal_date=f"2026-03-1{idx}",
+                signal_score=score,
+                verdict="BUY",
+                price_target={"target_price": 62000 + idx * 500, "currency": "KRW"},
+                returns={"1d": -1.0, "3d": -2.0, "5d": -4.5, "10d": None, "20d": None},
+            )
+        )
+    db.add_record(
+        SignalRecord(
+            ticker="078930.KS",
+            company_name="GS",
+            channel_slug="macroview",
+            signal_date="2026-03-21",
+            signal_score=68.0,
+            verdict="BUY",
+            price_target={"target_price": 65000, "currency": "KRW"},
+        )
+    )
+
+    output_path = tmp_path / "kindshot_feed.json"
+    export_signals_for_kindshot(db, output_path)
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert "078930.KS" not in [item["ticker"] for item in written["signals"]]
+
+
+def test_export_signals_for_kindshot_adds_consensus_evidence(tmp_path: Path):
+    db = SignalTrackerDB(tmp_path / "tracker.json")
+    db.add_record(
+        SignalRecord(
+            ticker="005930.KS",
+            company_name="삼성전자",
+            channel_slug="sampro",
+            signal_date="2026-03-20",
+            signal_score=84.0,
+            verdict="BUY",
+            source_title="삼성전자 비중 확대",
+            price_target={"target_price": 72000, "currency": "KRW"},
+            returns={"1d": 1.0, "3d": 2.2, "5d": 4.1, "10d": None, "20d": None},
+        )
+    )
+    db.add_record(
+        SignalRecord(
+            ticker="005930.KS",
+            company_name="삼성전자",
+            channel_slug="itgod",
+            signal_date="2026-03-21",
+            signal_score=82.0,
+            verdict="STRONG_BUY",
+            source_title="삼성전자 업사이드 재평가",
+            price_target={"target_price": 74000, "currency": "KRW"},
+            returns={"1d": 0.8, "3d": 2.0, "5d": 3.8, "10d": None, "20d": None},
+        )
+    )
+
+    output_path = tmp_path / "kindshot_feed.json"
+    export_signals_for_kindshot(db, output_path)
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert [item["ticker"] for item in written["signals"]] == ["005930.KS", "005930.KS"]
+    assert any("합의" in evidence for evidence in written["signals"][0]["evidence"])
+    assert written["signals"][0]["confidence"] > 0.84

@@ -115,8 +115,8 @@ def compute_channel_quality(
         quality = scorecard_overall * 0.35
         quality += min(actionable_ratio * 100, 100) * 0.10
         quality += ranking_pp * 0.20
-        quality += (avg_short_hit if avg_short_hit is not None else 50.0) * 0.20
-        return_score = 50.0
+        quality += (avg_short_hit if avg_short_hit is not None else 45.0) * 0.20
+        return_score = 45.0
         if avg_short_return is not None:
             return_score = _clamp(50.0 + avg_short_return * 5.0, 0.0, 100.0)
         quality += return_score * 0.10
@@ -177,6 +177,8 @@ def compute_dynamic_weights(
     weights: dict[str, float] = {}
     for report in ranked_reports:
         quality_anchor = _clamp((float(report.overall_quality_score) - 60.0) / 100.0, -0.12, 0.16)
+        predictive_anchor = _clamp((float(report.ranking_predictive_power or 0.0) - 50.0) / 220.0, -0.08, 0.1)
+        spearman_anchor = _clamp(float(report.spearman_correlation or 0.0) * 0.06, -0.06, 0.06)
         short_hit_rates = [float(value) for value in (report.hit_rate_1d, report.hit_rate_3d, report.hit_rate_5d) if value is not None]
         short_returns = [
             float(value)
@@ -191,12 +193,15 @@ def compute_dynamic_weights(
             float(report.signals_with_price_5d or 0)
             + float(report.signals_with_price_3d or 0) * 0.35
             + float(report.signals_with_price_1d or 0) * 0.15
+            + float(report.signals_with_price_10d or 0) * 0.25
+            + float(report.target_count or 0) * 0.55
         )
-        evidence_factor = _clamp(evidence_score / 10.0, 0.0, 1.0)
-        if evidence_factor == 0.0 and (short_hit_rates or short_returns):
+        evidence_factor = _clamp(evidence_score / 12.0, 0.0, 1.0)
+        if evidence_factor == 0.0 and (short_hit_rates or short_returns or report.target_count):
             evidence_factor = 0.65
 
-        multiplier = 1.0 + quality_anchor * (0.4 + evidence_factor * 0.6)
+        structural_anchor = quality_anchor + predictive_anchor + spearman_anchor
+        multiplier = 1.0 + structural_anchor * (0.4 + evidence_factor * 0.6)
         if not short_hit_rates and not short_returns:
             weights[report.slug] = round(_clamp(multiplier, 0.9, 1.1), 3)
             continue
@@ -223,9 +228,20 @@ def compute_dynamic_weights(
             elif avg_return >= 2.0:
                 multiplier += min(0.08, avg_return / 40.0) * evidence_factor
 
+        target_evidence = _clamp(float(report.target_count or 0) / 4.0, 0.0, 1.0)
+        if report.target_hit_rate is not None:
+            target_adjustment = _clamp((float(report.target_hit_rate) - 50.0) / 50.0, -0.14, 0.14)
+            multiplier += target_adjustment * max(0.2, target_evidence)
+        if report.avg_target_progress_pct is not None and report.target_count:
+            progress_adjustment = _clamp((float(report.avg_target_progress_pct) - 65.0) / 120.0, -0.06, 0.06)
+            multiplier += progress_adjustment * max(0.15, target_evidence)
+        if report.pending_targets and report.target_count:
+            pending_ratio = float(report.pending_targets) / max(1.0, float(report.target_count))
+            multiplier -= min(0.05, pending_ratio * 0.05) * max(0.2, target_evidence)
+
         if evidence_factor < 0.35:
             multiplier = 1.0 + (multiplier - 1.0) * evidence_factor
-            multiplier += quality_anchor * 0.15
+            multiplier += structural_anchor * 0.12
 
         weights[report.slug] = round(_clamp(multiplier, 0.4, 1.5), 3)
     return weights

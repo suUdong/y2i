@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from scripts.run_channel_30d_comparison import (
+    _analyze_channel_rows,
     build_telegram_payload,
     discover_recent_video_ids,
     quality_scorecard,
@@ -43,6 +44,32 @@ def test_recent_feed_video_ids_returns_empty_without_channel_id():
     assert recent_feed_video_ids("", days=30) == []
 
 
+def test_recent_feed_video_ids_skips_malformed_entries(monkeypatch):
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def read(self):
+            return b"""<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns='http://www.w3.org/2005/Atom' xmlns:yt='http://www.youtube.com/xml/schemas/2015'>
+  <entry>
+    <published>not-a-date</published>
+    <yt:videoId>broken</yt:videoId>
+  </entry>
+  <entry>
+    <published>2026-03-26T00:00:00+00:00</published>
+    <yt:videoId>vid-good</yt:videoId>
+  </entry>
+</feed>"""
+
+    monkeypatch.setattr("scripts.run_channel_30d_comparison.urlopen", lambda *args, **kwargs: Response())
+
+    assert recent_feed_video_ids("UC123", days=30, today="2026-03-27") == ["vid-good"]
+
+
 def test_discover_recent_video_ids_falls_back_to_channel_listing(monkeypatch):
     class ResolverStub:
         def resolve_channel_videos_since(self, channel_url, days=30, reference_date=None):
@@ -66,6 +93,31 @@ def test_discover_recent_video_ids_falls_back_to_channel_listing(monkeypatch):
 def test_quality_scorecard_transcript_coverage_counts_cache():
     scorecard = quality_scorecard([{"should_analyze_stocks": True, "transcript_language": "cache:ko"}], {}, [])
     assert scorecard["transcript_coverage"] == 100.0
+
+
+def test_analyze_channel_rows_ignores_parallel_future_exception(monkeypatch, tmp_path):
+    class DummyConfig:
+        class Strategy:
+            video_workers = 2
+            fundamentals_workers = 1
+
+        strategy = Strategy()
+
+    monkeypatch.setattr("scripts.run_channel_30d_comparison.YoutubeResolver", lambda: object())
+    monkeypatch.setattr("scripts.run_channel_30d_comparison.TranscriptFetcher", lambda: object())
+    monkeypatch.setattr("scripts.run_channel_30d_comparison.FundamentalsFetcher", lambda max_workers=1: object())
+
+    def fake_analyze_single_video(video_id, resolver, fetcher, fundamentals, cache, config):
+        if video_id == "bad-video":
+            raise RuntimeError("boom")
+        return {"video_id": video_id, "stocks": []}
+
+    monkeypatch.setattr("scripts.run_channel_30d_comparison._analyze_single_video", fake_analyze_single_video)
+
+    config = DummyConfig()
+    rows = _analyze_channel_rows(["good-video", "bad-video"], cache=object(), config=config)
+
+    assert rows == [{"video_id": "good-video", "stocks": []}]
 
 
 def test_run_comparison_job_handles_empty_channel_set(tmp_path):

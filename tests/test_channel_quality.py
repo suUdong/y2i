@@ -221,6 +221,61 @@ class TestComputeDynamicWeights:
         weights = compute_dynamic_weights(reports)
         assert all(0.4 <= w <= 1.5 for w in weights.values())
 
+    def test_target_hit_rate_rewards_mature_channel(self):
+        base = ChannelQualityReport(
+            slug="base", display_name="base", actionable_ratio=0.55,
+            avg_signal_score=68.0, hit_rate_1d=62.0, hit_rate_3d=64.0,
+            hit_rate_5d=66.0, hit_rate_10d=60.0,
+            avg_return_1d=1.0, avg_return_3d=1.5,
+            avg_return_5d=3.0, avg_return_10d=2.8,
+            spearman_correlation=0.5, ranking_predictive_power=57.0,
+            overall_quality_score=70.0,
+            signals_with_price_1d=8, signals_with_price_3d=8, signals_with_price_5d=7, signals_with_price_10d=6,
+            target_count=4, target_hit_rate=75.0, pending_targets=1,
+            avg_directional_return_1d=1.0, avg_directional_return_3d=1.5, avg_directional_return_5d=3.0,
+        )
+        weak = ChannelQualityReport(
+            slug="weak", display_name="weak", actionable_ratio=0.55,
+            avg_signal_score=68.0, hit_rate_1d=62.0, hit_rate_3d=64.0,
+            hit_rate_5d=66.0, hit_rate_10d=60.0,
+            avg_return_1d=1.0, avg_return_3d=1.5,
+            avg_return_5d=3.0, avg_return_10d=2.8,
+            spearman_correlation=0.5, ranking_predictive_power=57.0,
+            overall_quality_score=70.0,
+            signals_with_price_1d=8, signals_with_price_3d=8, signals_with_price_5d=7, signals_with_price_10d=6,
+            target_count=4, target_hit_rate=25.0, pending_targets=3,
+            avg_directional_return_1d=1.0, avg_directional_return_3d=1.5, avg_directional_return_5d=3.0,
+        )
+        weights = compute_dynamic_weights([base, weak])
+        assert weights["base"] > weights["weak"]
+
+    def test_proven_target_hit_history_boosts_weight(self):
+        baseline = ChannelQualityReport(
+            slug="baseline", display_name="baseline", actionable_ratio=0.55,
+            avg_signal_score=66.0, hit_rate_1d=58.0, hit_rate_3d=60.0,
+            hit_rate_5d=61.0, hit_rate_10d=58.0,
+            avg_return_1d=0.8, avg_return_3d=1.5,
+            avg_return_5d=2.2, avg_return_10d=2.0,
+            spearman_correlation=0.45, ranking_predictive_power=56.0,
+            overall_quality_score=69.0,
+            signals_with_price_1d=8, signals_with_price_3d=7, signals_with_price_5d=6,
+            avg_directional_return_1d=0.8, avg_directional_return_3d=1.5, avg_directional_return_5d=2.2,
+        )
+        proven = ChannelQualityReport(
+            slug="proven", display_name="proven", actionable_ratio=0.55,
+            avg_signal_score=66.0, hit_rate_1d=58.0, hit_rate_3d=60.0,
+            hit_rate_5d=61.0, hit_rate_10d=58.0,
+            avg_return_1d=0.8, avg_return_3d=1.5,
+            avg_return_5d=2.2, avg_return_10d=2.0,
+            spearman_correlation=0.45, ranking_predictive_power=56.0,
+            overall_quality_score=69.0,
+            signals_with_price_1d=8, signals_with_price_3d=7, signals_with_price_5d=6,
+            avg_directional_return_1d=0.8, avg_directional_return_3d=1.5, avg_directional_return_5d=2.2,
+            target_count=6, target_hit_rate=83.0, avg_target_progress_pct=91.0, pending_targets=1,
+        )
+        weights = compute_dynamic_weights([baseline, proven])
+        assert weights["proven"] > weights["baseline"]
+
 
 class TestChannelQualityReport:
     def test_to_dict(self):

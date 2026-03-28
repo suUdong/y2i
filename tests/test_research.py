@@ -262,6 +262,78 @@ def test_build_consensus_ranking_requires_weighted_support_for_consensus_flag():
     assert ranking[0]["channel_weight_sum"] == 2.0
 
 
+def test_build_consensus_ranking_rejects_mixed_consensus_even_with_high_score():
+    ranking = build_consensus_ranking(
+        {
+            "sampro": [{
+                "ticker": "NVDA",
+                "company_name": "NVIDIA",
+                "aggregate_score": 91.0,
+                "aggregate_verdict": "STRONG_BUY",
+                "appearances": 2,
+                "total_mentions": 4,
+            }],
+            "itgod": [{
+                "ticker": "NVDA",
+                "company_name": "NVIDIA",
+                "aggregate_score": 88.0,
+                "aggregate_verdict": "BUY",
+                "appearances": 2,
+                "total_mentions": 3,
+            }],
+            "macroview": [{
+                "ticker": "NVDA",
+                "company_name": "NVIDIA",
+                "aggregate_score": 84.0,
+                "aggregate_verdict": "WATCH",
+                "appearances": 1,
+                "total_mentions": 1,
+            }],
+        },
+        channel_weights={"sampro": 1.2, "itgod": 1.05, "macroview": 1.0},
+    )
+    assert ranking[0]["cross_validation_status"] == "MIXED"
+    assert ranking[0]["consensus_strength"] == "WEAK"
+    assert ranking[0]["aggregate_score"] < 100.0
+    assert ranking[0]["consensus_signal"] is False
+
+
+def test_build_consensus_ranking_rejects_mixed_verdict_alignment():
+    ranking = build_consensus_ranking(
+        {
+            "sampro": [{
+                "ticker": "005930.KS",
+                "company_name": "Samsung Electronics",
+                "aggregate_score": 89.0,
+                "aggregate_verdict": "BUY",
+                "appearances": 2,
+                "total_mentions": 4,
+            }],
+            "itgod": [{
+                "ticker": "005930.KS",
+                "company_name": "Samsung Electronics",
+                "aggregate_score": 86.0,
+                "aggregate_verdict": "STRONG_BUY",
+                "appearances": 1,
+                "total_mentions": 2,
+            }],
+            "macroview": [{
+                "ticker": "005930.KS",
+                "company_name": "Samsung Electronics",
+                "aggregate_score": 84.0,
+                "aggregate_verdict": "WATCH",
+                "appearances": 1,
+                "total_mentions": 1,
+            }],
+        },
+        channel_weights={"sampro": 1.2, "itgod": 1.1, "macroview": 0.3},
+    )
+    assert ranking[0]["cross_validation_status"] == "MIXED"
+    assert ranking[0]["cross_validation_score"] >= 70.0
+    assert ranking[0]["verdict_alignment_ratio"] < 0.5
+    assert ranking[0]["consensus_signal"] is False
+
+
 # --- render_cross_video_ranking_text ---
 
 def test_render_cross_video_ranking_text_empty():

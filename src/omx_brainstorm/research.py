@@ -15,12 +15,16 @@ RANKING_FORMULA = (
 )
 CONSENSUS_FORMULA = (
     "aggregate_score = weighted_base_score + quality_weight_adjustment "
-    "+ consensus_weight_bonus + consensus_density_bonus"
+    "+ consensus_weight_bonus + consensus_density_bonus - consensus_disagreement_penalty"
 )
 OPTIMIZED_CONSENSUS_MIN_SCORE = 80.0
-OPTIMIZED_CONSENSUS_MIN_CROSS_VALIDATION = 70.0
+OPTIMIZED_CONSENSUS_MIN_CROSS_VALIDATION = 72.0
 OPTIMIZED_CONSENSUS_MIN_CHANNEL_WEIGHT_SUM = 2.15
+OPTIMIZED_CONSENSUS_MIN_MAJORITY_RATIO = 0.6
+OPTIMIZED_CONSENSUS_MIN_VERDICT_ALIGNMENT_RATIO = 0.5
+OPTIMIZED_CONSENSUS_MAX_SCORE_SPREAD = 18.0
 OPTIMIZED_CONSENSUS_ALLOWED_STRENGTHS = frozenset({"MODERATE", "STRONG"})
+OPTIMIZED_CONSENSUS_ALLOWED_STATUSES = frozenset({"CONFIRMED"})
 
 BULLISH_VERDICTS = {"STRONG_BUY", "BUY"}
 CAUTIOUS_VERDICTS = {"WATCH", "HOLD"}
@@ -34,7 +38,11 @@ def qualifies_weighted_consensus(
     min_cross_validation_score: float = OPTIMIZED_CONSENSUS_MIN_CROSS_VALIDATION,
     min_channel_count: int = 2,
     min_channel_weight_sum: float = OPTIMIZED_CONSENSUS_MIN_CHANNEL_WEIGHT_SUM,
+    min_majority_ratio: float = OPTIMIZED_CONSENSUS_MIN_MAJORITY_RATIO,
+    min_verdict_alignment_ratio: float = OPTIMIZED_CONSENSUS_MIN_VERDICT_ALIGNMENT_RATIO,
+    max_score_spread: float | None = OPTIMIZED_CONSENSUS_MAX_SCORE_SPREAD,
     allowed_strengths: frozenset[str] | set[str] | None = OPTIMIZED_CONSENSUS_ALLOWED_STRENGTHS,
+    allowed_statuses: frozenset[str] | set[str] | None = OPTIMIZED_CONSENSUS_ALLOWED_STATUSES,
 ) -> bool:
     """Return True when a multi-channel signal clears the ROI-tuned consensus bar."""
     channel_count = int(stock.get("channel_count", 0) or 0)
@@ -48,6 +56,23 @@ def qualifies_weighted_consensus(
     weight_sum = stock.get("channel_weight_sum")
     effective_weight_sum = float(weight_sum if weight_sum is not None else channel_count)
     if effective_weight_sum < min_channel_weight_sum:
+        return False
+
+    if allowed_statuses:
+        status = str(stock.get("cross_validation_status", "")).upper()
+        if status and status not in allowed_statuses:
+            return False
+
+    majority_ratio = stock.get("cross_validation_majority_ratio")
+    if majority_ratio is not None and float(majority_ratio) < min_majority_ratio:
+        return False
+
+    verdict_alignment_ratio = stock.get("verdict_alignment_ratio")
+    if verdict_alignment_ratio is not None and float(verdict_alignment_ratio) < min_verdict_alignment_ratio:
+        return False
+
+    score_spread = stock.get("score_spread")
+    if max_score_spread is not None and score_spread is not None and float(score_spread) > float(max_score_spread):
         return False
 
     if allowed_strengths:
@@ -269,7 +294,11 @@ def build_consensus_ranking(
             cross_validation["score"],
         )
         density_bonus = min(4.0, max(0, bucket["appearances"] - channel_count) * 0.75)
-        aggregate_score = min(100.0, max(0.0, weighted_base_score + consensus_bonus + quality_adjustment + density_bonus))
+        disagreement_penalty = _consensus_disagreement_penalty(cross_validation)
+        aggregate_score = min(
+            100.0,
+            max(0.0, weighted_base_score + consensus_bonus + quality_adjustment + density_bonus - disagreement_penalty),
+        )
 
         item = {
             "ticker": bucket["ticker"],
@@ -304,6 +333,7 @@ def build_consensus_ranking(
             "consensus_bonus": round(consensus_bonus, 1),
             "quality_weight_adjustment": round(quality_adjustment, 1),
             "consensus_density_bonus": round(density_bonus, 1),
+            "consensus_disagreement_penalty": round(disagreement_penalty, 1),
             "channel_scores": bucket["_channel_scores"],
             "channel_weights": bucket["_channel_weights"],
             "channel_verdicts": bucket["_channel_verdicts"],
@@ -456,14 +486,33 @@ def _consensus_weight_bonus(
     if channel_count < 2:
         return 0.0
 
-    base_bonus = min(18.0, max(0, channel_count - 1) * 6.5)
-    if cross_validation_status == "CONFIRMED":
+    status = str(cross_validation_status or "").upper()
+    if status == "CONFIRMED":
+        base_bonus = min(18.0, max(0, channel_count - 1) * 6.5)
         verification_bonus = min(8.0, max(0.0, cross_validation_score - 60.0) * 0.18)
-    elif cross_validation_status == "MIXED":
+    elif status == "MIXED":
+        base_bonus = min(8.0, max(0, channel_count - 1) * 2.5)
         verification_bonus = min(4.0, max(0.0, cross_validation_score - 55.0) * 0.08)
     else:
+        base_bonus = 0.0
         verification_bonus = 0.0
     return round(base_bonus + verification_bonus, 1)
+
+
+def _consensus_disagreement_penalty(cross_validation: dict[str, Any]) -> float:
+    status = str(cross_validation.get("status", "")).upper()
+    majority_ratio = float(cross_validation.get("majority_ratio", 0.0) or 0.0)
+    verdict_alignment_ratio = float(cross_validation.get("verdict_alignment_ratio", 0.0) or 0.0)
+    score_spread = float(cross_validation.get("score_spread", 0.0) or 0.0)
+
+    penalty = max(0.0, 0.55 - verdict_alignment_ratio) * 8.0
+    penalty += max(0.0, 0.7 - majority_ratio) * 4.0
+    penalty += max(0.0, score_spread - 14.0) * 0.12
+    if status == "DIVERGENT":
+        penalty += 2.5
+    elif status == "MIXED":
+        penalty += 0.5
+    return round(min(8.0, penalty), 2)
 
 
 def aggregate_verdict(score: float) -> str:

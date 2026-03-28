@@ -24,3 +24,32 @@ def test_signal_gate_understands_korean_market_sector_keywords():
 
     assert result.metrics["finance_keyword_hits"] >= 6
     assert result.video_signal_class in {"ACTIONABLE", "SECTOR_ONLY"}
+
+
+def test_signal_gate_keeps_sector_label_but_skips_stock_analysis_without_specific_path(monkeypatch):
+    monkeypatch.setattr("omx_brainstorm.signal_gate.indirect_macro_mentions", lambda *args, **kwargs: [])
+
+    result = assess_video_signal(
+        title="반도체 수혜주 밸류체인 투자 전략 총정리",
+        transcript_text="반도체 투자 전략과 수혜주, 밸류체인, 실적, 매출, 이익, 전략을 반복 점검한다.",
+        description="반도체 업황과 투자 전략만 다루는 섹터 영상",
+        tags=["반도체", "수혜주", "밸류체인", "투자"],
+    )
+
+    assert result.video_signal_class == "SECTOR_ONLY"
+    assert result.should_analyze_stocks is False
+    assert result.skip_reason
+
+
+def test_signal_gate_recognizes_spaced_korean_company_names():
+    result = assess_video_signal(
+        title="SK 하이닉스 실적 점검",
+        transcript_text="SK 하이닉스 실적과 반도체 투자 전략을 점검한다.",
+        description="메모리 업황과 투자 포인트를 본다.",
+        tags=["반도체", "실적", "투자"],
+    )
+
+    assert result.video_signal_class in {"ACTIONABLE", "SECTOR_ONLY"}
+    assert result.should_analyze_stocks is True
+    assert result.metrics["title_description_company_hits"] >= 1
+    assert result.metrics["company_hits"] >= 1

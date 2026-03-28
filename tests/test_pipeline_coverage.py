@@ -2,7 +2,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from omx_brainstorm.models import VideoInput, TranscriptSegment
+from omx_brainstorm.models import TickerMention, VideoInput, TranscriptSegment
 from omx_brainstorm.pipeline import OMXPipeline
 from omx_brainstorm.transcript_cache import TranscriptCache
 
@@ -128,3 +128,36 @@ def test_analyze_channel_since_empty(tmp_path):
     pipeline.resolver = _DummyResolver([])
     results = pipeline.analyze_channel_since("https://youtube.com/channel/test", days=7)
     assert results == []
+
+
+def test_run_stock_analysis_uses_fetch_many_when_available(tmp_path):
+    pipeline = _make_pipeline(tmp_path, [])
+    mentions = [TickerMention(ticker="NVDA"), TickerMention(ticker="AMD")]
+    pipeline.extractor = MagicMock()
+    pipeline.extractor.extract.return_value = mentions
+
+    class _FetchManyFundamentals:
+        def fetch_many(self, incoming_mentions):
+            assert incoming_mentions == mentions
+            return {
+                "NVDA": {"ticker": "NVDA"},
+                "AMD": {"ticker": "AMD"},
+            }
+
+        def fetch(self, mention):
+            raise AssertionError(f"single fetch should not be used for {mention.ticker}")
+
+    pipeline.fundamentals = _FetchManyFundamentals()
+    pipeline.analyzer = MagicMock()
+    pipeline.analyzer.analyze.side_effect = lambda _title, _text, mention, snapshot: {
+        "ticker": mention.ticker,
+        "snapshot": snapshot["ticker"],
+    }
+
+    got_mentions, analyses = pipeline._run_stock_analysis("반도체 점검", "엔비디아 AMD", should_analyze=True)
+
+    assert got_mentions == mentions
+    assert analyses == [
+        {"ticker": "NVDA", "snapshot": "NVDA"},
+        {"ticker": "AMD", "snapshot": "AMD"},
+    ]

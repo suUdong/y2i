@@ -38,7 +38,7 @@ from omx_brainstorm.signal_tracker import (
     update_price_snapshots,
 )
 from omx_brainstorm.transcript_cache import TranscriptCache
-from omx_brainstorm.youtube import ChannelRegistry, TranscriptFetcher, YoutubeResolver
+from omx_brainstorm.youtube import ChannelRegistry, TranscriptFetcher, YoutubeResolver, describe_youtube_error
 
 logger = logging.getLogger(__name__)
 
@@ -304,7 +304,7 @@ def recent_feed_video_ids(channel_id: str, days: int = 30, *, today: str | None 
         "yt": "http://www.youtube.com/xml/schemas/2015",
     }
     try:
-        with urlopen(feed_url) as response:
+        with urlopen(feed_url, timeout=10) as response:
             root = ET.fromstring(response.read())
     except Exception as exc:
         logger.warning("Feed fetch failed for %s: %s", channel_id, exc)
@@ -312,7 +312,11 @@ def recent_feed_video_ids(channel_id: str, days: int = 30, *, today: str | None 
     entries: list[str] = []
     for entry in root.findall("atom:entry", namespaces):
         published_text = entry.findtext("atom:published", default="", namespaces=namespaces)
-        published_date = date.fromisoformat(published_text[:10])
+        try:
+            published_date = date.fromisoformat(published_text[:10])
+        except ValueError:
+            logger.warning("Skipping malformed RSS entry for %s with published=%r", channel_id, published_text)
+            continue
         if published_date < cutoff:
             continue
         video_id = entry.findtext("yt:videoId", default="", namespaces=namespaces)
@@ -403,7 +407,15 @@ def run_comparison_job(config: AppConfig) -> dict:
         accuracy_by_channel, leaderboard, signal_accuracy_summary = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
         accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, output_dir, context.run_id)
         signal_accuracy_report = {"json_path": str(accuracy_json), "txt_path": str(accuracy_txt)}
-        kindshot_feed = export_signals_for_kindshot(tracker_db, output_dir.parent / ".omx" / "state" / "kindshot_feed.json")
+        kindshot_feed = export_signals_for_kindshot(
+            tracker_db,
+            output_dir.parent / ".omx" / "state" / "kindshot_feed.json",
+            channel_weights={
+                str(item.get("slug", "")): float(item.get("weight_multiplier", 1.0) or 1.0)
+                for item in leaderboard
+                if item.get("slug")
+            },
+        )
         comparison["signal_accuracy"] = signal_accuracy_summary
     except Exception as exc:
         logger.warning("Signal tracking failed (non-fatal): %s", exc)
@@ -414,7 +426,15 @@ def run_comparison_job(config: AppConfig) -> dict:
             accuracy_by_channel, leaderboard, signal_accuracy_summary = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
             accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, output_dir, context.run_id)
             signal_accuracy_report = {"json_path": str(accuracy_json), "txt_path": str(accuracy_txt)}
-            kindshot_feed = export_signals_for_kindshot(tracker_db, output_dir.parent / ".omx" / "state" / "kindshot_feed.json")
+            kindshot_feed = export_signals_for_kindshot(
+                tracker_db,
+                output_dir.parent / ".omx" / "state" / "kindshot_feed.json",
+                channel_weights={
+                    str(item.get("slug", "")): float(item.get("weight_multiplier", 1.0) or 1.0)
+                    for item in leaderboard
+                    if item.get("slug")
+                },
+            )
             comparison["signal_accuracy"] = signal_accuracy_summary
             telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
         except Exception as exc:
@@ -513,7 +533,11 @@ def _analyze_channel_rows(
         }
         for future in as_completed(future_to_index):
             idx = future_to_index[future]
-            results[idx] = future.result()
+            try:
+                results[idx] = future.result()
+            except Exception as exc:
+                failed_video_id = video_ids[idx] if idx < len(video_ids) else "unknown"
+                logger.warning("Parallel video analysis failed for %s: %s", failed_video_id, describe_youtube_error(exc))
     return [row for row in results if row is not None]
 
 
@@ -535,7 +559,7 @@ def _analyze_single_video(
             max_fundamental_workers=config.strategy.fundamentals_workers,
         )
     except Exception as exc:
-        logger.warning("Skipping video %s due to resolve/analyze failure: %s", video_id, exc)
+        logger.warning("Skipping video %s due to resolve/analyze failure: %s", video_id, describe_youtube_error(exc))
         return None
 
 

@@ -972,20 +972,15 @@ def _build_consensus_accuracy_summary(
     channel_weights: dict[str, float],
     channel_names: dict[str, str],
 ) -> dict[str, Any]:
-    candidate_clusters = _cluster_consensus_records(records)
     candidate_records: list[SignalRecord] = []
     qualified_records: list[SignalRecord] = []
-    recent_signals: list[dict[str, Any]] = []
-
-    for cluster in candidate_clusters:
-        item = _build_consensus_cluster_summary(
-            cluster,
-            channel_weights=channel_weights,
-            channel_names=channel_names,
-        )
-        if item is None:
-            continue
-        recent_signals.append(item)
+    recent_signals = build_recent_consensus_signals(
+        records,
+        channel_weights=channel_weights,
+        channel_names=channel_names,
+        limit=None,
+    )
+    for item in recent_signals:
         candidate_records.append(_consensus_summary_to_record(item))
         if item.get("consensus_signal"):
             qualified_records.append(_consensus_summary_to_record(item))
@@ -1014,12 +1009,48 @@ def _build_consensus_accuracy_summary(
         )
 
     return {
-        "candidate_cohorts": len(candidate_clusters),
+        "candidate_cohorts": len(recent_signals),
         "qualified_signals": len(qualified_records),
         "overall": overall,
         "qualified_overall": qualified_overall,
         "recent_signals": recent_signals[:CONSENSUS_RECENT_LIMIT],
     }
+
+
+def build_recent_consensus_signals(
+    records: Sequence[SignalRecord],
+    *,
+    channel_weights: dict[str, float] | None = None,
+    channel_names: dict[str, str] | None = None,
+    limit: int | None = CONSENSUS_RECENT_LIMIT,
+    qualified_only: bool = False,
+) -> list[dict[str, Any]]:
+    """Build recent ticker-level consensus summaries from tracked per-channel records."""
+    summaries: list[dict[str, Any]] = []
+    for cluster in _cluster_consensus_records(list(records)):
+        item = _build_consensus_cluster_summary(
+            cluster,
+            channel_weights=channel_weights or {},
+            channel_names=channel_names or {},
+        )
+        if item is None:
+            continue
+        if qualified_only and not item.get("consensus_signal"):
+            continue
+        summaries.append(item)
+
+    summaries.sort(
+        key=lambda item: (
+            item.get("last_signal_at", ""),
+            item.get("signal_date", ""),
+            item.get("aggregate_score", 0),
+            item.get("ticker", ""),
+        ),
+        reverse=True,
+    )
+    if limit is None:
+        return summaries
+    return summaries[: max(0, int(limit))]
 
 
 def _cluster_consensus_records(records: list[SignalRecord]) -> list[list[SignalRecord]]:
