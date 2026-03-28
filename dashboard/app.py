@@ -1,9 +1,14 @@
 """Y2I 투자 시그널 대시보드 — 한국어, 다크 테마, 모바일 최적화."""
 from __future__ import annotations
 
+import sys
 from datetime import datetime, timedelta, timezone
 import os
 from pathlib import Path
+
+# Ensure project root is on sys.path so `dashboard.*` imports resolve
+# regardless of the working directory Streamlit uses.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
 import streamlit.components.v1 as components
