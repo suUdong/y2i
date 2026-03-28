@@ -128,6 +128,8 @@ def test_run_comparison_job_handles_empty_channel_set(tmp_path):
     assert Path(payload["dashboard_markdown"]).exists()
     assert Path(payload["daily_report"]["markdown_path"]).exists()
     assert payload["daily_report"]["totals"]["videos_analyzed"] == 0
+    assert payload["signal_tracker_snapshot"] is not None
+    assert Path(payload["signal_tracker_snapshot"]["path"]).exists()
     assert payload["kindshot_feed"] is not None
     assert Path(payload["kindshot_feed"]["path"]).exists()
 

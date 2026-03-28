@@ -15,6 +15,7 @@ from omx_brainstorm.signal_tracker import (
     record_signals_from_output,
     record_signals_from_ranking,
     record_signals_from_rows,
+    save_signal_tracker_snapshot,
     save_signal_backtest_report,
     save_signal_accuracy_report,
     update_price_snapshots,
@@ -923,6 +924,40 @@ def test_export_signals_for_kindshot_filters_to_kr_buy_signals(tmp_path: Path):
     assert "점수" in written["signals"][0]["evidence"][0]
     assert written["signals"][2]["channel"] == "sampro"
     assert "목표가 70000 KRW" in written["signals"][2]["evidence"]
+
+
+def test_save_signal_tracker_snapshot_preserves_kindshot_contract(tmp_path: Path):
+    db = SignalTrackerDB(tmp_path / ".omx" / "state" / "signal_tracker.json")
+    db.add_record(
+        SignalRecord(
+            ticker="005930.KS",
+            company_name="삼성전자",
+            channel_slug="itgod",
+            signal_date="2026-03-21",
+            signal_score=61.0,
+            verdict="WATCH",
+            source_video_id="vid-1",
+            source_title="삼성전자 점검",
+            entry_date="2026-03-21",
+            entry_price=58000.0,
+            returns={"1d": 0.5, "3d": 1.2, "5d": None, "10d": None, "20d": None},
+        )
+    )
+
+    output_path = tmp_path / "output" / "signal_tracker.json"
+    payload = save_signal_tracker_snapshot(db, output_path)
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert payload["path"] == str(output_path)
+    assert payload["signal_count"] == 1
+    assert "updated_at" in written
+    assert list(written) == ["signals", "updated_at"]
+    assert written["signals"][0]["ticker"] == "005930.KS"
+    assert written["signals"][0]["company_name"] == "삼성전자"
+    assert written["signals"][0]["channel_slug"] == "itgod"
+    assert written["signals"][0]["signal_date"] == "2026-03-21"
+    assert written["signals"][0]["signal_score"] == 61.0
+    assert written["signals"][0]["verdict"] == "WATCH"
 
 
 def test_export_signals_for_kindshot_excludes_negative_mature_signals(tmp_path: Path):

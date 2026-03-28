@@ -16,6 +16,17 @@ CONSENSUS_CLUSTER_MAX_GAP_DAYS = 3
 CONSENSUS_RECENT_LIMIT = 12
 
 
+def _signal_tracker_payload(
+    records: Sequence["SignalRecord"],
+    *,
+    updated_at: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "signals": [record.to_dict() for record in records],
+        "updated_at": updated_at or datetime.now(timezone.utc).isoformat(),
+    }
+
+
 @dataclass(slots=True)
 class SignalRecord:
     """One tracked signal: a stock mentioned by a channel with price tracking."""
@@ -109,7 +120,7 @@ class SignalTrackerDB:
 
     def _save(self) -> None:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = {"signals": [r.to_dict() for r in self._records], "updated_at": datetime.now(timezone.utc).isoformat()}
+        payload = _signal_tracker_payload(self._records)
         self.db_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     @property
@@ -724,6 +735,19 @@ def build_signal_backtest_summary(
         "filter_recommendations": filter_recommendations,
         "signals": signals,
         "recent_signals": signals[:20],
+    }
+
+
+def save_signal_tracker_snapshot(db: SignalTrackerDB, output_path: Path) -> dict[str, Any]:
+    """Persist a kindshot-compatible tracker snapshot to an explicit artifact path."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    updated_at = max((record.last_updated for record in db.records if record.last_updated), default="") or datetime.now(timezone.utc).isoformat()
+    payload = _signal_tracker_payload(db.records, updated_at=updated_at)
+    output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {
+        "path": str(output_path),
+        "signal_count": len(payload["signals"]),
+        "updated_at": payload["updated_at"],
     }
 
 

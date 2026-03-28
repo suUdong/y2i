@@ -34,6 +34,7 @@ from omx_brainstorm.signal_tracker import (
     SignalTrackerDB,
     build_signal_accuracy_summary,
     record_signals_from_output,
+    save_signal_tracker_snapshot,
     save_signal_accuracy_report,
     update_price_snapshots,
 )
@@ -392,6 +393,7 @@ def run_comparison_job(config: AppConfig) -> dict:
     leaderboard: list[dict[str, object]] = []
     signal_accuracy_summary: dict[str, object] = {}
     signal_accuracy_report: dict[str, str] | None = None
+    signal_tracker_snapshot: dict[str, object] | None = None
     kindshot_feed: dict[str, object] | None = None
     try:
         total_tracked = 0
@@ -439,6 +441,10 @@ def run_comparison_job(config: AppConfig) -> dict:
             telegram_payload = build_telegram_payload(channel_payloads, leaderboard, context)
         except Exception as exc:
             logger.warning("Signal accuracy enrichment retry failed (non-fatal): %s", exc)
+    try:
+        signal_tracker_snapshot = save_signal_tracker_snapshot(tracker_db, output_dir / "signal_tracker.json")
+    except Exception as exc:
+        logger.warning("Signal tracker snapshot export failed (non-fatal): %s", exc)
     comparison["consensus_signals"] = telegram_payload.get("analysis_summary", {}).get("consensus_signals", [])
 
     daily_report_payload = build_daily_report_payload(channel_payloads, comparison, leaderboard, context)
@@ -498,6 +504,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         "telegram": telegram_payload,
         "daily_report": daily_report_payload,
         "signal_accuracy_report": signal_accuracy_report,
+        "signal_tracker_snapshot": signal_tracker_snapshot,
         "kindshot_feed": kindshot_feed,
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
