@@ -17,6 +17,15 @@ SAFE_VIDEO_ID_RE = re.compile(r"[^A-Za-z0-9_-]")
 DEFAULT_MAX_AGE_HOURS = 168  # 7 days
 
 
+def _normalize_transcript_language(language: str | None) -> str | None:
+    if language is None:
+        return None
+    normalized = language.strip()
+    while normalized.startswith("cache:"):
+        normalized = normalized[len("cache:") :]
+    return normalized or None
+
+
 class TranscriptCache:
     """Persistent transcript and ticker-evidence cache keyed by video id."""
 
@@ -74,7 +83,7 @@ class TranscriptCache:
                 "tags": list(video.tags),
             },
             "transcript_text": transcript_text,
-            "transcript_language": transcript_language,
+            "transcript_language": _normalize_transcript_language(transcript_language),
             "source": source,
             "ticker_mentions": ticker_mentions or [],
             "cached_at": utc_now_iso(),
@@ -106,7 +115,11 @@ class TranscriptCache:
             video=video,
             transcript_text=payload.get("transcript_text", ""),
             transcript_language=payload.get("transcript_language"),
-            source=payload.get("provider", "artifact_cache"),
+            source=(
+                "metadata_fallback"
+                if _normalize_transcript_language(payload.get("transcript_language")) == "metadata_fallback"
+                else payload.get("provider", "artifact_cache")
+            ),
             ticker_mentions=list(payload.get("ticker_mentions", []) or []),
         )
         return True

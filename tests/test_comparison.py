@@ -105,6 +105,12 @@ def test_quality_scorecard_metadata_fallback():
     assert sc["transcript_coverage"] == 0.0
 
 
+def test_quality_scorecard_cached_metadata_fallback():
+    rows = [_make_row(transcript_language="cache:metadata_fallback")]
+    sc = quality_scorecard(rows, {}, [])
+    assert sc["transcript_coverage"] == 0.0
+
+
 def test_save_channel_artifacts_creates_files(tmp_path):
     rows = [_make_row()]
     ranking = _make_ranking()

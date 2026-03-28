@@ -370,3 +370,28 @@ def test_pipeline_downgrades_actionable_when_no_tickers_remain(tmp_path: Path, m
     assert report.signal_assessment.skip_reason
     assert report.ticker_mentions == []
     assert report.stock_analyses == []
+
+
+def test_pipeline_cached_metadata_fallback_does_not_analyze_macro_only_video(tmp_path: Path):
+    class MacroOnlyResolver:
+        def resolve_video(self, url_or_id: str) -> VideoInput:
+            return VideoInput(
+                video_id="metaonly12345",
+                title="[LIVE] 이란 전쟁은 안 끝나고, M7은 끝났다?",
+                url="https://youtube.com/watch?v=metaonly12345",
+                description="중동 위기와 시장 충격을 다룬다.",
+                tags=["전쟁", "중동", "M7"],
+            )
+
+    pipeline = OMXPipeline(provider_name="mock", output_dir=tmp_path, transcript_cache=TranscriptCache(tmp_path / "cache"))
+    pipeline.resolver = MacroOnlyResolver()
+    pipeline.fetcher = FailingFetcher()
+    pipeline.fundamentals = DummyFundamentals()
+
+    report, _ = pipeline.analyze_video("https://youtube.com/watch?v=metaonly12345")
+
+    assert report.transcript_language == "metadata_fallback"
+    assert report.signal_assessment.video_signal_class in {"NOISE", "LOW_SIGNAL", "SECTOR_ONLY"}
+    assert report.signal_assessment.should_analyze_stocks is False
+    assert report.ticker_mentions == []
+    assert report.stock_analyses == []

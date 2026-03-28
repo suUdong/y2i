@@ -49,7 +49,10 @@ def _parse_timestamp(value: str | None) -> datetime | None:
 
 
 def _is_transcript_backed(language: str | None) -> bool:
-    return (language or "").startswith("cache") or language not in {None, "", "metadata_fallback"}
+    normalized = (language or "").strip().lower()
+    if not normalized:
+        return False
+    return not normalized.endswith("metadata_fallback")
 
 
 def summarize_channel_run(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -64,7 +67,7 @@ def summarize_channel_run(rows: list[dict[str, Any]]) -> dict[str, Any]:
         signal_breakdown[row.get("video_signal_class", "UNKNOWN")] += 1
 
         transcript_language = row.get("transcript_language")
-        if transcript_language == "metadata_fallback":
+        if (transcript_language or "").strip().lower().endswith("metadata_fallback"):
             metadata_fallback_videos += 1
         elif _is_transcript_backed(transcript_language):
             transcript_backed_videos += 1
@@ -105,7 +108,7 @@ def quality_scorecard(rows: list[dict], validation: dict[str, Any], ranking: lis
     """Build a simple quality scorecard for a channel artifact."""
     total_videos = len(rows)
     actionable_videos = sum(1 for row in rows if row["should_analyze_stocks"])
-    transcript_backed = sum(1 for row in rows if (row["transcript_language"] or "").startswith("cache") or row["transcript_language"] not in {None, "metadata_fallback"})
+    transcript_backed = sum(1 for row in rows if _is_transcript_backed(row.get("transcript_language")))
     holding_days = [
         (date.fromisoformat(item["exit_date"]) - date.fromisoformat(item["entry_date"])).days
         for item in validation.get(f"top_{len(ranking)}", {}).get("positions", [])
