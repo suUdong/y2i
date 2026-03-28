@@ -151,6 +151,20 @@ def test_save_comparison_artifacts_writes_human_readable_labels(tmp_path):
                 "quality_scorecard": {"overall": 61.0},
             },
         },
+        "signal_accuracy": {
+            "overall": {"total_signals": 8},
+            "consensus_accuracy": {
+                "candidate_cohorts": 3,
+                "qualified_signals": 2,
+                "overall": {
+                    "total_signals": 2,
+                    "signals_with_price_5d": 2,
+                    "hit_rate_5d": 50.0,
+                    "avg_directional_return_5d": 1.25,
+                    "compounded_directional_roi_5d": 0.94,
+                },
+            },
+        },
     }
     _json_path, txt_path = save_comparison_artifacts(comparison, context)
     txt = txt_path.read_text(encoding="utf-8")
@@ -164,6 +178,8 @@ def test_save_comparison_artifacts_writes_human_readable_labels(tmp_path):
     assert "- 시그널 분포: 엄격 액션 6 | 노이즈 9" in txt
     assert "- 최신 기준 시각: 2026-03-26 00:00 UTC" in txt
     assert "[합의 시그널]" in txt
+    assert "[합의 시그널 정확도]" in txt
+    assert "합의 후보 코호트: 3" in txt
     assert "NVIDIA (NVDA)" in txt
     assert "강한 합의" in txt
     assert "[삼프로TV]" in txt

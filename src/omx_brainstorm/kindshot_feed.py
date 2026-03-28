@@ -11,6 +11,7 @@ _KR_MARKET_SUFFIXES = (".KS", ".KQ")
 _EXPORTABLE_VERDICTS = {"BUY", "STRONG_BUY"}
 _MIN_KINDSHOT_SIGNAL_SCORE = 65.0
 _MIN_KINDSHOT_HIGH_CONFIDENCE_SCORE = 80.0
+_KINDSHOT_DIRECTIONAL_WINDOWS = ("3d", "5d")
 
 
 def _is_exportable_record(record: SignalRecord) -> bool:
@@ -24,6 +25,7 @@ def _is_exportable_record(record: SignalRecord) -> bool:
         and verdict in _EXPORTABLE_VERDICTS
         and score >= _MIN_KINDSHOT_SIGNAL_SCORE
         and (has_target or has_strong_conviction)
+        and not _has_failed_directional_history(record)
     )
 
 
@@ -41,6 +43,10 @@ def _record_to_kindshot_signal(record: SignalRecord) -> dict[str, Any]:
         evidence.append(target_label)
     if record.target_progress_pct is not None:
         evidence.append(f"목표 진척 {float(record.target_progress_pct):.1f}%")
+    for window_key in _KINDSHOT_DIRECTIONAL_WINDOWS:
+        directional_return = _directional_return(record, window_key)
+        if directional_return is not None:
+            evidence.append(f"{window_key} 방향수익률 {float(directional_return):.2f}%")
     if not evidence:
         evidence.append(f"{record.channel_slug} {record.signal_date} tracked signal")
 
@@ -49,6 +55,9 @@ def _record_to_kindshot_signal(record: SignalRecord) -> dict[str, Any]:
         confidence += 0.05
     if record.price_target and record.price_target.get("target_price") is not None:
         confidence += 0.03
+    directional_5d = _directional_return(record, "5d")
+    if directional_5d is not None:
+        confidence += max(-0.04, min(0.05, directional_5d / 100.0))
 
     return {
         "ticker": record.ticker,
@@ -60,6 +69,29 @@ def _record_to_kindshot_signal(record: SignalRecord) -> dict[str, Any]:
         "channel": record.channel_slug,
         "evidence": evidence,
     }
+
+
+def _has_failed_directional_history(record: SignalRecord) -> bool:
+    directional_5d = _directional_return(record, "5d")
+    if directional_5d is not None:
+        return directional_5d <= 0
+
+    short_values = [
+        float(value)
+        for value in (_directional_return(record, "1d"), _directional_return(record, "3d"))
+        if value is not None
+    ]
+    return len(short_values) >= 2 and (sum(short_values) / len(short_values)) <= 0
+
+
+def _directional_return(record: SignalRecord, window_key: str) -> float | None:
+    raw_return = record.returns.get(window_key)
+    if raw_return is None:
+        return None
+    verdict = str(record.verdict or "").upper()
+    if verdict in {"SELL", "REJECT", "AVOID"}:
+        return round(-float(raw_return), 2)
+    return round(float(raw_return), 2)
 
 
 def export_signals_for_kindshot(db: SignalTrackerDB, output_path: Path) -> dict[str, Any]:

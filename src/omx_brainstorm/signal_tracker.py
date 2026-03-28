@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 TRACKING_WINDOWS = [1, 3, 5, 10, 20]  # days after signal
 DEFAULT_DB_PATH = Path(".omx/state/signal_tracker.json")
+CONSENSUS_CLUSTER_MAX_GAP_DAYS = 3
+CONSENSUS_RECENT_LIMIT = 12
 
 
 @dataclass(slots=True)
@@ -616,6 +618,19 @@ def build_signal_accuracy_summary(
             item["weight_multiplier"] = weight_multipliers.get(report.slug)
             channel_leaderboard.append(item)
 
+    channel_weights = {
+        str(item.get("slug", "")): float(item.get("weight_multiplier", 1.0) or 1.0)
+        for item in channel_leaderboard
+        if item.get("slug")
+    }
+    consensus_accuracy = _build_consensus_accuracy_summary(
+        db.records,
+        channel_weights=channel_weights,
+        channel_names={
+            slug: str((channel_metadata.get(slug, {}) or {}).get("display_name", slug))
+            for slug in channel_slugs
+        },
+    )
     updated_at = max((record.last_updated for record in db.records if record.last_updated), default="")
     return {
         "updated_at": updated_at,
@@ -623,6 +638,7 @@ def build_signal_accuracy_summary(
         "by_channel": accuracy_by_channel,
         "by_ticker": {item["ticker"]: item for item in ticker_summaries},
         "channel_leaderboard": channel_leaderboard,
+        "consensus_accuracy": consensus_accuracy,
         "ticker_leaderboard": ticker_summaries[:top_tickers],
         "recent_signals": db.recent_records(limit=recent_limit),
         "recent_targets": db.recent_records(limit=recent_targets_limit, target_only=True),
@@ -750,6 +766,8 @@ def save_signal_backtest_report(summary: dict[str, Any], output_dir: Path, run_i
 def render_signal_accuracy_report_text(summary: dict[str, Any]) -> str:
     """Render a human-readable signal accuracy report."""
     overall = summary.get("overall", {}) if isinstance(summary, dict) else {}
+    consensus_accuracy = summary.get("consensus_accuracy", {}) if isinstance(summary, dict) else {}
+    consensus_overall = consensus_accuracy.get("overall", {}) if isinstance(consensus_accuracy, dict) else {}
     lines = [
         f"시그널 정확도 리포트 ({summary.get('generated_at', summary.get('updated_at', '-'))})",
         f"업데이트 시각: {summary.get('updated_at', '-')}",
@@ -764,6 +782,14 @@ def render_signal_accuracy_report_text(summary: dict[str, Any]) -> str:
         f"- 5일 평균 실제수익률: {_fmt_pct(overall.get('avg_return_5d'))}",
         f"- 5일 평균 방향수익률: {_fmt_pct(overall.get('avg_directional_return_5d'))}",
         f"- 평균 시그널 점수: {_fmt_scalar(overall.get('avg_signal_score'))}",
+        "",
+        "[합의 시그널 정확도]",
+        f"- 합의 후보 코호트: {int(consensus_accuracy.get('candidate_cohorts', 0) or 0)}",
+        f"- 통과 합의 시그널: {int(consensus_accuracy.get('qualified_signals', 0) or 0)}",
+        f"- 5일 표본: {int(consensus_overall.get('signals_with_price_5d', 0) or 0)}",
+        f"- 5일 적중률: {_fmt_pct(consensus_overall.get('hit_rate_5d'))}",
+        f"- 5일 평균 방향수익률: {_fmt_pct(consensus_overall.get('avg_directional_return_5d'))}",
+        f"- 5일 복리 ROI: {_fmt_pct(consensus_overall.get('compounded_directional_roi_5d'))}",
         "",
         "[채널 리더보드]",
     ]
@@ -938,6 +964,188 @@ def _compounded_directional_roi(records: list[SignalRecord], window_key: str) ->
     for value in values:
         capital *= 1.0 + value / 100.0
     return round((capital - 1.0) * 100.0, 2)
+
+
+def _build_consensus_accuracy_summary(
+    records: list[SignalRecord],
+    *,
+    channel_weights: dict[str, float],
+    channel_names: dict[str, str],
+) -> dict[str, Any]:
+    candidate_clusters = _cluster_consensus_records(records)
+    candidate_records: list[SignalRecord] = []
+    qualified_records: list[SignalRecord] = []
+    recent_signals: list[dict[str, Any]] = []
+
+    for cluster in candidate_clusters:
+        item = _build_consensus_cluster_summary(
+            cluster,
+            channel_weights=channel_weights,
+            channel_names=channel_names,
+        )
+        if item is None:
+            continue
+        recent_signals.append(item)
+        candidate_records.append(_consensus_summary_to_record(item))
+        if item.get("consensus_signal"):
+            qualified_records.append(_consensus_summary_to_record(item))
+
+    recent_signals.sort(
+        key=lambda item: (
+            item.get("last_signal_at", ""),
+            item.get("signal_date", ""),
+            item.get("aggregate_score", 0),
+            item.get("ticker", ""),
+        ),
+        reverse=True,
+    )
+    overall = _build_accuracy_stats(candidate_records).to_dict()
+    overall.update(_build_roi_fields(candidate_records))
+    qualified_overall = _build_accuracy_stats(qualified_records).to_dict()
+    qualified_overall.update(_build_roi_fields(qualified_records))
+    if recent_signals:
+        overall["avg_channel_count"] = round(
+            sum(float(item.get("channel_count", 0) or 0) for item in recent_signals) / len(recent_signals),
+            2,
+        )
+        overall["avg_channel_weight_sum"] = round(
+            sum(float(item.get("channel_weight_sum", 0) or 0) for item in recent_signals) / len(recent_signals),
+            3,
+        )
+
+    return {
+        "candidate_cohorts": len(candidate_clusters),
+        "qualified_signals": len(qualified_records),
+        "overall": overall,
+        "qualified_overall": qualified_overall,
+        "recent_signals": recent_signals[:CONSENSUS_RECENT_LIMIT],
+    }
+
+
+def _cluster_consensus_records(records: list[SignalRecord]) -> list[list[SignalRecord]]:
+    grouped: dict[str, list[tuple[date, SignalRecord]]] = defaultdict(list)
+    for record in records:
+        normalized_date = _normalize_signal_date(record.signal_date)
+        if not normalized_date:
+            continue
+        try:
+            grouped[record.ticker].append((date.fromisoformat(normalized_date), record))
+        except ValueError:
+            continue
+
+    clusters: list[list[SignalRecord]] = []
+    for items in grouped.values():
+        items.sort(key=lambda item: (item[0], item[1].channel_slug, item[1].signal_score))
+        current: list[SignalRecord] = []
+        current_end: date | None = None
+        for signal_dt, record in items:
+            if current and current_end is not None and (signal_dt - current_end).days > CONSENSUS_CLUSTER_MAX_GAP_DAYS:
+                if len({item.channel_slug for item in current if item.channel_slug}) >= 2:
+                    clusters.append(current)
+                current = []
+            current.append(record)
+            current_end = signal_dt
+        if len({item.channel_slug for item in current if item.channel_slug}) >= 2:
+            clusters.append(current)
+    return clusters
+
+
+def _build_consensus_cluster_summary(
+    cluster: list[SignalRecord],
+    *,
+    channel_weights: dict[str, float],
+    channel_names: dict[str, str],
+) -> dict[str, Any] | None:
+    try:
+        from .research import build_consensus_ranking
+    except Exception:
+        return None
+
+    selected_records: dict[str, SignalRecord] = {}
+    for record in cluster:
+        current = selected_records.get(record.channel_slug)
+        if current is None:
+            selected_records[record.channel_slug] = record
+            continue
+        current_key = (current.signal_score, current.signal_date, current.recorded_at, current.ticker)
+        candidate_key = (record.signal_score, record.signal_date, record.recorded_at, record.ticker)
+        if candidate_key > current_key:
+            selected_records[record.channel_slug] = record
+
+    if len(selected_records) < 2:
+        return None
+
+    ranking_input: dict[str, list[dict[str, Any]]] = {}
+    cluster_weights: dict[str, float] = {}
+    for slug, record in selected_records.items():
+        currency = None
+        if isinstance(record.price_target, dict):
+            currency = record.price_target.get("currency")
+        ranking_input[slug] = [{
+            "ticker": record.ticker,
+            "company_name": record.company_name,
+            "aggregate_score": float(record.signal_score or 0),
+            "aggregate_verdict": str(record.verdict or ""),
+            "appearances": 1,
+            "total_mentions": 1,
+            "latest_price": record.latest_price,
+            "currency": currency,
+            "price_target": dict(record.price_target or {}) or None,
+            "first_signal_at": record.signal_date,
+            "last_signal_at": record.signal_date,
+            "latest_checked_at": record.last_updated or record.latest_price_date or record.recorded_at,
+            "source_video_titles": [record.source_title] if record.source_title else [],
+        }]
+        cluster_weights[slug] = max(0.1, float(channel_weights.get(slug, 1.0) or 1.0))
+
+    ranking = build_consensus_ranking(
+        ranking_input,
+        channel_weights=cluster_weights,
+        channel_names=channel_names,
+    )
+    if not ranking:
+        return None
+
+    item = dict(ranking[0])
+    selected = list(selected_records.values())
+    dates = sorted(record.signal_date for record in selected if record.signal_date)
+    item["signal_date"] = dates[0] if dates else ""
+    item["last_signal_at"] = dates[-1] if dates else item.get("last_signal_at")
+    item["returns"] = {
+        f"{window}d": _average_cluster_return(selected, f"{window}d")
+        for window in TRACKING_WINDOWS
+    }
+    item["candidate_record_count"] = len(cluster)
+    item["qualified_record_count"] = len(selected)
+    return item
+
+
+def _average_cluster_return(records: list[SignalRecord], window_key: str) -> float | None:
+    values = [
+        float(record.returns.get(window_key))
+        for record in records
+        if record.returns.get(window_key) is not None
+    ]
+    if not values:
+        return None
+    return round(sum(values) / len(values), 2)
+
+
+def _consensus_summary_to_record(summary: dict[str, Any]) -> SignalRecord:
+    price_target = dict(summary.get("price_target") or {}) or None
+    returns = dict(summary.get("returns") or {})
+    return SignalRecord(
+        ticker=str(summary.get("ticker", "")),
+        company_name=summary.get("company_name"),
+        channel_slug="consensus",
+        signal_date=str(summary.get("signal_date", "")),
+        signal_score=float(summary.get("aggregate_score", 0) or 0),
+        verdict=str(summary.get("aggregate_verdict", "") or ""),
+        latest_price=summary.get("latest_price"),
+        latest_price_date=str(summary.get("last_signal_at", "") or "") or None,
+        price_target=price_target,
+        returns=returns,
+    )
 
 
 def _signal_record_to_backtest_row(

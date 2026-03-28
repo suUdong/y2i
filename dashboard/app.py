@@ -11,6 +11,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from streamlit_autorefresh import st_autorefresh
+import dashboard.data_loader as data_loader_runtime
 
 from dashboard.auth import (
     AUTH_COOKIE_NAME,
@@ -814,7 +815,7 @@ header[data-testid="stHeader"] {
 
 # -- Header with timestamp + NEW badge ----------------------------------------
 
-OUTPUT_DIR = DEFAULT_OUTPUT_DIR
+OUTPUT_DIR = Path(os.getenv("Y2I_OUTPUT_DIR", str(data_loader_runtime.DEFAULT_OUTPUT_DIR)))
 KST = timezone(timedelta(hours=9))
 
 last_update = get_last_update_time(OUTPUT_DIR)

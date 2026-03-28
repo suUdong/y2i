@@ -652,6 +652,17 @@ def save_comparison_artifacts(comparison: dict, context: RunContext) -> tuple[Pa
             f"{_fmt_window_stats(overall_accuracy.get('window_stats', {}), '5d')}"
         )
         lines.append("")
+    consensus_accuracy = signal_accuracy.get("consensus_accuracy", {}) if isinstance(signal_accuracy, dict) else {}
+    consensus_overall = consensus_accuracy.get("overall", {}) if isinstance(consensus_accuracy, dict) else {}
+    if consensus_accuracy:
+        lines.append("[합의 시그널 정확도]")
+        lines.append(f"- 합의 후보 코호트: {int(consensus_accuracy.get('candidate_cohorts', 0) or 0)}")
+        lines.append(f"- 통과 합의 시그널: {int(consensus_accuracy.get('qualified_signals', 0) or 0)}")
+        lines.append(f"- 5일 표본: {_fmt_scalar(consensus_overall.get('signals_with_price_5d', 0))}")
+        lines.append(f"- 5일 적중률: {_fmt_percentage(consensus_overall.get('hit_rate_5d'))}")
+        lines.append(f"- 5일 방향수익률: {_fmt_percentage(consensus_overall.get('avg_directional_return_5d'))}")
+        lines.append(f"- 5일 복리 ROI: {_fmt_percentage(consensus_overall.get('compounded_directional_roi_5d'))}")
+        lines.append("")
     channel_leaderboard = signal_accuracy.get("channel_leaderboard", []) if isinstance(signal_accuracy, dict) else []
     if channel_leaderboard:
         lines.append("[채널 적중률 리더보드]")

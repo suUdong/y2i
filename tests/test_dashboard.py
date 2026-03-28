@@ -634,6 +634,31 @@ class TestConsensusRanking:
         assert rankings[0]["channel_weight_sum"] > 0
         assert rankings[0]["aggregate_score"] > rankings[0]["weighted_base_score"]
 
+    def test_get_all_rankings_applies_channel_leaderboard_weights(self, tmp_output: Path):
+        report = {
+            "generated_at": "20260328T000000Z",
+            "updated_at": "2026-03-28T00:00:00+00:00",
+            "overall": {"total_signals": 4},
+            "by_channel": {},
+            "by_ticker": {},
+            "channel_leaderboard": [
+                {"slug": "sampro", "weight_multiplier": 1.4},
+                {"slug": "itgod", "weight_multiplier": 0.6},
+            ],
+            "ticker_leaderboard": [],
+            "recent_signals": [],
+            "recent_targets": [],
+        }
+        (tmp_output / "signal_accuracy_report_20260328T000000Z.json").write_text(json.dumps(report), encoding="utf-8")
+
+        rankings = get_all_rankings(tmp_output)
+
+        assert rankings[0]["ticker"] == "005930.KS"
+        assert rankings[0]["channel_weights"] == {"sampro": 1.4, "itgod": 0.6}
+        assert rankings[0]["channel_weight_sum"] == 2.0
+        assert rankings[0]["weighted_base_score"] == pytest.approx(81.7, abs=0.1)
+        assert rankings[0]["weighted_base_score"] > 79.5
+
 
 class TestTrackerDerivedLoaders:
     def test_load_tracker_records(self, tmp_output: Path):

@@ -312,6 +312,58 @@ class TestSignalTrackerDB:
         assert "종목 리더보드" in text
         assert "삼성전자" in text
 
+    def test_build_signal_accuracy_summary_measures_consensus_cohorts(self, db: SignalTrackerDB):
+        db.add_record(
+            SignalRecord(
+                ticker="NVDA", company_name="NVIDIA", channel_slug="sampro",
+                signal_date="2026-03-01", signal_score=88.0, verdict="BUY",
+                returns={"1d": 1.0, "3d": 2.5, "5d": 4.0, "10d": None, "20d": None},
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="NVDA", company_name="NVIDIA", channel_slug="itgod",
+                signal_date="2026-03-03", signal_score=84.0, verdict="BUY",
+                returns={"1d": 0.8, "3d": 2.0, "5d": 3.0, "10d": None, "20d": None},
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="TSLA", company_name="Tesla", channel_slug="sampro",
+                signal_date="2026-03-05", signal_score=86.0, verdict="BUY",
+                returns={"1d": -1.2, "3d": -2.5, "5d": -5.0, "10d": None, "20d": None},
+            )
+        )
+        db.add_record(
+            SignalRecord(
+                ticker="TSLA", company_name="Tesla", channel_slug="itgod",
+                signal_date="2026-03-07", signal_score=82.0, verdict="BUY",
+                returns={"1d": -0.7, "3d": -1.5, "5d": -3.0, "10d": None, "20d": None},
+            )
+        )
+
+        summary = build_signal_accuracy_summary(
+            db,
+            channel_metadata={
+                "sampro": {"display_name": "삼프로TV", "actionable_ratio": 0.6, "quality_scorecard": {"overall": 72.0}},
+                "itgod": {"display_name": "IT의 신", "actionable_ratio": 0.55, "quality_scorecard": {"overall": 69.0}},
+            },
+        )
+
+        consensus = summary["consensus_accuracy"]
+        assert consensus["candidate_cohorts"] == 2
+        assert consensus["qualified_signals"] == 0
+        assert consensus["overall"]["total_signals"] == 2
+        assert consensus["overall"]["hit_rate_5d"] == 50.0
+        assert consensus["overall"]["avg_directional_return_5d"] == -0.25
+        assert consensus["overall"]["compounded_directional_roi_5d"] == pytest.approx(-0.64, abs=0.01)
+        assert consensus["recent_signals"][0]["channel_count"] == 2
+        assert consensus["recent_signals"][0]["consensus_signal"] is False
+        assert consensus["recent_signals"][0]["cross_validation_score"] >= 70.0
+        assert consensus["recent_signals"][0]["channel_weight_sum"] < 2.15
+        assert consensus["recent_signals"][0]["returns"]["5d"] == -4.0
+        assert consensus["recent_signals"][1]["ticker"] == "NVDA"
+
     def test_build_signal_backtest_summary_filters_by_lookback(self, db: SignalTrackerDB):
         db.add_record(
             SignalRecord(
@@ -870,3 +922,38 @@ def test_export_signals_for_kindshot_filters_to_kr_buy_signals(tmp_path: Path):
     assert "점수" in written["signals"][0]["evidence"][0]
     assert written["signals"][1]["channel"] == "sampro"
     assert "목표가 70000 KRW" in written["signals"][1]["evidence"]
+
+
+def test_export_signals_for_kindshot_excludes_negative_mature_signals(tmp_path: Path):
+    db = SignalTrackerDB(tmp_path / "tracker.json")
+    db.add_record(
+        SignalRecord(
+            ticker="005930.KS",
+            company_name="삼성전자",
+            channel_slug="sampro",
+            signal_date="2026-03-20",
+            signal_score=91.0,
+            verdict="STRONG_BUY",
+            source_title="삼성전자 강한 매수",
+            returns={"1d": 1.2, "3d": 2.5, "5d": 6.0, "10d": None, "20d": None},
+        )
+    )
+    db.add_record(
+        SignalRecord(
+            ticker="035420.KS",
+            company_name="NAVER",
+            channel_slug="itgod",
+            signal_date="2026-03-20",
+            signal_score=92.0,
+            verdict="STRONG_BUY",
+            source_title="네이버 강한 매수",
+            returns={"1d": -1.0, "3d": -2.5, "5d": -7.0, "10d": None, "20d": None},
+        )
+    )
+
+    output_path = tmp_path / "kindshot_feed.json"
+    export_signals_for_kindshot(db, output_path)
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert [item["ticker"] for item in written["signals"]] == ["005930.KS"]
+    assert any("5d 방향수익률 6.00%" in evidence for evidence in written["signals"][0]["evidence"])
