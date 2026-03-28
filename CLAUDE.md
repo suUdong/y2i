@@ -70,6 +70,7 @@ For each selected stock, final text output should include:
 - `~/workspace/WORKSPACE.md`: top-level workspace map
 - `memsearch`: search previous session memory and debugging history
 - `agent-deck`: session orchestration layer
+- `README.md`: repository-local CLI, config, scheduler, and backtest details
 
 ## Setup
 ```bash

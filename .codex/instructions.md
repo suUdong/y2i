@@ -7,6 +7,10 @@ See `AGENTS.md` first, then `~/workspace/WORKSPACE.md`.
 - Converts YouTube content into investment signals
 - Feeds kindshot and alpha-scanner
 - Uses macro-intelligence as upstream context when regime matters
+- Dashboards are the final human-facing surface; agents should inspect and modify code directly
+
+Data flow:
+`[YouTube] -> y2i -> [signal feed] -> kindshot, alpha-scanner`
 
 ## Default Execution
 - Run in `ralph` mode by default.
@@ -53,6 +57,7 @@ For each selected stock, preserve:
 - Read `AGENTS.md`
 - Read `SESSION_HANDOFF.md` if resuming
 - Read `~/workspace/WORKSPACE.md`
+- Read `README.md` for local commands, config, and scheduler behavior
 - Check `git status --short`
 - Search memsearch before redoing prior investigation
 
