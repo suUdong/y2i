@@ -29,6 +29,13 @@ ACTIONABLE_TITLE_ANCHORS = {
     '2차전지', '바이오', '전력기기', '원전', '밸류업', '저pbr', '지주사',
     '관세전쟁', '무역전쟁', '트럼프',
 }
+EXPLICIT_SECTOR_CUES = {
+    '건설', '건설주', '성장주', '증권', '증권주', '부동산', '반도체', '메모리', '파운드리',
+    '방산', '방산주', '조선', '조선주', '정유', '정유주', '원전', '전력', '전력기기',
+    '데이터센터', '수혜주', '밸류체인', '은행', '은행주', '보험', '보험주', '통신', '통신주',
+    '유틸리티', '화학', '화학주', '항공', '항공주', '수출주', '지주사', '로봇', '바이오',
+    '2차전지', '배터리', '리츠', '업종', '섹터',
+}
 GENERIC_INDIRECT_ONLY_MACRO_SIGNALS = {"semiconductor_cycle", "ai_theme"}
 NO_TICKER_SKIP_REASON = '종목 추출 근거가 부족해 종목 분석을 건너뜀'
 
@@ -76,6 +83,7 @@ def assess_video_signal(
     transcript_text: str,
     description: str = "",
     tags: list[str] | None = None,
+    transcript_source: str | None = None,
 ) -> VideoSignalAssessment:
     tags = tags or []
     metadata_text = " ".join(part for part in [title, description, " ".join(tags)] if part)
@@ -90,7 +98,10 @@ def assess_video_signal(
     title_description_company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(title_description_text)) + _count_spaced_kr_company_hits(title_description_text)
     transcript_len = len(transcript_text)
     metadata_company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(metadata_text)) + _count_spaced_kr_company_hits(metadata_text.lower())
-    used_metadata_fallback = transcript_len == 0 and bool(metadata_text)
+    used_metadata_fallback = (
+        (transcript_source or "").lower().endswith("metadata_fallback")
+        or (transcript_len == 0 and bool(metadata_text))
+    )
     macro_signals = extract_macro_signals(text)
     macro_signal_count = len(macro_signals)
     actionable_macro_count = sum(1 for signal in macro_signals if signal["actionable"])
@@ -99,6 +110,7 @@ def assess_video_signal(
     has_actionable_anchor = any(keyword in title_description_text for keyword in ACTIONABLE_TITLE_ANCHORS)
     title_has_actionable_anchor = any(keyword in title_only_text for keyword in ACTIONABLE_TITLE_ANCHORS)
     has_generic_title_cue = any(keyword in title_description_text for keyword in GENERIC_TITLE_CUES)
+    has_explicit_sector_path = any(keyword in title_description_text for keyword in EXPLICIT_SECTOR_CUES)
     has_only_generic_indirect_macro_path = (
         macro_stock_candidates >= 1
         and title_description_company_hits == 0
@@ -106,8 +118,28 @@ def assess_video_signal(
         and macro_signal_count > 0
         and all(signal["name"] in GENERIC_INDIRECT_ONLY_MACRO_SIGNALS for signal in macro_signals)
     )
-    has_specific_stock_path = title_description_company_hits >= 1 or (
-        macro_stock_candidates >= 2 and not has_only_generic_indirect_macro_path
+    has_macro_only_without_sector_path = (
+        macro_stock_candidates >= 2
+        and title_description_company_hits == 0
+        and company_hits == 0
+        and actionable_macro_count >= 1
+        and not has_explicit_sector_path
+    )
+    has_title_named_company_path = title_company_hits >= 1
+    has_repeated_company_path = company_hits >= 2
+    has_metadata_named_equity_path = used_metadata_fallback and title_description_company_hits >= 1 and finance_hits >= 3
+    has_macro_stock_path = (
+        macro_stock_candidates >= 2
+        and not has_only_generic_indirect_macro_path
+        and not used_metadata_fallback
+        and has_explicit_sector_path
+        and (has_actionable_anchor or title_description_company_hits >= 1)
+    )
+    has_specific_stock_path = (
+        has_title_named_company_path
+        or has_repeated_company_path
+        or has_metadata_named_equity_path
+        or has_macro_stock_path
     )
 
     score = 0.0
@@ -136,6 +168,8 @@ def assess_video_signal(
         score = min(score, 54.0)
     if has_generic_title_cue and not title_has_actionable_anchor and title_company_hits == 0:
         score = min(score, 54.0)
+    if has_macro_only_without_sector_path:
+        score = min(score, 54.0)
     score = max(0.0, min(100.0, score))
 
     if non_equity_hits >= 2 and finance_hits == 0:
@@ -143,14 +177,14 @@ def assess_video_signal(
         should = False
         reason = '주식/산업 분석보다 비주식성 콘텐츠 신호가 강함'
     elif (
-        score >= 70 and not has_only_generic_indirect_macro_path
+        score >= 70 and has_specific_stock_path and not has_only_generic_indirect_macro_path
     ) or (
         score >= 55 and has_actionable_anchor and actionable_macro_count >= 1 and has_specific_stock_path
     ):
         klass = 'ACTIONABLE'
         should = True
         reason = '직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음'
-    elif score >= 55:
+    elif score >= 55 or (used_metadata_fallback and actionable_macro_count >= 1):
         klass = 'SECTOR_ONLY'
         should = has_specific_stock_path
         reason = '섹터 중심이지만 종목 단서가 충분해 분석 가치가 있음'
@@ -193,6 +227,12 @@ def assess_video_signal(
             'has_actionable_anchor': has_actionable_anchor,
             'title_has_actionable_anchor': title_has_actionable_anchor,
             'has_generic_title_cue': has_generic_title_cue,
+            'has_explicit_sector_path': has_explicit_sector_path,
+            'has_title_named_company_path': has_title_named_company_path,
+            'has_repeated_company_path': has_repeated_company_path,
+            'has_metadata_named_equity_path': has_metadata_named_equity_path,
+            'has_macro_stock_path': has_macro_stock_path,
+            'has_macro_only_without_sector_path': has_macro_only_without_sector_path,
             'has_specific_stock_path': has_specific_stock_path,
             'has_only_generic_indirect_macro_path': has_only_generic_indirect_macro_path,
         },

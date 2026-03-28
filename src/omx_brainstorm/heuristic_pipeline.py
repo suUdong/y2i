@@ -191,7 +191,13 @@ def analyze_video_heuristic(
     """Run the fast heuristic analysis lane for one resolved video."""
     analysis_text, transcript_language, evidence_source, cached_entry = resolve_transcript_text(video, cache, fetcher, logger)
     metadata_text = " ".join(part for part in [video.description or "", " ".join(video.tags)] if part).strip()
-    signal = assess_video_signal(video.title, analysis_text, description=video.description or "", tags=video.tags)
+    signal = assess_video_signal(
+        video.title,
+        analysis_text,
+        description=video.description or "",
+        tags=video.tags,
+        transcript_source=evidence_source,
+    )
     video_type = VideoType(signal.video_type)
     cached_video = (cached_entry or {}).get("video", {}) if isinstance(cached_entry, dict) else {}
     published_at = video.published_at or cached_video.get("published_at")

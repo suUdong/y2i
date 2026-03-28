@@ -64,6 +64,7 @@ class OMXPipeline:
             transcript_text,
             description=video.description or "",
             tags=video.tags,
+            transcript_source=transcript_source,
         )
         analysis_text = transcript_text or metadata_text
         video_type = VideoType(signal_assessment.video_type)

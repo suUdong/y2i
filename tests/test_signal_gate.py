@@ -70,3 +70,95 @@ def test_signal_gate_keeps_generic_semiconductor_theme_as_sector_only_without_di
     assert result.should_analyze_stocks is False
     assert result.metrics["macro_stock_candidates"] >= 2
     assert result.metrics["has_only_generic_indirect_macro_path"] is True
+
+
+def test_signal_gate_blocks_geopolitical_news_without_company_or_sector_path():
+    result = assess_video_signal(
+        title="트럼프 발표 15분전 누군가가 20조 배팅을 걸었다",
+        transcript_text=(
+            "트럼프 발표와 중동 전쟁, 환율, 유가, 금리, 증시 충격 가능성을 빠르게 정리한다. "
+            "거시 변수와 뉴스 흐름만 다루고 특정 기업이나 개별 투자 전략은 설명하지 않는다."
+        ),
+        description="전쟁과 거시 뉴스 브리핑",
+        tags=["트럼프", "전쟁", "속보"],
+    )
+
+    assert result.video_signal_class == "LOW_SIGNAL"
+    assert result.should_analyze_stocks is False
+    assert result.metrics["macro_stock_candidates"] >= 2
+    assert result.metrics["has_explicit_sector_path"] is False
+    assert result.metrics["has_specific_stock_path"] is False
+
+
+def test_signal_gate_keeps_geopolitical_sector_strategy_actionable():
+    result = assess_video_signal(
+        title="전쟁 장기화 국면, 방산주와 조선주 어디가 더 유리한가",
+        transcript_text=(
+            "전쟁 장기화와 지정학 리스크 속에서 방산주와 조선주 수혜 흐름을 비교한다. "
+            "업황과 수주, 실적, 밸류체인 관점에서 섹터 전략을 설명한다."
+        ),
+        description="방산주 조선주 섹터 전략",
+        tags=["전쟁", "방산", "조선", "수혜주"],
+    )
+
+    assert result.video_signal_class == "ACTIONABLE"
+    assert result.should_analyze_stocks is True
+    assert result.metrics["has_explicit_sector_path"] is True
+    assert result.metrics["has_specific_stock_path"] is True
+
+
+def test_signal_gate_cached_metadata_fallback_does_not_promote_macro_only_video_to_actionable():
+    result = assess_video_signal(
+        title="[LIVE] 이란 전쟁은 안 끝나고, M7은 끝났다?",
+        transcript_text="[LIVE] 이란 전쟁은 안 끝나고, M7은 끝났다? 중동 위기와 시장 충격을 다룬다.",
+        description="중동 위기와 시장 충격을 다룬다.",
+        tags=["전쟁", "중동", "M7"],
+        transcript_source="metadata_fallback",
+    )
+
+    assert result.video_signal_class in {"NOISE", "LOW_SIGNAL", "SECTOR_ONLY"}
+    assert result.should_analyze_stocks is False
+    assert result.metrics["used_metadata_fallback"] is True
+    assert result.metrics["has_specific_stock_path"] is False
+
+
+def test_signal_gate_blocks_single_metadata_company_hit_for_non_stock_topic():
+    result = assess_video_signal(
+        title="난이도 조절에 실패했다는 2026 수능 영어",
+        transcript_text="영어 시험 난이도와 학습법을 설명한다.",
+        description="0:00 역대 최고 난이도 영어 12:29 삼성, 국내해외법인간 문서도 영어만 쓴다",
+        tags=["슈카", "경제", "시사", "주식"],
+    )
+
+    assert result.video_signal_class in {"NOISE", "LOW_SIGNAL", "SECTOR_ONLY"}
+    assert result.should_analyze_stocks is False
+    assert result.metrics["company_hits"] == 1
+    assert result.metrics["has_specific_stock_path"] is False
+
+
+def test_signal_gate_requires_more_than_single_company_hit_for_macro_talk():
+    result = assess_video_signal(
+        title="코스피 1만 시나리오, 결국 금리에서 갈린다",
+        transcript_text="금리, 코스피, 시장 대응과 자산 배분을 설명한다. 카카오는 예시로 한 번만 언급된다.",
+        description="거시 환경 토론과 시장 대응 전략 정리",
+        tags=["금리", "코스피", "투자"],
+    )
+
+    assert result.video_signal_class in {"NOISE", "LOW_SIGNAL", "SECTOR_ONLY"}
+    assert result.should_analyze_stocks is False
+    assert result.metrics["title_description_company_hits"] == 0
+    assert result.metrics["company_hits"] == 1
+    assert result.metrics["has_specific_stock_path"] is False
+
+
+def test_signal_gate_keeps_named_equity_title_actionable():
+    result = assess_video_signal(
+        title="엔비디아와 삼성전자 반도체 로드맵 점검",
+        transcript_text="엔비디아와 삼성전자 실적, HBM, 데이터센터 수요를 함께 본다.",
+        description="구체 종목 중심 분석",
+        tags=["엔비디아", "삼성전자", "반도체", "투자"],
+    )
+
+    assert result.should_analyze_stocks is True
+    assert result.metrics["title_company_hits"] >= 1
+    assert result.metrics["has_specific_stock_path"] is True

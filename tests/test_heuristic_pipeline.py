@@ -34,6 +34,18 @@ class _DummyFundamentals:
         )
 
 
+class _MacroNewsOnlyFetcher:
+    def fetch(self, video_id, preferred_languages=None):
+        text = (
+            "트럼프 발표와 중동 전쟁, 환율, 유가, 금리, 증시 충격 가능성을 빠르게 정리한다. "
+            "거시 뉴스 흐름만 설명하고 특정 기업이나 개별 투자 전략은 다루지 않는다."
+        ) * 8
+        return [TranscriptSegment(0, 1, text)], "ko"
+
+    def join_segments(self, segments):
+        return " ".join(s.text for s in segments)
+
+
 def test_heuristic_macro_video_includes_macro_insights(tmp_path):
     video = VideoInput(
         video_id="hm1",
@@ -79,6 +91,28 @@ def test_heuristic_market_review_failure_returns_empty_fields(tmp_path, monkeypa
     assert result["video_type"] == "MARKET_REVIEW"
     assert result["market_review"] is None
     assert result["macro_insights"] == []
+
+
+def test_heuristic_blocks_macro_news_without_company_or_sector_path(tmp_path):
+    video = VideoInput(
+        video_id="hmacro-news",
+        title="트럼프 발표 15분전 누군가가 20조 배팅을 걸었다",
+        url="https://youtube.com/watch?v=hmacro-news",
+        description="전쟁과 거시 뉴스 브리핑",
+        tags=["트럼프", "전쟁", "속보"],
+    )
+    result = analyze_video_heuristic(
+        video,
+        TranscriptCache(tmp_path / "cache"),
+        _MacroNewsOnlyFetcher(),
+        _DummyFundamentals(),
+    )
+
+    assert result["video_signal_class"] == "LOW_SIGNAL"
+    assert result["should_analyze_stocks"] is False
+    assert result["stocks"] == []
+    assert result["signal_metrics"]["macro_stock_candidates"] >= 2
+    assert result["signal_metrics"]["has_explicit_sector_path"] is False
 
 
 def test_heuristic_expert_interview_includes_insights(tmp_path):
@@ -137,6 +171,35 @@ def test_heuristic_output_includes_video_type_field(tmp_path):
     result = analyze_video_heuristic(video, TranscriptCache(tmp_path / "cache"), _DummyFetcher(), _DummyFundamentals())
     assert "video_type" in result
     assert result["video_type"] == "NEWS_EVENT"
+
+
+def test_heuristic_skips_stock_analysis_for_non_stock_video_with_single_company_mention(tmp_path):
+    class _SingleMentionFetcher:
+        def fetch(self, video_id, preferred_languages=None):
+            text = "영어 시험 난이도와 학습법을 설명한다. 삼성은 사내 문서를 영어로 쓴다는 사례만 짧게 언급한다."
+            return [TranscriptSegment(0, 1, text)], "ko"
+
+        def join_segments(self, segments):
+            return " ".join(s.text for s in segments)
+
+    video = VideoInput(
+        video_id="h-single-mention",
+        title="난이도 조절에 실패했다는 2026 수능 영어",
+        url="https://youtube.com/watch?v=h-single-mention",
+        description="시험 난이도와 영어 학습법을 다루는 영상",
+        tags=["슈카", "경제", "시사", "주식"],
+    )
+
+    result = analyze_video_heuristic(
+        video,
+        TranscriptCache(tmp_path / "cache"),
+        _SingleMentionFetcher(),
+        _DummyFundamentals(),
+    )
+
+    assert result["should_analyze_stocks"] is False
+    assert result["stocks"] == []
+    assert result["signal_metrics"]["has_specific_stock_path"] is False
 
 
 def test_heuristic_compacts_large_description_and_tags(tmp_path):
@@ -347,6 +410,35 @@ def test_heuristic_downgrades_actionable_when_no_tickers_remain(tmp_path, monkey
     assert result["should_analyze_stocks"] is False
     assert result["stocks"] == []
     assert result["skip_reason"]
+
+
+def test_heuristic_cached_metadata_fallback_keeps_macro_only_video_out_of_stock_analysis(tmp_path):
+    class _MetadataOnlyFetcher:
+        def fetch(self, video_id, preferred_languages=None):
+            raise RuntimeError("no transcript")
+
+        def join_segments(self, segments):
+            return " ".join(s.text for s in segments)
+
+    video = VideoInput(
+        video_id="h-meta-macro",
+        title='[LIVE] 이란 전쟁은 안 끝나고, M7은 끝났다?',
+        url="https://youtube.com/watch?v=h-meta-macro",
+        description="중동 위기와 시장 충격을 다룬다.",
+        tags=["전쟁", "중동", "M7"],
+    )
+
+    result = analyze_video_heuristic(
+        video,
+        TranscriptCache(tmp_path / "cache"),
+        _MetadataOnlyFetcher(),
+        _DummyFundamentals(),
+    )
+
+    assert result["transcript_language"] == "metadata_fallback"
+    assert result["video_signal_class"] in {"NOISE", "LOW_SIGNAL", "SECTOR_ONLY"}
+    assert result["should_analyze_stocks"] is False
+    assert result["stocks"] == []
 
 
 def test_heuristic_extracts_price_target(tmp_path, monkeypatch):
