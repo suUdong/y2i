@@ -14,7 +14,7 @@ from .master_engine import build_master_opinions, master_variance_score
 from .models import FundamentalSnapshot, TickerMention, VideoInput, VideoType
 from .price_targets import aggregate_price_targets, extract_price_targets
 from .signal_features import stock_signal_strength
-from .signal_gate import assess_video_signal
+from .signal_gate import assess_video_signal, downgrade_signal_without_tickers
 from .stock_registry import COMPANY_MAP, resolve_kr_ticker
 from .transcript_cache import TranscriptCache
 from .transcript_runtime import resolve_transcript_text
@@ -24,6 +24,7 @@ from .youtube import TranscriptFetcher
 logger = logging.getLogger(__name__)
 _TOKEN_RE = re.compile(r"[0-9A-Za-z가-힣&]+")
 _AMBIGUOUS_ALIAS_KEYS = {"kt", "lg", "sk", "삼성", "한화"}
+_EMAIL_OR_URL_RE = re.compile(r"(?:https?://\S+|www\.\S+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})", re.I)
 
 
 def _count_alias_hits(text: str, alias: str) -> int:
@@ -57,9 +58,9 @@ def _fallback_kr_company_hits(text: str) -> list[tuple[str, tuple[str, str]]]:
     return hits
 
 
-def extract_mentions(title: str, text: str) -> list[tuple[TickerMention, int]]:
+def extract_mentions(title: str, text: str, metadata_text: str = "") -> list[tuple[TickerMention, int]]:
     """Extract direct company mentions and merge higher-confidence indirect macro mentions."""
-    lower = f"{title} {text}".lower()
+    lower = _EMAIL_OR_URL_RE.sub(" ", f"{title} {text} {metadata_text}".lower())
     counts: Counter[tuple[str, str]] = Counter()
     scores: dict[tuple[str, str], float] = {}
     reasons: dict[tuple[str, str], list[str]] = {}
@@ -89,7 +90,13 @@ def extract_mentions(title: str, text: str) -> list[tuple[TickerMention, int]]:
         )
         if has_longer_prefixed_reason:
             suppressed_keys.add(ambiguous_key)
-    for mention in indirect_macro_mentions(title, text):
+            continue
+        ambiguous_reasons = sorted(set(reasons.get(ambiguous_key, [])))
+        ambiguous_count = counts.get(ambiguous_key, 0)
+        if ambiguous_reasons and ambiguous_count < 2 and set(ambiguous_reasons) == {ambiguous}:
+            suppressed_keys.add(ambiguous_key)
+    macro_context = " ".join(part for part in [text, metadata_text] if part)
+    for mention in indirect_macro_mentions(title, macro_context):
         key = (mention.ticker, mention.company_name or "")
         if mention.confidence < 0.55:
             continue
@@ -183,6 +190,7 @@ def analyze_video_heuristic(
 ) -> dict[str, Any]:
     """Run the fast heuristic analysis lane for one resolved video."""
     analysis_text, transcript_language, evidence_source, cached_entry = resolve_transcript_text(video, cache, fetcher, logger)
+    metadata_text = " ".join(part for part in [video.description or "", " ".join(video.tags)] if part).strip()
     signal = assess_video_signal(video.title, analysis_text, description=video.description or "", tags=video.tags)
     video_type = VideoType(signal.video_type)
     cached_video = (cached_entry or {}).get("video", {}) if isinstance(cached_entry, dict) else {}
@@ -194,14 +202,27 @@ def analyze_video_heuristic(
     expert_insights_data = []
 
     if video_type == VideoType.MARKET_REVIEW:
-        mr = extract_market_review(video.title, analysis_text)
-        market_review_data = asdict(mr)
-        macro_insights_data = [asdict(i) for i in mr.macro_insights]
+        try:
+            mr = extract_market_review(video.title, analysis_text)
+        except Exception as exc:
+            logger.warning("Market review extraction failed for %s: %s", video.video_id, exc)
+        else:
+            market_review_data = asdict(mr)
+            macro_insights_data = [asdict(i) for i in mr.macro_insights]
     elif video_type == VideoType.EXPERT_INTERVIEW:
-        expert_insights_data = [asdict(i) for i in extract_expert_insights(video.title, analysis_text, video.description or "")]
-        macro_insights_data = [asdict(i) for i in extract_macro_insights(video.title, analysis_text)]
+        try:
+            expert_insights_data = [asdict(i) for i in extract_expert_insights(video.title, analysis_text, video.description or "")]
+        except Exception as exc:
+            logger.warning("Expert insight extraction failed for %s: %s", video.video_id, exc)
+        try:
+            macro_insights_data = [asdict(i) for i in extract_macro_insights(video.title, analysis_text)]
+        except Exception as exc:
+            logger.warning("Macro insight extraction failed for %s: %s", video.video_id, exc)
     elif video_type not in (VideoType.STOCK_PICK, VideoType.SECTOR):
-        macro_insights_data = [asdict(i) for i in extract_macro_insights(video.title, analysis_text)]
+        try:
+            macro_insights_data = [asdict(i) for i in extract_macro_insights(video.title, analysis_text)]
+        except Exception as exc:
+            logger.warning("Macro insight extraction failed for %s: %s", video.video_id, exc)
 
     row = {
         "video_id": video.video_id,
@@ -226,74 +247,99 @@ def analyze_video_heuristic(
     if not signal.should_analyze_stocks:
         return row
 
-    mentions = extract_mentions(video.title, analysis_text)
+    mentions = extract_mentions(video.title, analysis_text, metadata_text=metadata_text)
+    if not mentions:
+        signal = downgrade_signal_without_tickers(signal)
+        row["signal_score"] = signal.signal_score
+        row["video_signal_class"] = signal.video_signal_class
+        row["should_analyze_stocks"] = signal.should_analyze_stocks
+        row["reason"] = signal.reason
+        row["skip_reason"] = signal.skip_reason
+        row["signal_metrics"] = dict(signal.metrics)
+        return row
     if hasattr(fundamentals, "fetch_many"):
-        snapshots = fundamentals.fetch_many(
-            [mention for mention, _mention_count in mentions],
-            max_workers=max_fundamental_workers,
-        )
+        try:
+            snapshots = fundamentals.fetch_many(
+                [mention for mention, _mention_count in mentions],
+                max_workers=max_fundamental_workers,
+            )
+        except Exception as exc:
+            logger.warning("Batch fundamentals fetch failed for %s: %s", video.video_id, exc)
+            snapshots = {}
     else:
-        snapshots = {
-            mention.ticker: fundamentals.fetch(mention)
-            for mention, _mention_count in mentions
-        }
+        snapshots = {}
     cached_evidence = {item["ticker"]: list(item.get("evidence", [])) for item in (cached_entry or {}).get("ticker_mentions", [])}
     for mention, mention_count in mentions:
-        snapshot = snapshots.get(mention.ticker) or fundamentals.fetch(mention)
-        basic_score, basic_verdict, basic_state, basic_summary = basic_assessment(snapshot)
-        evidence_snippets = _compact_evidence(cached_evidence.get(mention.ticker) or list(mention.evidence or [mention.reason]))
-        price_targets = extract_price_targets(
-            analysis_text,
-            ticker=mention.ticker,
-            company_name=snapshot.company_name or mention.company_name,
-            current_price=snapshot.current_price,
-            currency=snapshot.currency,
-        )
-        price_target_payloads = [asdict(item) for item in price_targets]
-        mops = build_master_opinions(
-            ticker=mention.ticker,
-            company_name=snapshot.company_name or mention.company_name,
-            snapshot=snapshot,
-            mention_count=mention_count,
-            video_title=video.title,
-            video_signal_score=signal.signal_score,
-            evidence_snippets=evidence_snippets,
-        )
-        variance = master_variance_score(mops)
-        total_score, verdict = final_verdict([basic_score] + [item.score for item in mops])
-        row["stocks"].append(
-            {
-                "ticker": mention.ticker,
-                "company_name": snapshot.company_name or mention.company_name,
-                "mention_count": mention_count,
-                "signal_timestamp": video.published_at,
-                "signal_strength_score": stock_signal_strength(
-                    ticker=mention.ticker,
-                    company_name=snapshot.company_name or mention.company_name,
-                    video_signal_score=signal.signal_score,
-                    mention_count=mention_count,
-                    master_variance=variance,
-                    evidence_snippets=evidence_snippets,
-                    evidence_source=evidence_source,
-                ),
-                "evidence_source": evidence_source,
-                "evidence_snippets": evidence_snippets,
-                "basic_state": basic_state,
-                "basic_signal_summary": basic_summary,
-                "basic_signal_verdict": basic_verdict,
-                "fundamentals": asdict(snapshot),
-                "master_opinions": [asdict(item) for item in mops],
-                "final_score": round(total_score, 1),
-                "final_verdict": verdict,
-                "invalidation_triggers": ["실적/가이던스 둔화", "섹터 CAPEX 둔화", "멀티플 재조정"],
-                "price_targets": price_target_payloads,
-                "price_target": aggregate_price_targets(
-                    price_target_payloads,
-                    latest_price=snapshot.current_price,
-                    currency=snapshot.currency,
-                ),
-            }
-        )
+        try:
+            snapshot = snapshots.get(mention.ticker)
+            if snapshot is None:
+                snapshot = fundamentals.fetch(mention)
+        except Exception as exc:
+            logger.warning("Fundamentals fetch failed for %s in %s: %s", mention.ticker, video.video_id, exc)
+            snapshot = FundamentalSnapshot(
+                ticker=mention.ticker,
+                company_name=mention.company_name,
+                data_source="fundamentals_error",
+                notes=[f"fetch_error:{type(exc).__name__}"],
+            )
+
+        try:
+            basic_score, basic_verdict, basic_state, basic_summary = basic_assessment(snapshot)
+            evidence_snippets = _compact_evidence(cached_evidence.get(mention.ticker) or list(mention.evidence or [mention.reason]))
+            price_targets = extract_price_targets(
+                analysis_text,
+                ticker=mention.ticker,
+                company_name=snapshot.company_name or mention.company_name,
+                current_price=snapshot.current_price,
+                currency=snapshot.currency,
+            )
+            price_target_payloads = [asdict(item) for item in price_targets]
+            mops = build_master_opinions(
+                ticker=mention.ticker,
+                company_name=snapshot.company_name or mention.company_name,
+                snapshot=snapshot,
+                mention_count=mention_count,
+                video_title=video.title,
+                video_signal_score=signal.signal_score,
+                evidence_snippets=evidence_snippets,
+            )
+            variance = master_variance_score(mops)
+            total_score, verdict = final_verdict([basic_score] + [item.score for item in mops])
+            row["stocks"].append(
+                {
+                    "ticker": mention.ticker,
+                    "company_name": snapshot.company_name or mention.company_name,
+                    "mention_count": mention_count,
+                    "signal_timestamp": video.published_at,
+                    "signal_strength_score": stock_signal_strength(
+                        ticker=mention.ticker,
+                        company_name=snapshot.company_name or mention.company_name,
+                        video_signal_score=signal.signal_score,
+                        mention_count=mention_count,
+                        master_variance=variance,
+                        evidence_snippets=evidence_snippets,
+                        evidence_source=evidence_source,
+                    ),
+                    "evidence_source": evidence_source,
+                    "evidence_snippets": evidence_snippets,
+                    "basic_state": basic_state,
+                    "basic_signal_summary": basic_summary,
+                    "basic_signal_verdict": basic_verdict,
+                    "fundamentals": asdict(snapshot),
+                    "master_opinions": [asdict(item) for item in mops],
+                    "final_score": round(total_score, 1),
+                    "final_verdict": verdict,
+                    "invalidation_triggers": ["실적/가이던스 둔화", "섹터 CAPEX 둔화", "멀티플 재조정"],
+                    "price_targets": price_target_payloads,
+                    "price_target": aggregate_price_targets(
+                        price_target_payloads,
+                        latest_price=snapshot.current_price,
+                        currency=snapshot.currency,
+                    ),
+                }
+            )
+        except Exception as exc:
+            logger.warning("Stock analysis failed for %s in %s: %s", mention.ticker, video.video_id, exc)
     return row
 
 

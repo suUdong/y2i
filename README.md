@@ -20,7 +20,12 @@
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e . pytest
+pip install -e .[dev,dashboard]
+```
+
+대시보드까지 포함해 설치하려면:
+```bash
+pip install -e .[dashboard] pytest
 ```
 
 ## 설정

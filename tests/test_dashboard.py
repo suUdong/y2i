@@ -532,6 +532,31 @@ class TestGetRecentVideos:
         assert len(videos) >= 2  # sampro has 2 videos
         assert all("_channel" in v for v in videos)
 
+    def test_prefers_latest_artifact_per_channel(self, tmp_output: Path):
+        older = {
+            "channel_slug": "sampro",
+            "channel_name": "Test Channel",
+            "videos": [
+                {
+                    "video_id": "old-video",
+                    "title": "Old Run Video",
+                    "video_signal_class": "ACTIONABLE",
+                    "signal_score": 30.0,
+                    "should_analyze_stocks": True,
+                    "published_at": "20260310",
+                    "stocks": [],
+                }
+            ],
+        }
+        older_path = tmp_output / "sampro_30d_20260322T000000Z.json"
+        older_path.write_text(json.dumps(older), encoding="utf-8")
+
+        videos = get_recent_videos(tmp_output, hours=24)
+        video_ids = {video["video_id"] for video in videos}
+
+        assert "old-video" not in video_ids
+        assert {"v1", "v2"}.issubset(video_ids)
+
     def test_returns_empty_for_zero_hours(self, tmp_output: Path):
         videos = get_recent_videos(tmp_output, hours=0)
         assert videos == []
@@ -542,6 +567,65 @@ class TestGetRecentVideos:
     def test_sorts_by_recent_date_then_score(self, tmp_output: Path):
         videos = get_recent_videos(tmp_output, hours=24)
         assert videos[0]["published_at"] >= videos[-1]["published_at"]
+
+    def test_uses_only_latest_run_per_channel(self, tmp_output: Path):
+        newer = {
+            "channel_slug": "sampro",
+            "channel_name": "Test Channel",
+            "generated_at": "20260324T000000Z",
+            "window_days": 30,
+            "videos": [
+                {
+                    "video_id": "latest-v1",
+                    "title": "Latest Run Video",
+                    "video_signal_class": "ACTIONABLE",
+                    "signal_score": 88.0,
+                    "should_analyze_stocks": True,
+                    "published_at": "20260324",
+                    "stocks": [],
+                }
+            ],
+            "cross_video_ranking": [],
+            "quality_scorecard": {"overall": 0.0},
+        }
+        (tmp_output / "sampro_30d_20260324T000000Z.json").write_text(json.dumps(newer), encoding="utf-8")
+
+        videos = get_recent_videos(tmp_output, hours=24)
+        sampro_titles = [video["title"] for video in videos if video["_channel"] == "sampro"]
+
+        assert sampro_titles == ["Latest Run Video"]
+
+    def test_prefers_latest_artifact_per_channel_without_duplicate_historical_runs(self, tmp_output: Path):
+        newer = {
+            "channel_slug": "sampro",
+            "channel_name": "Test Channel",
+            "generated_at": "20260324T000000Z",
+            "window_days": 30,
+            "videos": [
+                {
+                    "video_id": "v-new",
+                    "title": "Latest Only",
+                    "video_signal_class": "ACTIONABLE",
+                    "signal_score": 88.0,
+                    "should_analyze_stocks": True,
+                    "published_at": "20260324",
+                    "stocks": [],
+                }
+            ],
+            "cross_video_ranking": [],
+            "quality_scorecard": {"overall": 0.9},
+        }
+        (tmp_output / "sampro_30d_20260324T000000Z.json").write_text(json.dumps(newer), encoding="utf-8")
+        get_recent_videos.clear()
+        get_available_channels.clear()
+        load_30d_results.clear()
+
+        videos = get_recent_videos(tmp_output, hours=24)
+        titles = [video["title"] for video in videos if video["_channel"] == "sampro"]
+
+        assert "Latest Only" in titles
+        assert "Test Video 1" not in titles
+        assert "Test Video 2" not in titles
 
 
 # ── extract_actionable_signals (US-006) ─────────────────────────────────────
@@ -715,6 +799,71 @@ class TestGetLiveFeedData:
         assert data["recent_videos"] == []
         assert data["recent_signals"] == []
         assert data["last_update"] is None
+
+    def test_reuses_recent_video_and_chart_records(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+        calls = {"recent": 0, "charts": 0}
+
+        def fake_recent(*_args, **_kwargs):
+            calls["recent"] += 1
+            return [{"_channel": "sampro", "title": "Recent", "published_at": "20260324", "signal_score": 70.0, "video_signal_class": "ACTIONABLE"}]
+
+        def fake_charts(*_args, **_kwargs):
+            calls["charts"] += 1
+            return [{
+                "ticker": "005930.KS",
+                "company_name": "Samsung",
+                "channel_slug": "sampro",
+                "channel_display": "Test Channel",
+                "ticker_display": "005930 삼성전자",
+                "signal_date": "2026-03-24",
+                "signal_score": 82.0,
+                "verdict": "BUY",
+                "entry_price": 58000.0,
+                "timeline": [{"date": "2026-03-24", "close": 58000.0, "return_pct": 0.0}],
+                "returns": {"5d": 1.2},
+                "recorded_at": "2026-03-24T00:00:00+00:00",
+                "last_updated": "2026-03-24T00:00:00+00:00",
+            }]
+
+        monkeypatch.setattr(data_loader_module, "get_recent_videos", fake_recent)
+        monkeypatch.setattr(data_loader_module, "get_signal_chart_records", fake_charts)
+        monkeypatch.setattr(data_loader_module, "get_channel_display_names", lambda *_args, **_kwargs: {"sampro": "Test Channel"})
+        monkeypatch.setattr(data_loader_module, "load_channel_comparison", lambda *_args, **_kwargs: {"signal_accuracy": {"recent_signals": [{"ticker": "005930.KS"}]}})
+        monkeypatch.setattr(data_loader_module, "extract_recent_tracked_signals", lambda comparison: comparison["signal_accuracy"]["recent_signals"])
+        monkeypatch.setattr(data_loader_module, "get_last_update_time", lambda *_args, **_kwargs: None)
+
+        data = get_live_feed_data(tmp_path, hours=48)
+
+        assert calls == {"recent": 1, "charts": 1}
+        assert data["recent_videos"][0]["title"] == "Recent"
+        assert data["signal_chart_records"][0]["ticker"] == "005930.KS"
+        assert data["feed_events"]
+
+
+def test_get_recent_videos_uses_only_latest_run_per_channel(tmp_path: Path):
+    older = {
+        "channel_slug": "sampro",
+        "channel_name": "Test Channel",
+        "videos": [
+            {"video_id": "old1", "title": "Old video", "published_at": "20260301", "signal_score": 10.0, "video_signal_class": "NOISE"},
+        ],
+    }
+    newer = {
+        "channel_slug": "sampro",
+        "channel_name": "Test Channel",
+        "videos": [
+            {"video_id": "new1", "title": "New video", "published_at": "20260320", "signal_score": 80.0, "video_signal_class": "ACTIONABLE"},
+        ],
+    }
+
+    older_path = tmp_path / "sampro_30d_20260301T000000Z.json"
+    newer_path = tmp_path / "sampro_30d_20260320T000000Z.json"
+    older_path.write_text(json.dumps(older), encoding="utf-8")
+    newer_path.write_text(json.dumps(newer), encoding="utf-8")
+
+    videos = get_recent_videos(tmp_path, hours=9999)
+
+    assert [video["video_id"] for video in videos] == ["new1"]
 
 
 def test_streamlit_app_runs_without_session_errors(tmp_output: Path, monkeypatch: pytest.MonkeyPatch):

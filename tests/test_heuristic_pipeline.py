@@ -63,6 +63,24 @@ def test_heuristic_market_review_includes_review(tmp_path):
     assert "direction" in result["market_review"]
 
 
+def test_heuristic_market_review_failure_returns_empty_fields(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "omx_brainstorm.heuristic_pipeline.extract_market_review",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
+    video = VideoInput(
+        video_id="hmr-fail",
+        title="마감시황 코스피 상승 나스닥 하락",
+        url="https://youtube.com/watch?v=hmr-fail",
+        description="오늘 시황 정리",
+        tags=["시황", "코스피"],
+    )
+    result = analyze_video_heuristic(video, TranscriptCache(tmp_path / "cache"), _DummyFetcher(), _DummyFundamentals())
+    assert result["video_type"] == "MARKET_REVIEW"
+    assert result["market_review"] is None
+    assert result["macro_insights"] == []
+
+
 def test_heuristic_expert_interview_includes_insights(tmp_path):
     video = VideoInput(
         video_id="hei1",
@@ -75,6 +93,22 @@ def test_heuristic_expert_interview_includes_insights(tmp_path):
     assert result["video_type"] == "EXPERT_INTERVIEW"
     assert len(result["expert_insights"]) > 0
     assert result["expert_insights"][0]["expert_name"] == "김영호"
+
+
+def test_heuristic_falls_back_to_individual_fundamental_fetches_when_batch_fails(tmp_path):
+    class BatchFailFundamentals(_DummyFundamentals):
+        def fetch_many(self, mentions, max_workers=None):
+            raise RuntimeError("batch boom")
+
+    video = VideoInput(
+        video_id="hfund1",
+        title="엔비디아와 삼성전자 반도체 분석",
+        url="https://youtube.com/watch?v=hfund1",
+        description="반도체 종목 분석",
+        tags=["엔비디아", "삼성전자"],
+    )
+    result = analyze_video_heuristic(video, TranscriptCache(tmp_path / "cache"), _DummyFetcher(), BatchFailFundamentals())
+    assert result["stocks"]
 
 
 def test_heuristic_stock_pick_no_extra_fields(tmp_path):
@@ -157,6 +191,31 @@ def test_extract_mentions_suppresses_ambiguous_group_alias_when_longer_company_m
     tickers = [m.ticker for m, _count in mentions]
     assert "207940.KS" in tickers
     assert "005930.KS" not in tickers
+
+
+def test_extract_mentions_ignores_email_domain_noise():
+    mentions = extract_mentions(
+        "공지",
+        "문의는 sample@naver.com 으로 주세요. 영상과 무관한 일반 안내문입니다.",
+    )
+    assert mentions == []
+
+
+def test_extract_mentions_uses_metadata_when_transcript_body_is_generic():
+    mentions = extract_mentions(
+        "전력 인프라 업황 점검",
+        "이번 영상은 업황과 수급만 간단히 본다.",
+        metadata_text="AI 데이터센터 전력 인프라 수혜주로 HD현대일렉트릭과 효성중공업을 본다.",
+    )
+    tickers = [m.ticker for m, _count in mentions]
+    assert "267260.KS" in tickers
+    assert "298040.KS" in tickers
+
+
+def test_extract_mentions_suppresses_single_ambiguous_group_alias_without_specific_company():
+    mentions = extract_mentions("한화 지금 들어가도 되나?", "개인투자자 심리와 투자 원칙을 말합니다.")
+    tickers = [m.ticker for m, _count in mentions]
+    assert "000880.KS" not in tickers
 
 
 # --- basic_assessment verdicts ---
@@ -257,6 +316,37 @@ def test_heuristic_no_stock_analysis_when_low_signal(tmp_path):
     result = analyze_video_heuristic(video, TranscriptCache(tmp_path / "cache"), _NoStockFetcher(), _DummyFundamentals())
     assert result["stocks"] == []
     assert result["skip_reason"] == result["reason"]
+
+
+def test_heuristic_downgrades_actionable_when_no_tickers_remain(tmp_path, monkeypatch):
+    from omx_brainstorm.models import VideoSignalAssessment
+
+    video = VideoInput(
+        video_id="h-empty-actionable",
+        title="반도체 매수 기회",
+        url="https://youtube.com/watch?v=h-empty-actionable",
+        description="강한 종목 신호처럼 보이지만 실제 언급 종목은 없다",
+        tags=["반도체", "매수"],
+    )
+    monkeypatch.setattr(
+        "omx_brainstorm.heuristic_pipeline.assess_video_signal",
+        lambda *args, **kwargs: VideoSignalAssessment(
+            signal_score=82.0,
+            video_signal_class="ACTIONABLE",
+            should_analyze_stocks=True,
+            reason="pre-gate actionable",
+            video_type="STOCK_PICK",
+            metrics={"test": True},
+        ),
+    )
+    monkeypatch.setattr("omx_brainstorm.heuristic_pipeline.extract_mentions", lambda *args, **kwargs: [])
+
+    result = analyze_video_heuristic(video, TranscriptCache(tmp_path / "cache"), _DummyFetcher(), _DummyFundamentals())
+
+    assert result["video_signal_class"] == "LOW_SIGNAL"
+    assert result["should_analyze_stocks"] is False
+    assert result["stocks"] == []
+    assert result["skip_reason"]
 
 
 def test_heuristic_extracts_price_target(tmp_path, monkeypatch):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import OrderedDict
 import logging
 import re
 import time
@@ -30,7 +31,15 @@ RETRYABLE_YTDLP_MARKERS = (
     "sign in to confirm you’re not a bot",
     "too many requests",
     "http error 429",
+    "http error 500",
+    "http error 502",
+    "http error 503",
+    "http error 504",
     "broken pipe",
+    "connection reset by peer",
+    "connection aborted",
+    "remote end closed connection without response",
+    "temporary failure in name resolution",
     "timed out",
     "temporarily unavailable",
 )
@@ -40,6 +49,11 @@ RETRYABLE_TRANSCRIPT_MARKERS = (
     "request blocked",
     "ip blocked",
     "broken pipe",
+    "connection reset by peer",
+    "connection aborted",
+    "remote end closed connection without response",
+    "temporarily unavailable",
+    "timed out",
 )
 
 logger = logging.getLogger(__name__)
@@ -60,20 +74,39 @@ def _sleep_before_retry(delay_seconds: float) -> None:
     time.sleep(delay_seconds)
 
 
+def _exception_messages(exc: Exception) -> list[str]:
+    messages: list[str] = []
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        message = describe_youtube_error(current if isinstance(current, Exception) else Exception(str(current)))
+        if message:
+            messages.append(message.lower())
+        current = current.__cause__ or current.__context__
+    return messages
+
+
+def _has_retryable_marker(exc: Exception, markers: tuple[str, ...]) -> bool:
+    return any(
+        marker in message
+        for message in _exception_messages(exc)
+        for marker in markers
+    )
+
+
 def _is_retryable_ytdlp_error(exc: Exception) -> bool:
-    if isinstance(exc, BrokenPipeError):
+    if isinstance(exc, (BrokenPipeError, TimeoutError, ConnectionResetError, ConnectionAbortedError, EOFError)):
         return True
-    if not isinstance(exc, DownloadError):
+    if not isinstance(exc, (DownloadError, OSError)):
         return False
-    message = describe_youtube_error(exc).lower()
-    return any(marker in message for marker in RETRYABLE_YTDLP_MARKERS)
+    return _has_retryable_marker(exc, RETRYABLE_YTDLP_MARKERS)
 
 
 def _is_retryable_transcript_error(exc: Exception) -> bool:
-    if isinstance(exc, (RequestBlocked, IpBlocked, BrokenPipeError)):
+    if isinstance(exc, (RequestBlocked, IpBlocked, BrokenPipeError, TimeoutError, ConnectionResetError, ConnectionAbortedError, EOFError)):
         return True
-    message = describe_youtube_error(exc).lower()
-    return any(marker in message for marker in RETRYABLE_TRANSCRIPT_MARKERS)
+    return _has_retryable_marker(exc, RETRYABLE_TRANSCRIPT_MARKERS)
 
 
 def _call_with_retry(
@@ -140,7 +173,14 @@ def extract_video_id(url_or_id: str) -> str:
 
 
 class YoutubeResolver:
-    def __init__(self, cache_root: Path | None = None, cache_max_age_hours: int = DEFAULT_VIDEO_CACHE_HOURS):
+    def __init__(
+        self,
+        cache_root: Path | None = None,
+        cache_max_age_hours: int = DEFAULT_VIDEO_CACHE_HOURS,
+        max_memory_entries: int = 256,
+        memory_cache_max_entries: int | None = None,
+        memory_cache_size: int | None = None,
+    ):
         self._ydl_opts = {
             "quiet": True,
             "no_warnings": True,
@@ -149,7 +189,12 @@ class YoutubeResolver:
         }
         self.cache_root = cache_root or Path(".omx/cache/video_metadata")
         self.cache_max_age_hours = cache_max_age_hours
-        self._memory_cache: dict[str, dict] = {}
+        if memory_cache_max_entries is not None:
+            max_memory_entries = memory_cache_max_entries
+        if memory_cache_size is not None:
+            max_memory_entries = memory_cache_size
+        self.max_memory_entries = max(0, int(max_memory_entries))
+        self._memory_cache: OrderedDict[str, dict] = OrderedDict()
         self._cache_lock = Lock()
         ensure_dir(self.cache_root)
 
@@ -296,15 +341,13 @@ class YoutubeResolver:
         return self.cache_root / f"{safe_video_id}.json"
 
     def _load_cached_video(self, video_id: str) -> dict | None:
-        with self._cache_lock:
-            cached = self._memory_cache.get(video_id)
+        cached = self._memory_cache_get(video_id)
         if cached is not None:
             return cached
         payload = read_json(self._cache_path(video_id), None)
         if payload is None:
             return None
-        with self._cache_lock:
-            self._memory_cache[video_id] = payload
+        self._memory_cache_put(video_id, payload)
         return payload
 
     def _save_video_cache(self, video: VideoInput) -> None:
@@ -312,8 +355,7 @@ class YoutubeResolver:
             "cached_at": utc_now_iso(),
             "video": asdict(video),
         }
-        with self._cache_lock:
-            self._memory_cache[video.video_id] = payload
+        self._memory_cache_put(video.video_id, payload)
         write_json(self._cache_path(video.video_id), payload)
 
     def _is_cache_stale(self, payload: dict) -> bool:
@@ -330,6 +372,25 @@ class YoutubeResolver:
     @staticmethod
     def _video_from_payload(payload: dict) -> VideoInput:
         return VideoInput(**payload)
+
+    def _memory_cache_get(self, key: str) -> dict | None:
+        if self.max_memory_entries == 0:
+            return None
+        with self._cache_lock:
+            cached = self._memory_cache.get(key)
+            if cached is None:
+                return None
+            self._memory_cache.move_to_end(key)
+            return cached
+
+    def _memory_cache_put(self, key: str, payload: dict) -> None:
+        if self.max_memory_entries == 0:
+            return
+        with self._cache_lock:
+            self._memory_cache[key] = payload
+            self._memory_cache.move_to_end(key)
+            while len(self._memory_cache) > self.max_memory_entries:
+                self._memory_cache.popitem(last=False)
 
 
 class TranscriptFetcher:

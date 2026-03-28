@@ -4,8 +4,10 @@ import re
 
 from .macro_signals import extract_macro_signals, indirect_macro_mentions
 from .models import VideoSignalAssessment
-from .stock_registry import COMPANY_PATTERNS
+from .stock_registry import COMPANY_PATTERNS, resolve_kr_ticker
 from .title_taxonomy import classify_video_type
+
+_TOKEN_RE = re.compile(r"[0-9A-Za-z가-힣&]+")
 
 FINANCE_KEYWORDS = {
     '투자', '종목', '실적', '반도체', '메모리', '파운드리', '엔비디아', '삼성', 'sk하이닉스', '로드맵', '수혜주',
@@ -18,13 +20,52 @@ FINANCE_KEYWORDS = {
 NON_EQUITY_KEYWORDS = {'브이로그', '먹방', '여행', '일상', '운동', '게임', '리뷰만', '광고'}
 GENERIC_TITLE_CUES = {
     '폭락', '현금', '조심하세요', '개인투자자', '이 실수', '이 주식만', '부자되는', '위험 신호', '위험신호',
-    '희비', '이상 현상', '기회 왔다'
+    '희비', '이상 현상', '기회 왔다', '사야 할 것들', '지금 사야'
 }
 ACTIONABLE_TITLE_ANCHORS = {
     '반도체', '메모리', '전쟁', '방산', '금리', '환율', '유가',
     '건설', '부동산', '증권', '조선', '정유', 'ai 반도체', '데이터센터', 'gpu',
     '2차전지', '바이오', '전력기기', '원전', '밸류업', '저pbr', '지주사'
 }
+NO_TICKER_SKIP_REASON = '종목 추출 근거가 부족해 종목 분석을 건너뜀'
+
+
+def downgrade_signal_without_tickers(
+    assessment: VideoSignalAssessment,
+    *,
+    reason: str = NO_TICKER_SKIP_REASON,
+) -> VideoSignalAssessment:
+    metrics = dict(assessment.metrics or {})
+    metrics["extracted_ticker_count"] = 0
+    metrics["post_extraction_gate"] = "downgraded_no_tickers"
+    return VideoSignalAssessment(
+        signal_score=min(float(assessment.signal_score), 54.0),
+        video_signal_class="LOW_SIGNAL",
+        should_analyze_stocks=False,
+        reason=reason,
+        skip_reason=reason,
+        video_type=assessment.video_type,
+        metrics=metrics,
+    )
+
+
+def _count_spaced_kr_company_hits(text: str) -> int:
+    tokens = [match.group(0).lower() for match in _TOKEN_RE.finditer(text)]
+    hits = 0
+    idx = 0
+    while idx < len(tokens):
+        matched = False
+        for window in range(min(3, len(tokens) - idx), 1, -1):
+            candidate = "".join(tokens[idx : idx + window])
+            if resolve_kr_ticker(candidate) is None:
+                continue
+            hits += 1
+            idx += window
+            matched = True
+            break
+        if not matched:
+            idx += 1
+    return hits
 
 
 def assess_video_signal(
@@ -41,11 +82,11 @@ def assess_video_signal(
     text = f"{title} {signal_body} {description} {' '.join(tags)}".lower()
     finance_hits = sum(1 for kw in FINANCE_KEYWORDS if kw in text)
     non_equity_hits = sum(1 for kw in NON_EQUITY_KEYWORDS if kw in text)
-    company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(text))
-    title_company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(title_only_text))
-    title_description_company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(title_description_text))
+    company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(text)) + _count_spaced_kr_company_hits(text)
+    title_company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(title_only_text)) + _count_spaced_kr_company_hits(title_only_text)
+    title_description_company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(title_description_text)) + _count_spaced_kr_company_hits(title_description_text)
     transcript_len = len(transcript_text)
-    metadata_company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(metadata_text))
+    metadata_company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(metadata_text)) + _count_spaced_kr_company_hits(metadata_text.lower())
     used_metadata_fallback = transcript_len == 0 and bool(metadata_text)
     macro_signals = extract_macro_signals(text)
     macro_signal_count = len(macro_signals)
@@ -55,6 +96,7 @@ def assess_video_signal(
     has_actionable_anchor = any(keyword in title_description_text for keyword in ACTIONABLE_TITLE_ANCHORS)
     title_has_actionable_anchor = any(keyword in title_only_text for keyword in ACTIONABLE_TITLE_ANCHORS)
     has_generic_title_cue = any(keyword in title_description_text for keyword in GENERIC_TITLE_CUES)
+    has_specific_stock_path = title_description_company_hits >= 1 or macro_stock_candidates >= 1
 
     score = 0.0
     score += min(finance_hits * 4, 40)
@@ -66,6 +108,8 @@ def assess_video_signal(
         score = max(score, 35.0)
     if used_metadata_fallback and title_description_company_hits >= 1 and finance_hits >= 3:
         score = max(score, 55.0)
+    if title_description_company_hits >= 1 and finance_hits >= 2:
+        score = max(score, 55.0)
     if finance_hits >= 6 and has_actionable_anchor:
         score = max(score, 55.0)
     if has_actionable_anchor and actionable_macro_count >= 1 and finance_hits >= 3:
@@ -74,6 +118,8 @@ def assess_video_signal(
         score = max(score, 70.0)
     if title_description_company_hits >= 2 and finance_hits >= 4:
         score = max(score, 70.0)
+    if has_generic_title_cue and title_description_company_hits == 0 and company_hits == 0:
+        score = min(score, 54.0)
     if has_generic_title_cue and not has_actionable_anchor:
         score = min(score, 54.0)
     if has_generic_title_cue and not title_has_actionable_anchor and title_company_hits == 0:
@@ -90,7 +136,7 @@ def assess_video_signal(
         reason = '직접 종목 또는 매크로-섹터-종목 연결까지 포함하면 분석 가치가 높음'
     elif score >= 55:
         klass = 'SECTOR_ONLY'
-        should = True
+        should = has_specific_stock_path
         reason = '섹터 중심이지만 종목 단서가 충분해 분석 가치가 있음'
     elif score >= 35:
         klass = 'LOW_SIGNAL'
@@ -108,7 +154,11 @@ def assess_video_signal(
         video_signal_class=klass,
         should_analyze_stocks=should,
         reason=reason,
-        skip_reason="" if should else reason,
+        skip_reason="" if should else (
+            '섹터 흐름은 유효하지만 구체 종목 연결 근거가 부족해 종목 분석은 건너뜀'
+            if klass == 'SECTOR_ONLY'
+            else reason
+        ),
         video_type=video_type.value,
         metrics={
             'finance_keyword_hits': finance_hits,

@@ -1,4 +1,5 @@
 """Extended tests for youtube.py: resolver, fetcher, parse helpers."""
+from dataclasses import asdict
 from datetime import date
 from unittest.mock import MagicMock, patch
 
@@ -160,6 +161,119 @@ def test_resolve_video_uses_cache_on_repeat(monkeypatch, tmp_path):
     assert calls["count"] == 1
 
 
+def test_resolve_video_bounds_memory_cache_on_resolve(monkeypatch, tmp_path):
+    fake_info = {
+        "title": "Cached Video",
+        "channel_id": "CH1",
+        "channel": "Test Channel",
+        "upload_date": "20260315",
+        "description": "desc",
+        "tags": ["tag1"],
+    }
+
+    class FakeYDL:
+        def __init__(self, opts):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
+
+        def extract_info(self, url, download=False):
+            return fake_info
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+
+    resolver = YoutubeResolver(cache_root=tmp_path / "video-cache", max_memory_entries=2)
+    resolver.resolve_video("dQw4w9WgXcQ")
+    resolver.resolve_video("aaaaaaaaaaa")
+    resolver.resolve_video("bbbbbbbbbbb")
+
+    assert len(resolver._memory_cache) == 2
+    assert "dQw4w9WgXcQ" not in resolver._memory_cache
+
+
+def test_resolver_memory_cache_is_bounded_lru(tmp_path):
+    resolver = YoutubeResolver(cache_root=tmp_path / "video-cache", max_memory_entries=2)
+    payloads = {
+        "aaaaaaaaaaa": {"cached_at": "2026-03-28T00:00:00+00:00", "video": asdict(VideoInput(video_id="aaaaaaaaaaa", title="A", url="https://youtube.com/watch?v=aaaaaaaaaaa"))},
+        "bbbbbbbbbbb": {"cached_at": "2026-03-28T00:00:00+00:00", "video": asdict(VideoInput(video_id="bbbbbbbbbbb", title="B", url="https://youtube.com/watch?v=bbbbbbbbbbb"))},
+        "ccccccccccc": {"cached_at": "2026-03-28T00:00:00+00:00", "video": asdict(VideoInput(video_id="ccccccccccc", title="C", url="https://youtube.com/watch?v=ccccccccccc"))},
+    }
+
+    for video_id, payload in payloads.items():
+        resolver._cache_path(video_id).write_text(__import__("json").dumps(payload), encoding="utf-8")
+
+    assert resolver._load_cached_video("aaaaaaaaaaa") is not None
+    assert resolver._load_cached_video("bbbbbbbbbbb") is not None
+    assert resolver._load_cached_video("aaaaaaaaaaa") is not None
+    assert resolver._load_cached_video("ccccccccccc") is not None
+
+    assert len(resolver._memory_cache) == 2
+    assert "aaaaaaaaaaa" in resolver._memory_cache
+    assert "ccccccccccc" in resolver._memory_cache
+    assert "bbbbbbbbbbb" not in resolver._memory_cache
+
+
+def test_resolver_bounds_in_memory_cache(tmp_path):
+    resolver = YoutubeResolver(cache_root=tmp_path / "video-cache", max_memory_entries=2)
+    videos = [
+        VideoInput(video_id="vid00000001", title="One", url="https://youtube.com/watch?v=vid00000001"),
+        VideoInput(video_id="vid00000002", title="Two", url="https://youtube.com/watch?v=vid00000002"),
+        VideoInput(video_id="vid00000003", title="Three", url="https://youtube.com/watch?v=vid00000003"),
+    ]
+
+    for video in videos:
+        resolver._save_video_cache(video)
+
+    assert len(resolver._memory_cache) == 2
+    assert "vid00000001" not in resolver._memory_cache
+    assert set(resolver._memory_cache) == {"vid00000002", "vid00000003"}
+
+    reloaded = resolver._load_cached_video("vid00000001")
+
+    assert reloaded is not None
+    assert reloaded["video"]["title"] == "One"
+    assert len(resolver._memory_cache) == 2
+    assert "vid00000001" in resolver._memory_cache
+    assert "vid00000002" not in resolver._memory_cache
+
+
+def test_resolve_video_bounds_memory_cache_eviction_order(monkeypatch, tmp_path):
+    fake_info = {
+        "channel_id": "CH1",
+        "channel": "Test Channel",
+        "upload_date": "20260315",
+        "description": "desc",
+        "tags": ["tag1"],
+    }
+
+    class FakeYDL:
+        def __init__(self, opts):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
+
+        def extract_info(self, url, download=False):
+            video_id = url.split("v=")[-1]
+            return {**fake_info, "title": f"Video {video_id}"}
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+
+    resolver = YoutubeResolver(cache_root=tmp_path / "video-cache", max_memory_entries=2)
+    resolver.resolve_video("AAAAAAAAAAA")
+    resolver.resolve_video("BBBBBBBBBBB")
+    resolver.resolve_video("CCCCCCCCCCC")
+
+    assert list(resolver._memory_cache) == ["BBBBBBBBBBB", "CCCCCCCCCCC"]
+
+
 def test_resolve_video_retries_bot_error(monkeypatch, tmp_path):
     calls = {"count": 0}
     sleeps: list[float] = []
@@ -197,6 +311,48 @@ def test_resolve_video_retries_bot_error(monkeypatch, tmp_path):
     assert video.title == "Recovered Video"
     assert calls["count"] == 3
     assert sleeps == [2.0, 4.0]
+
+
+def test_resolve_video_retries_nested_timeout(monkeypatch, tmp_path):
+    calls = {"count": 0}
+    sleeps: list[float] = []
+    fake_info = {
+        "title": "Recovered Video",
+        "channel_id": "CH1",
+        "channel": "Test Channel",
+        "upload_date": "20260315",
+        "description": "desc",
+        "tags": ["tag1"],
+    }
+
+    class FakeYDL:
+        def __init__(self, opts):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
+
+        def extract_info(self, url, download=False):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                try:
+                    raise TimeoutError("socket timed out")
+                except TimeoutError as exc:
+                    raise DownloadError("ERROR: unable to download API page") from exc
+            return fake_info
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+    monkeypatch.setattr("omx_brainstorm.youtube._sleep_before_retry", lambda delay: sleeps.append(delay))
+
+    resolver = YoutubeResolver(cache_root=tmp_path / "video-cache")
+    video = resolver.resolve_video("dQw4w9WgXcQ")
+
+    assert video.title == "Recovered Video"
+    assert calls["count"] == 2
+    assert sleeps == [2.0]
 
 
 def test_resolve_channel_videos_mocked(monkeypatch):
@@ -429,3 +585,29 @@ def test_transcript_fetcher_retries_request_blocked(monkeypatch):
     assert language == "ko"
     assert calls["count"] == 3
     assert sleeps == [2.0, 4.0]
+
+
+def test_transcript_fetcher_retries_timeout_error(monkeypatch):
+    calls = {"count": 0}
+    sleeps: list[float] = []
+
+    class FakeFetched(list):
+        language_code = "ko"
+
+    class FakeApi:
+        def fetch(self, video_id, languages):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise TimeoutError("read timed out")
+            return FakeFetched([MagicMock(start=0, duration=1, text=" hello ")])
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda: FakeApi())
+    monkeypatch.setattr("omx_brainstorm.youtube._sleep_before_retry", lambda delay: sleeps.append(delay))
+
+    fetcher = TranscriptFetcher()
+    segments, language = fetcher.fetch("dQw4w9WgXcQ")
+
+    assert [segment.text for segment in segments] == ["hello"]
+    assert language == "ko"
+    assert calls["count"] == 2
+    assert sleeps == [2.0]

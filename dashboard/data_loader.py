@@ -1,6 +1,7 @@
 """Data loading utilities for the OMX Streamlit dashboard."""
 from __future__ import annotations
 
+from functools import lru_cache
 import json
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -19,6 +20,7 @@ def _tracker_db_path(output_dir: Path) -> Path:
     return primary if primary.exists() or not local.exists() else local
 
 
+@lru_cache(maxsize=16384)
 def _parse_timestamp(value: str) -> datetime | None:
     """Parse compact or ISO-like timestamps to aware UTC datetimes."""
     if not value:
@@ -65,6 +67,18 @@ def _load_json(path: Path | None) -> dict[str, Any] | list[Any]:
         return json.load(f)
 
 
+def _latest_channel_result_paths(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, str]:
+    latest_paths: dict[str, tuple[str, str]] = {}
+    for path in output_dir.glob("*_30d_*.json"):
+        if path.stem.startswith("channel_comparison"):
+            continue
+        slug, run_id = path.stem.split("_30d_", 1)
+        current = latest_paths.get(slug)
+        if current is None or run_id > current[0]:
+            latest_paths[slug] = (run_id, str(path))
+    return {slug: raw_path for slug, (_run_id, raw_path) in latest_paths.items()}
+
+
 def _is_newer_timestamp(candidate: str, current: str) -> bool:
     candidate_ts = _parse_timestamp(candidate)
     current_ts = _parse_timestamp(current)
@@ -87,6 +101,63 @@ def _is_older_timestamp(candidate: str, current: str) -> bool:
 
 def _is_transcript_backed(language: str | None) -> bool:
     return (language or "").startswith("cache") or language not in {None, "", "metadata_fallback"}
+
+
+def _compose_live_feed_events(
+    recent_videos: list[dict[str, Any]],
+    signal_chart_records: list[dict[str, Any]],
+    channel_names: dict[str, str],
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+
+    for record in signal_chart_records:
+        timestamp = (
+            _parse_timestamp(str(record.get("last_updated", "")))
+            or _parse_timestamp(str(record.get("recorded_at", "")))
+            or _parse_timestamp(str(record.get("signal_date", ""))[:10])
+            or datetime.min.replace(tzinfo=timezone.utc)
+        )
+        return_5d = (record.get("returns", {}) or {}).get("5d") if isinstance(record.get("returns"), dict) else None
+        events.append(
+            {
+                "event_type": "signal_update",
+                "timestamp": timestamp.isoformat(),
+                "channel_slug": record.get("channel_slug", ""),
+                "channel_display": record.get("channel_display", channel_names.get(str(record.get("channel_slug", "")), str(record.get("channel_slug", "")))),
+                "headline": record.get("ticker_display", format_ticker_display(str(record.get("ticker", "")), str(record.get("company_name") or ""))),
+                "summary": f"{record.get('verdict', 'WATCH')} · 점수 {float(record.get('signal_score', 0) or 0):.1f}",
+                "detail": (
+                    f"진입 {format_price(record.get('entry_price'))}"
+                    + (f" · 5일 {float(return_5d):+.2f}%" if return_5d is not None else "")
+                ),
+                "signal_class": "TRACKED",
+                "score": float(record.get("signal_score", 0) or 0),
+            }
+        )
+
+    for video in recent_videos:
+        published = _parse_timestamp(str(video.get("published_at", "")) or "")
+        updated = video.get("_updated_at")
+        timestamp = published or updated or datetime.min.replace(tzinfo=timezone.utc)
+        score = float(video.get("signal_score", 0) or 0)
+        events.append(
+            {
+                "event_type": "video_analysis",
+                "timestamp": timestamp.isoformat() if isinstance(timestamp, datetime) else str(timestamp),
+                "channel_slug": video.get("_channel", ""),
+                "channel_display": channel_names.get(str(video.get("_channel", "")), str(video.get("_channel", ""))),
+                "headline": video.get("title", ""),
+                "summary": f"{translate_signal_class(video.get('video_signal_class', 'UNKNOWN'))} · 점수 {score:.0f}",
+                "detail": first_non_empty(video.get("skip_reason"), video.get("reason"), translate_video_type(video.get("video_type", ""))),
+                "signal_class": video.get("video_signal_class", "UNKNOWN"),
+                "score": score,
+            }
+        )
+
+    events.sort(key=lambda item: item.get("timestamp", ""), reverse=True)
+    return events[:limit]
 
 
 def _derive_channel_health(data_30d: dict[str, Any], slug: str) -> dict[str, Any]:
@@ -513,56 +584,18 @@ def build_live_feed_events(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     hours: int = 48,
     limit: int = 40,
+    recent_videos: list[dict[str, Any]] | None = None,
+    signal_chart_records: list[dict[str, Any]] | None = None,
+    channel_names: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
-    channel_names = get_channel_display_names(output_dir)
-    events: list[dict[str, Any]] = []
-
-    for record in get_signal_chart_records(output_dir, limit=max(limit, 24)):
-        timestamp = (
-            _parse_timestamp(str(record.get("last_updated", "")))
-            or _parse_timestamp(str(record.get("recorded_at", "")))
-            or _parse_timestamp(str(record.get("signal_date", ""))[:10])
-            or datetime.min.replace(tzinfo=timezone.utc)
-        )
-        return_5d = (record.get("returns", {}) or {}).get("5d") if isinstance(record.get("returns"), dict) else None
-        events.append(
-            {
-                "event_type": "signal_update",
-                "timestamp": timestamp.isoformat(),
-                "channel_slug": record.get("channel_slug", ""),
-                "channel_display": record.get("channel_display", channel_names.get(str(record.get("channel_slug", "")), str(record.get("channel_slug", "")))),
-                "headline": record.get("ticker_display", format_ticker_display(str(record.get("ticker", "")), str(record.get("company_name") or ""))),
-                "summary": f"{record.get('verdict', 'WATCH')} · 점수 {float(record.get('signal_score', 0) or 0):.1f}",
-                "detail": (
-                    f"진입 {format_price(record.get('entry_price'))}"
-                    + (f" · 5일 {float(return_5d):+.2f}%" if return_5d is not None else "")
-                ),
-                "signal_class": "TRACKED",
-                "score": float(record.get("signal_score", 0) or 0),
-            }
-        )
-
-    for video in get_recent_videos(output_dir, hours=hours):
-        published = _parse_timestamp(str(video.get("published_at", "")) or "")
-        updated = video.get("_updated_at")
-        timestamp = published or updated or datetime.min.replace(tzinfo=timezone.utc)
-        score = float(video.get("signal_score", 0) or 0)
-        events.append(
-            {
-                "event_type": "video_analysis",
-                "timestamp": timestamp.isoformat() if isinstance(timestamp, datetime) else str(timestamp),
-                "channel_slug": video.get("_channel", ""),
-                "channel_display": channel_names.get(str(video.get("_channel", "")), str(video.get("_channel", ""))),
-                "headline": video.get("title", ""),
-                "summary": f"{translate_signal_class(video.get('video_signal_class', 'UNKNOWN'))} · 점수 {score:.0f}",
-                "detail": first_non_empty(video.get("skip_reason"), video.get("reason"), translate_video_type(video.get("video_type", ""))),
-                "signal_class": video.get("video_signal_class", "UNKNOWN"),
-                "score": score,
-            }
-        )
-
-    events.sort(key=lambda item: item.get("timestamp", ""), reverse=True)
-    return events[:limit]
+    channel_names = channel_names or get_channel_display_names(output_dir)
+    recent_videos = recent_videos if recent_videos is not None else get_recent_videos(output_dir, hours=hours)
+    signal_chart_records = (
+        signal_chart_records
+        if signal_chart_records is not None
+        else get_signal_chart_records(output_dir, limit=max(limit, 24))
+    )
+    return _compose_live_feed_events(recent_videos, signal_chart_records, channel_names, limit=limit)
 
 
 # ── Helpers for extracting dashboard-ready data ──────────────────────────────
@@ -626,12 +659,7 @@ def extract_recent_tracked_signals(comparison: dict[str, Any]) -> list[dict[str,
 @st.cache_data(ttl=60, show_spinner=False)
 def get_available_channels(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[str]:
     """Detect channel slugs from *_30d_*.json filenames."""
-    slugs = set()
-    for p in output_dir.glob("*_30d_*.json"):
-        parts = p.stem.split("_30d_")
-        if parts[0] not in ("channel_comparison",):
-            slugs.add(parts[0])
-    return sorted(slugs)
+    return sorted(_latest_channel_result_paths(output_dir))
 
 
 # ── Last-update timestamp (US-002) ──────────────────────────────────────────
@@ -653,17 +681,24 @@ def get_recent_videos(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     hours: int = 24,
 ) -> list[dict[str, Any]]:
-    """Collect videos from all channels whose 30d file was updated within *hours*."""
+    """Collect videos from the latest artifact per channel whose file was updated within *hours*."""
     cutoff = datetime.now(tz=timezone.utc).timestamp() - hours * 3600
     recent: list[dict[str, Any]] = []
+    latest_paths: dict[str, tuple[str, Path]] = {}
     for p in output_dir.glob("*_30d_*.json"):
         if p.stem.startswith("channel_comparison"):
             continue
+        slug, run_id = p.stem.split("_30d_", 1)
+        current = latest_paths.get(slug)
+        if current is None or run_id > current[0]:
+            latest_paths[slug] = (run_id, p)
+
+    for slug, (_run_id, p) in latest_paths.items():
         file_mtime = p.stat().st_mtime
         if file_mtime < cutoff:
             continue
         data = _load_json(p)
-        slug = data.get("channel_slug", p.stem.split("_30d_")[0])
+        slug = data.get("channel_slug", slug)
         updated_at = datetime.fromtimestamp(file_mtime, tz=timezone.utc)
         for v in data.get("videos", []):
             row = dict(v)
@@ -691,8 +726,8 @@ def extract_actionable_signals(
 ) -> list[dict[str, Any]]:
     """Return ACTIONABLE videos with their ticker mentions across all channels."""
     signals: list[dict[str, Any]] = []
-    for slug in get_available_channels(output_dir):
-        data = load_30d_results(slug, output_dir)
+    for slug, raw_path in _latest_channel_result_paths(output_dir).items():
+        data = _load_json(Path(raw_path))
         for v in data.get("videos", []):
             if v.get("video_signal_class") != "ACTIONABLE":
                 continue
@@ -724,9 +759,8 @@ def get_pipeline_activity(
 ) -> list[dict[str, Any]]:
     """Return recent output file activity as a log of pipeline runs."""
     entries: list[dict[str, Any]] = []
-    for p in sorted(output_dir.glob("*_30d_*.json"), key=lambda x: x.stat().st_mtime, reverse=True):
-        if p.stem.startswith("channel_comparison"):
-            continue
+    latest_paths = [Path(raw_path) for raw_path in _latest_channel_result_paths(output_dir).values()]
+    for p in sorted(latest_paths, key=lambda x: x.stat().st_mtime, reverse=True):
         mtime = datetime.fromtimestamp(p.stat().st_mtime, tz=timezone.utc)
         slug = p.stem.split("_30d_")[0]
         entries.append({"channel": slug, "file": p.name, "timestamp": mtime})
@@ -749,11 +783,12 @@ def build_overview_report(
     expert_video_count = 0
     ranked_stock_count = 0
 
+    latest_paths = _latest_channel_result_paths(output_dir)
     channel_names = get_channel_display_names(output_dir)
-    channels = get_available_channels(output_dir)
+    channels = sorted(latest_paths)
 
     for slug in channels:
-        data = load_30d_results(slug, output_dir)
+        data = _load_json(Path(latest_paths[slug]))
         videos = data.get("videos", [])
         ranked_stock_count += len(data.get("cross_video_ranking", []))
 
@@ -893,14 +928,16 @@ def get_live_feed_data(
         last_update: ISO timestamp of latest output file
     """
     recent_videos = get_recent_videos(output_dir, hours=hours)
+    signal_chart_records = get_signal_chart_records(output_dir)
+    channel_names = get_channel_display_names(output_dir)
     comparison = load_channel_comparison(output_dir)
     recent_signals = extract_recent_tracked_signals(comparison)
     last_update = get_last_update_time(output_dir)
     return {
         "recent_videos": recent_videos,
         "recent_signals": recent_signals,
-        "feed_events": build_live_feed_events(output_dir, hours=hours),
-        "signal_chart_records": get_signal_chart_records(output_dir),
+        "feed_events": _compose_live_feed_events(recent_videos, signal_chart_records, channel_names, limit=40),
+        "signal_chart_records": signal_chart_records,
         "last_update": last_update.isoformat() if last_update else None,
     }
 
@@ -964,9 +1001,9 @@ def get_channel_display_names(
     if comp and "channels" in comp:
         for slug, info in comp["channels"].items():
             names[slug] = info.get("display_name", slug)
-    for slug in get_available_channels(output_dir):
+    for slug, raw_path in _latest_channel_result_paths(output_dir).items():
         if slug not in names:
-            data = load_30d_results(slug, output_dir)
+            data = _load_json(Path(raw_path))
             names[slug] = data.get("channel_name", slug)
     return names
 
@@ -992,8 +1029,8 @@ def get_all_rankings(
     }
     channel_rankings: dict[str, list[dict[str, Any]]] = {}
 
-    for slug in get_available_channels(output_dir):
-        data = load_30d_results(slug, output_dir)
+    for slug, raw_path in _latest_channel_result_paths(output_dir).items():
+        data = _load_json(Path(raw_path))
         ranking = data.get("cross_video_ranking", [])
         if isinstance(ranking, list) and ranking:
             channel_rankings[slug] = [item for item in ranking if isinstance(item, dict)]

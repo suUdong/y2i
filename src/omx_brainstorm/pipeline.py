@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import asdict
+from dataclasses import asdict, replace
 import logging
 import uuid
 from pathlib import Path
@@ -43,6 +43,8 @@ class OMXPipeline:
         if not should_analyze:
             return [], []
         mentions = self.extractor.extract(video_title, analysis_text)
+        if not mentions:
+            return [], []
         if hasattr(self.fundamentals, "fetch_many"):
             snapshots = self.fundamentals.fetch_many(mentions)
         else:
@@ -56,6 +58,7 @@ class OMXPipeline:
     def _analyze_resolved_video(self, video):
         transcript_text, language, transcript_source = self._resolve_transcript(video)
         metadata_text = " ".join(part for part in [video.title, video.description or "", " ".join(video.tags)] if part).strip()
+        extraction_text = " ".join(part for part in [transcript_text, video.description or "", " ".join(video.tags)] if part).strip()
         signal_assessment = assess_video_signal(
             video.title,
             transcript_text,
@@ -98,7 +101,16 @@ class OMXPipeline:
             except Exception as exc:
                 logger.warning("Macro insight extraction failed for %s: %s", video.video_id, exc)
 
-        mentions, analyses = self._run_stock_analysis(video.title, analysis_text, should)
+        mentions, analyses = self._run_stock_analysis(video.title, extraction_text or analysis_text, should)
+        if should and not mentions:
+            downgrade_reason = "직접 또는 간접 종목이 남지 않아 actionable 판정을 낮춤"
+            signal_assessment = replace(
+                signal_assessment,
+                video_signal_class="LOW_SIGNAL",
+                should_analyze_stocks=False,
+                reason=downgrade_reason,
+                skip_reason=downgrade_reason,
+            )
 
         self.transcript_cache.save(
             video=video,

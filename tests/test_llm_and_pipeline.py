@@ -1,3 +1,5 @@
+from dataclasses import asdict
+import json
 from pathlib import Path
 
 from omx_brainstorm.analysis import StockAnalyzer
@@ -121,6 +123,77 @@ def test_fundamentals_fetcher_uses_file_cache(monkeypatch, tmp_path):
     assert calls["count"] == 1
 
 
+def test_fundamentals_fetcher_bounds_memory_cache(tmp_path):
+    fetcher = FundamentalsFetcher(cache_root=tmp_path / "fundamentals", max_workers=1, memory_cache_size=2)
+    for ticker in ("NVDA", "AAPL", "TSLA"):
+        payload = {
+            "cached_at": "2026-03-28T00:00:00+00:00",
+            "snapshot": asdict(FundamentalSnapshot(ticker=ticker, company_name=ticker, data_source="cache")),
+        }
+        path = fetcher._cache_path(fetcher._cache_key(ticker))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        fetcher._load_cache_entry(fetcher._cache_key(ticker))
+
+    assert len(fetcher._memory_cache) == 2
+    assert fetcher._cache_key("NVDA") not in fetcher._memory_cache
+
+
+def test_fundamentals_fetcher_memory_cache_is_bounded_lru(tmp_path):
+    fetcher = FundamentalsFetcher(cache_root=tmp_path / "fundamentals", memory_cache_max_entries=2)
+    for ticker in ("AAA", "BBB", "CCC"):
+        snapshot = FundamentalSnapshot(ticker=ticker, company_name=ticker, data_source="cache")
+        fetcher._save_cache_entry(fetcher._cache_key(ticker), snapshot)
+
+    assert len(fetcher._memory_cache) == 2
+    assert fetcher._cache_key("AAA") not in fetcher._memory_cache
+
+    fetcher._load_cache_entry(fetcher._cache_key("BBB"))
+    fetcher._save_cache_entry(fetcher._cache_key("DDD"), FundamentalSnapshot(ticker="DDD", company_name="DDD", data_source="cache"))
+
+    assert len(fetcher._memory_cache) == 2
+    assert fetcher._cache_key("BBB") in fetcher._memory_cache
+    assert fetcher._cache_key("DDD") in fetcher._memory_cache
+    assert fetcher._cache_key("CCC") not in fetcher._memory_cache
+
+
+def test_fundamentals_fetcher_bounds_in_memory_cache(monkeypatch, tmp_path):
+    prices = {
+        "NVDA": 100.0,
+        "MU": 90.0,
+        "AVGO": 110.0,
+    }
+    calls: list[str] = []
+
+    class DummyTicker:
+        def __init__(self, ticker: str):
+            self.info = {"longName": ticker, "currentPrice": prices[ticker]}
+            self.fast_info = None
+
+    class DummyYF:
+        def Ticker(self, ticker):
+            calls.append(ticker)
+            return DummyTicker(ticker)
+
+    monkeypatch.setitem(__import__("sys").modules, "yfinance", DummyYF())
+    fetcher = FundamentalsFetcher(cache_root=tmp_path / "fundamentals", max_memory_entries=2)
+
+    fetcher.fetch(TickerMention(ticker="NVDA"))
+    fetcher.fetch(TickerMention(ticker="MU"))
+    fetcher.fetch(TickerMention(ticker="AVGO"))
+
+    assert len(fetcher._memory_cache) == 2
+    assert set(fetcher._memory_cache) == {"MU", "AVGO"}
+
+    cached = fetcher.fetch(TickerMention(ticker="NVDA"))
+
+    assert cached.current_price == 100.0
+    assert calls == ["NVDA", "MU", "AVGO"]
+    assert len(fetcher._memory_cache) == 2
+    assert "NVDA" in fetcher._memory_cache
+    assert "MU" not in fetcher._memory_cache
+
+
 def test_stock_analyzer_mock_provider():
     fundamentals = DummyFundamentals().fetch(TickerMention(ticker="NVDA"))
     analysis = StockAnalyzer(MockProvider()).analyze("제목", "엔비디아가 아직 더 갈 수 있다", TickerMention(ticker="NVDA"), fundamentals)
@@ -171,6 +244,32 @@ class MetadataResolver(DummyResolver):
         )
 
 
+class GenericTranscriptFetcher:
+    def fetch(self, video_id: str, preferred_languages=None):
+        return [TranscriptSegment(0, 1, "이번 영상은 업황과 수급만 간단히 본다.")], "ko"
+
+    def join_segments(self, segments):
+        return " ".join(s.text for s in segments)
+
+
+class MetadataAwareExtractionProvider(LLMProvider):
+    def run(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+        payload = {"mentions": []}
+        if "hd현대일렉트릭" in user_prompt.lower():
+            payload = {
+                "mentions": [
+                    {
+                        "ticker": "267260.KS",
+                        "company_name": "HD Hyundai Electric",
+                        "confidence": 0.88,
+                        "reason": "메타데이터에서 HD현대일렉트릭을 명시적으로 언급",
+                        "evidence": ["HD현대일렉트릭"],
+                    }
+                ]
+            }
+        return LLMResponse(provider="metadata-aware", text=__import__("json").dumps(payload, ensure_ascii=False))
+
+
 def test_pipeline_uses_metadata_fallback_when_transcript_fetch_fails(tmp_path: Path):
     pipeline = OMXPipeline(provider_name="mock", output_dir=tmp_path, transcript_cache=TranscriptCache(tmp_path / "cache"))
     pipeline.resolver = MetadataResolver()
@@ -183,6 +282,19 @@ def test_pipeline_uses_metadata_fallback_when_transcript_fetch_fails(tmp_path: P
     assert report.transcript_language == "metadata_fallback"
     assert "HD현대일렉트릭" in report.transcript_text
     assert paths[0].exists()
+
+
+def test_pipeline_uses_metadata_to_extract_tickers_when_transcript_is_generic(tmp_path: Path):
+    pipeline = OMXPipeline(provider_name="mock", output_dir=tmp_path, transcript_cache=TranscriptCache(tmp_path / "cache"))
+    pipeline.provider = MetadataAwareExtractionProvider()
+    pipeline.extractor = HybridTickerExtractor(pipeline.provider, mode=pipeline.mode)
+    pipeline.resolver = MetadataResolver()
+    pipeline.fetcher = GenericTranscriptFetcher()
+    pipeline.fundamentals = DummyFundamentals()
+
+    report, _ = pipeline.analyze_video("https://youtube.com/watch?v=abc123def45")
+
+    assert any(mention.ticker == "267260.KS" for mention in report.ticker_mentions)
 
 
 def test_pipeline_uses_cached_transcript_when_fetch_fails(tmp_path: Path):
@@ -229,3 +341,32 @@ def test_pipeline_gracefully_handles_fundamentals_failure(tmp_path: Path):
 
     assert report.stock_analyses
     assert report.stock_analyses[0].fundamentals.notes
+
+
+def test_pipeline_downgrades_actionable_when_no_tickers_remain(tmp_path: Path, monkeypatch):
+    from omx_brainstorm.models import VideoSignalAssessment
+
+    pipeline = OMXPipeline(provider_name="mock", output_dir=tmp_path, transcript_cache=TranscriptCache(tmp_path / "cache"))
+    pipeline.resolver = DummyResolver()
+    pipeline.fetcher = GenericTranscriptFetcher()
+    pipeline.extractor = type("EmptyExtractor", (), {"extract": lambda self, title, text: []})()
+
+    monkeypatch.setattr(
+        "omx_brainstorm.pipeline.assess_video_signal",
+        lambda *args, **kwargs: VideoSignalAssessment(
+            signal_score=76.0,
+            video_signal_class="ACTIONABLE",
+            should_analyze_stocks=True,
+            reason="pre-gate actionable",
+            video_type="OTHER",
+            metrics={"test": True},
+        ),
+    )
+
+    report, _ = pipeline.analyze_video("https://youtube.com/watch?v=abc123def45")
+
+    assert report.signal_assessment.video_signal_class == "LOW_SIGNAL"
+    assert report.signal_assessment.should_analyze_stocks is False
+    assert report.signal_assessment.skip_reason
+    assert report.ticker_mentions == []
+    assert report.stock_analyses == []

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, replace
 from datetime import datetime, timezone
@@ -23,11 +24,19 @@ class FundamentalsFetcher:
         cache_root: Path | None = None,
         max_age_hours: int = DEFAULT_MAX_AGE_HOURS,
         max_workers: int = 4,
+        max_memory_entries: int = 256,
+        memory_cache_max_entries: int | None = None,
+        memory_cache_size: int | None = None,
     ) -> None:
         self.cache_root = cache_root or Path(".omx/cache/fundamentals")
         self.max_age_hours = max_age_hours
         self.max_workers = max_workers
-        self._memory_cache: dict[str, dict[str, object]] = {}
+        if memory_cache_max_entries is not None:
+            max_memory_entries = memory_cache_max_entries
+        if memory_cache_size is not None:
+            max_memory_entries = memory_cache_size
+        self.max_memory_entries = max(0, int(max_memory_entries))
+        self._memory_cache: OrderedDict[str, dict[str, object]] = OrderedDict()
         self._lock = Lock()
         ensure_dir(self.cache_root)
 
@@ -142,8 +151,7 @@ class FundamentalsFetcher:
         return self.cache_root / f"{cache_key}.json"
 
     def _load_cache_entry(self, cache_key: str) -> dict[str, object] | None:
-        with self._lock:
-            cached = self._memory_cache.get(cache_key)
+        cached = self._memory_cache_get(cache_key)
         if cached is not None:
             return cached
 
@@ -151,8 +159,7 @@ class FundamentalsFetcher:
         payload = read_json(path, None)
         if payload is None:
             return None
-        with self._lock:
-            self._memory_cache[cache_key] = payload
+        self._memory_cache_put(cache_key, payload)
         return payload
 
     def _save_cache_entry(self, cache_key: str, snapshot: FundamentalSnapshot) -> None:
@@ -160,8 +167,7 @@ class FundamentalsFetcher:
             "cached_at": utc_now_iso(),
             "snapshot": asdict(snapshot),
         }
-        with self._lock:
-            self._memory_cache[cache_key] = payload
+        self._memory_cache_put(cache_key, payload)
         write_json(self._cache_path(cache_key), payload)
 
     def _snapshot_from_entry(self, entry: dict[str, object]) -> FundamentalSnapshot:
@@ -185,6 +191,25 @@ class FundamentalsFetcher:
         if note not in notes:
             notes.append(note)
         return replace(snapshot, notes=notes)
+
+    def _memory_cache_get(self, cache_key: str) -> dict[str, object] | None:
+        if self.max_memory_entries == 0:
+            return None
+        with self._lock:
+            cached = self._memory_cache.get(cache_key)
+            if cached is None:
+                return None
+            self._memory_cache.move_to_end(cache_key)
+            return cached
+
+    def _memory_cache_put(self, cache_key: str, payload: dict[str, object]) -> None:
+        if self.max_memory_entries == 0:
+            return
+        with self._lock:
+            self._memory_cache[cache_key] = payload
+            self._memory_cache.move_to_end(cache_key)
+            while len(self._memory_cache) > self.max_memory_entries:
+                self._memory_cache.popitem(last=False)
 
 
 def _as_float(value: object) -> float | None:

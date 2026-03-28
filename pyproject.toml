@@ -12,11 +12,16 @@ dependencies = [
   "youtube-transcript-api>=1.2.0",
   "yt-dlp>=2026.3.17",
   "yfinance>=0.2.54",
-  "streamlit>=1.45.0",
-  "plotly>=6.0.0",
+  "requests>=2.32.0",
 ]
 
 [project.optional-dependencies]
+dashboard = [
+  "streamlit>=1.45.0",
+  "streamlit-autorefresh>=1.0.1",
+  "plotly>=6.0.0",
+  "pandas>=2.0.0",
+]
 dev = [
   "pytest-cov>=5.0.0",
   "pip-audit>=2.8.0",
