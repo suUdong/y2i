@@ -169,6 +169,8 @@ class StockAnalysis:
     citations: list[str] = field(default_factory=list)
     raw_llm_payload: dict[str, Any] = field(default_factory=dict)
     price_targets: list[PriceTarget] = field(default_factory=list)
+    plain_summary: str = ""
+    video_context_summary: str = ""
 
 
 @dataclass(slots=True)

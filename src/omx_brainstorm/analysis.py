@@ -86,4 +86,5 @@ class StockAnalyzer:
             citations=list(payload.get("citations", []) or []),
             raw_llm_payload=payload,
             price_targets=price_targets,
+            video_context_summary=payload.get("video_context_summary", ""),
         )

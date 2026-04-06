@@ -84,7 +84,8 @@ Output schema:
   \"max_score\": 100,
   \"final_verdict\": str,
   \"invalidation_triggers\": [str],
-  \"citations\": [str]
+  \"citations\": [str],
+  \"video_context_summary\": str
 }
 Rules:
 - basic_state should summarize current financial condition in one short phrase.
@@ -98,6 +99,7 @@ Rules:
 - soros focuses on narrative/reflexivity, trend persistence, and regime-sensitive timing.
 - If financial data is sparse, explicitly say so and lower conviction.
 - In Ralph mode, finish the full judgment without asking follow-up questions.
+- video_context_summary: Summarize what this video says about the stock in 1-2 sentences, quoting key phrases from the transcript. This must be factual — cite transcript content only, do not infer or speculate.
 """
 
 
