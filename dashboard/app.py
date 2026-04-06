@@ -1705,6 +1705,145 @@ with tabs[2]:
             )
             fig_rank.update_traces(textposition="outside", hovertemplate="%{y}: %{x}점<extra>%{fullData.name}</extra>")
             render_chart(fig_rank, key="rank_scores", height=320)
+
+        # ── 종목 상세: 한눈에 보기 + 전문가 의견 + 영상별 요약 ──
+        st.markdown("##### 종목 상세 분석")
+        _rank_lookup: dict[str, dict[str, Any]] = {}
+        for _ri in ranking:
+            _tk = _ri.get("ticker", "")
+            if _tk:
+                _rank_lookup[_tk] = _ri
+
+        shown_tickers = df_rank["종목"].tolist()
+        for _display_name in shown_tickers[:20]:
+            _match = None
+            for _tk, _ri in _rank_lookup.items():
+                _dn = format_ticker_display(_tk, _ri.get("company_name", ""))
+                if _dn == _display_name:
+                    _match = _ri
+                    break
+            if not _match:
+                continue
+
+            _score = _match.get("aggregate_score", 0)
+            _verdict = translate_verdict(
+                _match.get("aggregate_verdict", _match.get("final_verdict", ""))
+            )
+            with st.expander(
+                f"{_display_name}  —  {_score}점 · {_verdict}",
+                expanded=False,
+            ):
+                summaries = _match.get("source_video_summaries", [])
+
+                # (A) 한눈에 보기 — plain summary
+                _plain = ""
+                if summaries:
+                    _plain = summaries[0].get("plain_summary", "")
+                    if not _plain:
+                        _fund = summaries[0].get("fundamentals", {})
+                        if _fund:
+                            _lines = []
+                            _om = _fund.get("operating_margin")
+                            if _om is not None:
+                                _om_pct = float(_om) * 100
+                                if _om_pct >= 20:
+                                    _lines.append(f"돈을 아주 잘 버는 회사 (영업이익률 {_om_pct:.1f}%)")
+                                elif _om_pct >= 10:
+                                    _lines.append(f"돈을 꽤 잘 버는 회사 (영업이익률 {_om_pct:.1f}%)")
+                                elif _om_pct >= 5:
+                                    _lines.append(f"돈을 보통 수준으로 버는 회사 (영업이익률 {_om_pct:.1f}%)")
+                                else:
+                                    _lines.append(f"돈 벌기가 어려운 회사 (영업이익률 {_om_pct:.1f}%)")
+                            _de = _fund.get("debt_to_equity")
+                            if _de is not None:
+                                _de_f = float(_de)
+                                if _de_f < 50:
+                                    _lines.append(f"빚이 아주 적음 (부채비율 {_de_f:.1f}%)")
+                                elif _de_f < 100:
+                                    _lines.append(f"빚은 적당한 편 (부채비율 {_de_f:.1f}%)")
+                                elif _de_f < 200:
+                                    _lines.append(f"빚이 좀 있는 편 (부채비율 {_de_f:.1f}%)")
+                                else:
+                                    _lines.append(f"빚이 많은 편 (부채비율 {_de_f:.1f}%)")
+                            _ac = _fund.get("analyst_count")
+                            if _ac and int(_ac) > 0:
+                                _sb = int(_fund.get("analyst_strong_buy", 0) or 0)
+                                _ab = int(_fund.get("analyst_buy", 0) or 0)
+                                _bc = _sb + _ab
+                                _tp = _fund.get("target_median_price") or _fund.get("target_mean_price")
+                                _cur = _fund.get("currency", "KRW")
+                                _tp_str = ""
+                                if _tp:
+                                    if _cur == "KRW":
+                                        _tp_str = f" (목표가 \\{float(_tp):,.0f})"
+                                    else:
+                                        _tp_str = f" (목표가 ${float(_tp):,.2f})"
+                                _lines.append(f"{_ac}명 전문가 중 {_bc}명이 '사라'고 함{_tp_str}")
+                            _plain = "\n".join(_lines)
+                if _plain:
+                    st.markdown(f"**한눈에 보기:**\n\n{_plain}")
+
+                # (B) 전문가 의견
+                if summaries:
+                    all_masters: list[dict[str, Any]] = []
+                    for _vs in summaries[:3]:
+                        for _mo in _vs.get("master_opinions", []):
+                            if isinstance(_mo, dict) and _mo.get("master"):
+                                all_masters.append(_mo)
+                    if all_masters:
+                        st.markdown("**전문가 의견:**")
+                        seen_masters: set[str] = set()
+                        for _mo in all_masters:
+                            _mn = _mo.get("master", "")
+                            if _mn in seen_masters:
+                                continue
+                            seen_masters.add(_mn)
+                            _ms = _mo.get("score", 0)
+                            _mv = translate_verdict(_mo.get("verdict", ""))
+                            _ml = _mo.get("one_liner", "")
+                            if _ml:
+                                st.markdown(f"  - **{_mn}** ({_ms}/100, {_mv}): {_ml}")
+
+                # (C) 점수 구성
+                _wb = _match.get("weighted_base_score")
+                _cb = _match.get("consensus_bonus")
+                if _wb is not None:
+                    breakdown_parts = [
+                        ("기본", _wb),
+                        ("합의", _cb),
+                        ("품질", _match.get("quality_weight_adjustment")),
+                        ("밀도", _match.get("consensus_density_bonus")),
+                        ("감점", _match.get("consensus_disagreement_penalty")),
+                    ]
+                    parts_str = " + ".join(
+                        f"{label} {v:+.1f}" for label, v in breakdown_parts
+                        if v is not None and v != 0
+                    )
+                    if parts_str:
+                        st.markdown(f"**점수 구성:** {parts_str} = {_score}")
+
+                # (D) 영상별 분석
+                if summaries:
+                    st.markdown("**영상에서 이 종목은:**")
+                    for _vs in summaries:
+                        _vt = _vs.get("video_title", "")
+                        _vcs = _vs.get("video_context_summary", "")
+                        _thesis = _vs.get("thesis_summary", "")
+                        _sig = _vs.get("signal_summary", "")
+                        _verd = translate_verdict(_vs.get("verdict", ""))
+                        _fs = _vs.get("final_score", 0)
+                        _text = _vcs or _thesis or _sig or ""
+                        if _text:
+                            st.markdown(
+                                f"- **{_vt}** ({_verd}, {_fs:.0f}점)\n"
+                                f"  > {_text}"
+                            )
+                        else:
+                            st.markdown(f"- **{_vt}** ({_verd}, {_fs:.0f}점)")
+                elif _match.get("source_video_titles"):
+                    st.markdown("**출처 영상:**")
+                    for _svt in _match["source_video_titles"]:
+                        st.markdown(f"- {_svt}")
     else:
         st.info("랭킹 데이터가 없습니다.")
 

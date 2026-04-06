@@ -102,6 +102,7 @@ class RankedStock:
     price_target: dict[str, Any] | None = None
     source_video_ids: list[str] = field(default_factory=list)
     source_video_titles: list[str] = field(default_factory=list)
+    source_video_summaries: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -134,6 +135,7 @@ def build_cross_video_ranking(videos: list[dict[str, Any]]) -> list[RankedStock]
                     "price_targets": [],
                     "source_video_ids": [],
                     "source_video_titles": [],
+                    "source_video_summaries": [],
                 },
             )
             bucket["appearances"] += 1
@@ -158,6 +160,20 @@ def build_cross_video_ranking(videos: list[dict[str, Any]]) -> list[RankedStock]
                 bucket["price_targets"].append(dict(stock["price_target"]))
             bucket["source_video_ids"].append(video.get("video_id", ""))
             bucket["source_video_titles"].append(video.get("title", ""))
+            bucket["source_video_summaries"].append(
+                {
+                    "video_id": video.get("video_id", ""),
+                    "video_title": video.get("title", ""),
+                    "verdict": stock.get("final_verdict", stock.get("aggregate_verdict", "")),
+                    "final_score": final_score,
+                    "thesis_summary": stock.get("thesis_summary", ""),
+                    "signal_summary": stock.get("basic_signal_summary", ""),
+                    "plain_summary": stock.get("plain_summary", ""),
+                    "video_context_summary": stock.get("video_context_summary", ""),
+                    "master_opinions": stock.get("master_opinions", []),
+                    "fundamentals": fundamentals,
+                }
+            )
 
     ranking = []
     for bucket in buckets.values():
@@ -196,6 +212,7 @@ def build_cross_video_ranking(videos: list[dict[str, Any]]) -> list[RankedStock]
                 price_target=price_target,
                 source_video_ids=bucket["source_video_ids"],
                 source_video_titles=bucket["source_video_titles"],
+                source_video_summaries=bucket["source_video_summaries"],
             )
         )
     ranking.sort(key=lambda item: (-item.aggregate_score, -item.appearances, -item.total_mentions, item.ticker))
@@ -236,6 +253,7 @@ def build_consensus_ranking(
                     "currency": item.get("currency"),
                     "price_targets": [],
                     "source_video_titles": [],
+                    "source_video_summaries": [],
                     "_source_channels": [],
                     "_channel_scores": {},
                     "_channel_weights": {},
@@ -254,6 +272,7 @@ def build_consensus_ranking(
             bucket["_channel_verdicts"][slug] = verdict
             bucket["_channel_directions"][slug] = _verdict_direction(verdict)
             bucket["source_video_titles"].extend(item.get("source_video_titles", []))
+            bucket["source_video_summaries"].extend(item.get("source_video_summaries", []))
             if item.get("price_target"):
                 bucket["price_targets"].append(dict(item["price_target"]))
 
@@ -337,6 +356,7 @@ def build_consensus_ranking(
             "channel_scores": bucket["_channel_scores"],
             "channel_weights": bucket["_channel_weights"],
             "channel_verdicts": bucket["_channel_verdicts"],
+            "source_video_summaries": bucket["source_video_summaries"],
         }
         item["consensus_signal"] = qualifies_weighted_consensus(item)
         item["signal_kind"] = "CONSENSUS" if channel_count > 1 else "SINGLE_SOURCE"
