@@ -64,13 +64,63 @@ def _rev_phrase(pct: float) -> str:
     return f"매출이 작년보다 {abs(pct):.0f}% 줄었어요"
 
 
+def _pick_edge(
+    rev: float | None,
+    margin: float | None,
+    roe: float | None,
+    de: float | None,
+    pe: float | None,
+) -> str:
+    """Pick the single most notable tension or highlight as a punchy one-liner."""
+    # Growth exploding but no profit
+    if rev is not None and rev >= 30 and margin is not None and margin < 5:
+        return f"매출 {rev:.0f}% 폭발인데 남는 게 없다"
+    # Great margins but crazy expensive
+    if margin is not None and margin >= 20 and pe is not None and pe >= 40:
+        return f"마진 {margin:.0f}%로 잘 벌지만 PER {pe:.0f}배는 너무 비싸다"
+    # Cheap + profitable = classic value
+    if margin is not None and margin >= 15 and pe is not None and 0 < pe < 15:
+        return f"마진도 좋고 PER {pe:.0f}배로 싸다 — 저평가 가능성"
+    # Revenue declining + expensive
+    if rev is not None and rev < -5 and pe is not None and pe >= 30:
+        return f"매출 역성장에 PER {pe:.0f}배 — 비싸게 사면 물린다"
+    # Revenue declining but still profitable
+    if rev is not None and rev < -5 and margin is not None and margin >= 15:
+        return f"매출이 빠지는데 마진 {margin:.0f}%는 아직 버티는 중"
+    # High growth + reasonable valuation
+    if rev is not None and rev >= 20 and pe is not None and 0 < pe < 25:
+        return f"매출 {rev:.0f}% 성장에 PER {pe:.0f}배면 아직 매력 있다"
+    # High debt danger
+    if de is not None and de >= 200 and margin is not None and margin < 10:
+        return f"빚이 많고 수익성도 낮다 — 재무 리스크 주의"
+    # ROE monster
+    if roe is not None and roe >= 25:
+        return f"ROE {roe:.0f}%로 돈 버는 효율이 최상급"
+    # Pure growth story
+    if rev is not None and rev >= 30:
+        return f"매출 {rev:.0f}% 급성장 — 성장주 테마"
+    # Expensive but nothing else stands out
+    if pe is not None and pe >= 50:
+        return f"PER {pe:.0f}배 — 시장이 미래에 크게 베팅 중"
+    # Cheap
+    if pe is not None and 0 < pe < 10:
+        return f"PER {pe:.0f}배로 바닥권 — 이유가 있는지 확인 필요"
+    # Nothing dramatic
+    if margin is not None and margin >= 10:
+        return "수익성은 괜찮은 회사"
+    return ""
+
+
 def build_plain_summary(snapshot: FundamentalSnapshot) -> str:
-    """Convert financial metrics to a natural Korean paragraph."""
+    """Convert financial metrics to a natural Korean paragraph with a punchy edge."""
     margin = _pct(snapshot.operating_margin)
     roe = _pct(snapshot.return_on_equity)
     de = snapshot.debt_to_equity
     pe = snapshot.forward_pe
     rev = _pct(snapshot.revenue_growth)
+
+    # Punchy one-liner edge
+    edge = _pick_edge(rev, margin, roe, de, pe)
 
     # Build a flowing paragraph, not a bullet list
     parts: list[str] = []
@@ -101,6 +151,8 @@ def build_plain_summary(snapshot: FundamentalSnapshot) -> str:
     if analyst and "없어요" not in analyst:
         summary += " " + analyst
 
+    if edge:
+        return f"**{edge}**\n\n{summary}"
     return summary
 
 
