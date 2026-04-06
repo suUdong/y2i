@@ -8,54 +8,6 @@ def _pct(value: float | None) -> float | None:
     return None if value is None else value * 100.0
 
 
-def _describe_margin(pct: float) -> str:
-    if pct >= 20:
-        return f"돈을 아주 잘 버는 회사 (영업이익률 {pct:.1f}%)"
-    if pct >= 10:
-        return f"돈을 꽤 잘 버는 회사 (영업이익률 {pct:.1f}%)"
-    if pct >= 5:
-        return f"돈을 보통 수준으로 버는 회사 (영업이익률 {pct:.1f}%)"
-    return f"돈 벌기가 어려운 회사 (영업이익률 {pct:.1f}%)"
-
-
-def _describe_roe(pct: float) -> str:
-    if pct >= 15:
-        return f"투자한 돈 대비 수익이 좋음 (ROE {pct:.1f}%)"
-    if pct >= 8:
-        return f"투자 대비 수익이 보통 (ROE {pct:.1f}%)"
-    return f"투자 대비 수익이 낮음 (ROE {pct:.1f}%)"
-
-
-def _describe_debt(de: float) -> str:
-    if de < 50:
-        return f"빚이 아주 적음 (부채비율 {de:.1f}%)"
-    if de < 100:
-        return f"빚은 적당한 편 (부채비율 {de:.1f}%)"
-    if de < 200:
-        return f"빚이 좀 있는 편 (부채비율 {de:.1f}%)"
-    return f"빚이 많은 편 (부채비율 {de:.1f}%)"
-
-
-def _describe_pe(pe: float) -> str:
-    if pe < 15:
-        return f"주가가 저렴한 편 (PER {pe:.1f}배)"
-    if pe < 25:
-        return f"주가가 적당한 편 (PER {pe:.1f}배)"
-    if pe < 40:
-        return f"주가가 비싼 편 (PER {pe:.1f}배)"
-    return f"주가가 아주 비쌈 (PER {pe:.1f}배)"
-
-
-def _describe_revenue_growth(pct: float) -> str:
-    if pct >= 30:
-        return f"매출이 빠르게 성장 중 (매출성장률 {pct:.1f}%)"
-    if pct >= 10:
-        return f"매출이 꾸준히 성장 중 (매출성장률 {pct:.1f}%)"
-    if pct >= 0:
-        return f"매출이 조금씩 성장 중 (매출성장률 {pct:.1f}%)"
-    return f"매출이 줄어들고 있음 (매출성장률 {pct:.1f}%)"
-
-
 def _format_price(price: float, currency: str | None) -> str:
     if currency == "KRW":
         return f"\\{price:,.0f}"
@@ -64,33 +16,92 @@ def _format_price(price: float, currency: str | None) -> str:
     return f"{price:,.0f}"
 
 
+def _margin_phrase(pct: float) -> str:
+    if pct >= 20:
+        return f"매출 100원 중 {pct:.0f}원이 남을 정도로 마진이 좋고"
+    if pct >= 10:
+        return f"매출 대비 {pct:.0f}% 정도 남기니 수익성은 괜찮은 편이고"
+    if pct >= 5:
+        return f"영업이익률 {pct:.0f}%로 남는 게 많진 않고"
+    return f"영업이익률 {pct:.0f}%라 사실상 남는 게 거의 없는 상태인데"
+
+
+def _roe_phrase(pct: float) -> str:
+    if pct >= 15:
+        return f"투자금 대비 {pct:.0f}%를 벌어오니 효율도 좋아요"
+    if pct >= 8:
+        return f"투자 대비 수익률은 {pct:.0f}%로 보통이에요"
+    return f"투자금 대비 {pct:.0f}%밖에 못 벌고 있어요"
+
+
+def _debt_phrase(de: float) -> str:
+    if de < 50:
+        return f"빚은 거의 없고 (부채비율 {de:.0f}%)"
+    if de < 100:
+        return f"빚은 감당할 만한 수준이고 (부채비율 {de:.0f}%)"
+    if de < 200:
+        return f"빚이 좀 있는 편이에요 (부채비율 {de:.0f}%)"
+    return f"빚이 꽤 많아요 (부채비율 {de:.0f}%)"
+
+
+def _pe_phrase(pe: float) -> str:
+    if pe < 15:
+        return f"현재 주가는 실적 대비 싼 편이에요 (PER {pe:.0f}배)"
+    if pe < 25:
+        return f"주가는 실적 대비 적당해요 (PER {pe:.0f}배)"
+    if pe < 40:
+        return f"주가가 실적 대비 비싼 편이에요 (PER {pe:.0f}배)"
+    return f"주가가 실적 대비 많이 비싸요 (PER {pe:.0f}배)"
+
+
+def _rev_phrase(pct: float) -> str:
+    if pct >= 30:
+        return f"매출은 작년보다 {pct:.0f}%나 늘었어요"
+    if pct >= 10:
+        return f"매출이 {pct:.0f}% 성장하면서 꾸준히 크고 있어요"
+    if pct >= 0:
+        return f"매출은 {pct:.0f}% 소폭 늘었어요"
+    return f"매출이 작년보다 {abs(pct):.0f}% 줄었어요"
+
+
 def build_plain_summary(snapshot: FundamentalSnapshot) -> str:
-    """Convert financial metrics to plain Korean summary lines."""
-    lines: list[str] = []
+    """Convert financial metrics to a natural Korean paragraph."""
     margin = _pct(snapshot.operating_margin)
     roe = _pct(snapshot.return_on_equity)
     de = snapshot.debt_to_equity
     pe = snapshot.forward_pe
     rev = _pct(snapshot.revenue_growth)
 
-    if margin is not None:
-        lines.append(_describe_margin(margin))
-    if roe is not None:
-        lines.append(_describe_roe(roe))
-    if de is not None:
-        lines.append(_describe_debt(de))
-    if pe is not None and pe > 0:
-        lines.append(_describe_pe(pe))
-    if rev is not None:
-        lines.append(_describe_revenue_growth(rev))
+    # Build a flowing paragraph, not a bullet list
+    parts: list[str] = []
 
-    if not lines:
+    # Lead with revenue growth if available — sets the story
+    if rev is not None:
+        parts.append(_rev_phrase(rev))
+
+    if margin is not None:
+        parts.append(_margin_phrase(margin))
+
+    if roe is not None:
+        parts.append(_roe_phrase(roe))
+
+    if de is not None:
+        parts.append(_debt_phrase(de))
+
+    if pe is not None and pe > 0:
+        parts.append(_pe_phrase(pe))
+
+    if not parts:
         return "데이터 부족"
+
+    # Join as natural paragraph with periods
+    summary = ". ".join(p.rstrip("., ") for p in parts) + "."
 
     analyst = build_analyst_summary(snapshot)
     if analyst and "없어요" not in analyst:
-        lines.append(analyst)
-    return "\n".join(lines)
+        summary += " " + analyst
+
+    return summary
 
 
 def build_analyst_summary(snapshot: FundamentalSnapshot) -> str:

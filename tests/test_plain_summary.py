@@ -12,12 +12,13 @@ def test_build_plain_summary_high_margin():
         revenue_growth=0.25,
     )
     result = build_plain_summary(snap)
-    assert "돈을 아주 잘 버는 회사" in result
-    assert "영업이익률 30.0%" in result
-    assert "투자한 돈 대비 수익이 좋음" in result
-    assert "빚이 아주 적음" in result
-    assert "주가가 적당한 편" in result
-    assert "매출이 꾸준히 성장 중" in result
+    # Natural paragraph style, not bullet list
+    assert "25%" in result  # revenue growth
+    assert "마진" in result  # margin quality
+    assert "18%" in result  # ROE
+    assert "빚" in result  # debt
+    assert "적당" in result  # PE reasonable
+    assert ". " in result  # joined as paragraph
 
 
 def test_build_plain_summary_low_margin():
@@ -30,11 +31,11 @@ def test_build_plain_summary_low_margin():
         revenue_growth=-0.1,
     )
     result = build_plain_summary(snap)
-    assert "돈 벌기가 어려운 회사" in result
-    assert "투자 대비 수익이 낮음" in result
-    assert "빚이 많은 편" in result
-    assert "주가가 아주 비쌈" in result
-    assert "매출이 줄어들고 있음" in result
+    assert "줄었" in result  # revenue declining
+    assert "남는 게 거의 없" in result  # low margin
+    assert "5%" in result  # low ROE
+    assert "빚이 꽤 많" in result  # high debt
+    assert "비싸" in result  # high PE
 
 
 def test_build_plain_summary_none_metrics():
