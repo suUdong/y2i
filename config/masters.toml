@@ -1,0 +1,97 @@
+[[masters]]
+name = "druckenmiller"
+display = "드러큰밀러"
+focus = "유동성, 18~24개월 선행 드라이버"
+key_metrics = ["revenue_growth", "forward_pe", "video_signal_score", "mention_count"]
+base_score = 56
+
+[masters.weights]
+mention = 2.2
+mention_cap = 12
+revenue = 0.12
+revenue_cap = 10
+signal = 0.08
+signal_cap = 8
+theme = 6.0
+valuation_penalty_threshold = 35
+valuation_penalty_rate = 0.25
+
+[masters.risks]
+items = [
+  "수요 드라이버 약화 또는 capex 피크아웃",
+  "정책/유동성 변화로 멀티플 압축 위험",
+]
+
+[masters.templates]
+one_liner = "{ticker}는 매출성장률 {revenue:.1f}%와 '{evidence}'로 드라이버는 강하지만, PER {forward_pe:.1f}배라 유동성 점검이 먼저다."
+rationale = [
+  "영상 신호 {video_signal_score:.1f}와 언급 {mention_count}회가 수급 지속을 지지",
+  "매출성장률 {revenue:.1f}%와 영업이익률 {margin:.1f}%는 이익 레버리지 유지 중",
+]
+
+[[masters]]
+name = "buffett"
+display = "버핏"
+focus = "사업 품질, 자본효율, 밸류에이션"
+key_metrics = ["operating_margin", "return_on_equity", "forward_pe", "debt_to_equity"]
+base_score = 48
+
+[masters.weights]
+margin = 0.18
+margin_cap = 12
+roe = 0.10
+roe_cap = 10
+leverage_low_threshold = 60
+leverage_low_bonus = 6
+leverage_mid_threshold = 120
+leverage_mid_bonus = 2
+leverage_high_penalty = -5
+valuation_low_threshold = 22
+valuation_low_bonus = 6
+valuation_mid_threshold = 30
+valuation_mid_bonus = 1
+valuation_high_penalty = -6
+
+[masters.risks]
+items = [
+  "밸류에이션이 장기 복리 수익률을 잠식할 위험",
+  "산업 사이클과 고객 집중이 예측 가능성을 낮출 위험",
+]
+
+[masters.templates]
+one_liner = "{ticker}는 영업이익률 {margin:.1f}%와 ROE {roe:.1f}%로 사업 질은 좋지만, 부채비율 {leverage:.1f}와 밸류에이션을 감안하면 안전마진이 충분하다고 보긴 어렵다."
+rationale = [
+  "ROE {roe:.1f}%와 영업이익률 {margin:.1f}%는 자본효율과 가격결정력을 뒷받침",
+  "PER {forward_pe:.1f}배와 부채비율 {leverage:.1f}는 보수적 진입 여부를 가른다",
+]
+
+[[masters]]
+name = "soros"
+display = "소로스"
+focus = "서사/반사성, 추세 지속, 레짐 타이밍"
+key_metrics = ["fifty_two_week_change", "video_signal_score", "mention_count"]
+base_score = 50
+
+[masters.weights]
+momentum = 0.10
+momentum_cap = 10
+signal = 0.10
+signal_cap = 9
+mention = 1.4
+mention_cap = 8
+theme = 4.0
+valuation_penalty_threshold = 40
+valuation_penalty_rate = 0.15
+
+[masters.risks]
+items = [
+  "서사 약화 시 추세 반전이 급격할 수 있음",
+  "포지셔닝 과열로 작은 악재에도 변동성이 커질 수 있음",
+]
+
+[masters.templates]
+one_liner = "{ticker}는 52주 수익률 {momentum:.1f}%와 '{evidence}'가 맞물려 서사가 자기강화 구간이지만, 신호 점수 {video_signal_score:.1f}가 높을수록 반사성 꺾임도 빨라질 수 있다."
+rationale = [
+  "영상 제목과 근거는 현재 테마가 네트워크/메모리/전력 병목 해소 서사 위에 있음을 보여준다",
+  "언급 {mention_count}회와 52주 변화율 {momentum:.1f}%는 추세 추종 자금이 붙기 쉬운 조건",
+]
