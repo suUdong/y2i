@@ -12,6 +12,7 @@ from .macro_signals import extract_macro_insights, indirect_macro_mentions
 from .market_review import extract_market_review
 from .master_engine import build_master_opinions, master_variance_score
 from .models import FundamentalSnapshot, TickerMention, VideoInput, VideoType
+from .plain_summary import build_plain_summary
 from .price_targets import aggregate_price_targets, extract_price_targets
 from .signal_features import stock_signal_strength
 from .signal_gate import assess_video_signal, downgrade_signal_without_tickers
@@ -336,6 +337,8 @@ def analyze_video_heuristic(
                     "final_score": round(total_score, 1),
                     "final_verdict": verdict,
                     "invalidation_triggers": ["실적/가이던스 둔화", "섹터 CAPEX 둔화", "멀티플 재조정"],
+                    "plain_summary": build_plain_summary(snapshot),
+                    "video_context_summary": "",  # filled by LLM pipeline
                     "price_targets": price_target_payloads,
                     "price_target": aggregate_price_targets(
                         price_target_payloads,
