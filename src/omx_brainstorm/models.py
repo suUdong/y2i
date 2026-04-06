@@ -122,6 +122,20 @@ class FundamentalSnapshot:
     fifty_two_week_change: float | None = None
     data_source: str = ""
     notes: list[str] = field(default_factory=list)
+    # Analyst consensus (Yahoo Finance)
+    recommendation_key: str | None = None
+    recommendation_mean: float | None = None
+    analyst_count: int | None = None
+    target_mean_price: float | None = None
+    target_median_price: float | None = None
+    analyst_strong_buy: int = 0
+    analyst_buy: int = 0
+    analyst_hold: int = 0
+    analyst_sell: int = 0
+    analyst_strong_sell: int = 0
+    # Sector classification
+    sector: str | None = None
+    industry: str | None = None
 
 
 @dataclass(slots=True)
