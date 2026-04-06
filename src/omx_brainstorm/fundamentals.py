@@ -116,6 +116,37 @@ class FundamentalsFetcher:
         if market_cap is None and fast_info is not None:
             market_cap = getattr(fast_info, "market_cap", None)
 
+        # Analyst recommendations
+        rec_key = info.get("recommendationKey")
+        rec_mean = _as_float(info.get("recommendationMean"))
+        analyst_count = info.get("numberOfAnalystOpinions")
+        if isinstance(analyst_count, (int, float)):
+            analyst_count = int(analyst_count)
+        else:
+            analyst_count = None
+        target_mean = _as_float(info.get("targetMeanPrice"))
+        target_median = _as_float(info.get("targetMedianPrice"))
+        sector = info.get("sector")
+        industry = info.get("industry")
+
+        # Recommendation distribution from recommendations property
+        a_strong_buy = 0
+        a_buy = 0
+        a_hold = 0
+        a_sell = 0
+        a_strong_sell = 0
+        try:
+            rec = ticker.recommendations
+            if rec is not None and not rec.empty:
+                current = rec.iloc[0]
+                a_strong_buy = int(current.get("strongBuy", 0) or 0)
+                a_buy = int(current.get("buy", 0) or 0)
+                a_hold = int(current.get("hold", 0) or 0)
+                a_sell = int(current.get("sell", 0) or 0)
+                a_strong_sell = int(current.get("strongSell", 0) or 0)
+        except Exception:
+            pass  # recommendations not available for all tickers
+
         snapshot = FundamentalSnapshot(
             ticker=mention.ticker,
             company_name=_pick("longName", "shortName") or mention.company_name,
@@ -134,6 +165,18 @@ class FundamentalsFetcher:
             fifty_two_week_change=_as_float(_pick("52WeekChange", "fiftyTwoWeekChange")),
             data_source="yfinance",
             notes=[],
+            recommendation_key=rec_key if isinstance(rec_key, str) else None,
+            recommendation_mean=rec_mean,
+            analyst_count=analyst_count,
+            target_mean_price=target_mean,
+            target_median_price=target_median,
+            analyst_strong_buy=a_strong_buy,
+            analyst_buy=a_buy,
+            analyst_hold=a_hold,
+            analyst_sell=a_sell,
+            analyst_strong_sell=a_strong_sell,
+            sector=sector if isinstance(sector, str) else None,
+            industry=industry if isinstance(industry, str) else None,
         )
 
         if snapshot.company_name is None:
