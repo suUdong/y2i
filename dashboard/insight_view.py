@@ -189,6 +189,8 @@ def build_stock_insight_cards(
                 "signal_note": _signal_note(item),
                 "channel_count": int(item.get("channel_count", 1) or 1),
                 "source_channels": list(item.get("_source_channels_display", []) or []),
+                "last_signal_at": str(item.get("last_signal_at") or ""),
+                "latest_checked_at": str(item.get("latest_checked_at") or ""),
                 "why_now": _ranking_why_now(item),
                 "plain_summary": first_non_empty(
                     lead_summary.get("plain_summary"),
@@ -211,6 +213,56 @@ def build_stock_insight_cards(
             }
         )
     return cards
+
+
+def build_feed_items(cards: list[dict[str, Any]], *, limit: int = 12) -> list[dict[str, Any]]:
+    sorted_cards = sorted(
+        cards,
+        key=lambda card: (
+            card.get("last_signal_at", ""),
+            float(card.get("score", 0) or 0),
+            card.get("ticker", ""),
+        ),
+        reverse=True,
+    )
+    return [
+        {
+            "ticker": card["ticker"],
+            "ticker_display": card["ticker_display"],
+            "score": float(card["score"]),
+            "verdict": card["verdict"],
+            "summary": first_non_empty(card.get("why_now"), card.get("plain_summary"), card.get("video_context_summary")),
+            "source": _feed_source_label(card),
+            "freshness": card.get("last_signal_at") or card.get("latest_checked_at") or "-",
+            "signal_note": card.get("signal_note", ""),
+        }
+        for card in sorted_cards[:limit]
+    ]
+
+
+def build_ranking_items(cards: list[dict[str, Any]], *, limit: int = 12) -> list[dict[str, Any]]:
+    sorted_cards = sorted(
+        cards,
+        key=lambda card: (
+            float(card.get("score", 0) or 0),
+            int(card.get("channel_count", 0) or 0),
+            card.get("ticker", ""),
+        ),
+        reverse=True,
+    )
+    return [
+        {
+            "ticker": card["ticker"],
+            "ticker_display": card["ticker_display"],
+            "score": float(card["score"]),
+            "verdict": card["verdict"],
+            "conviction": card.get("conviction", ""),
+            "summary": first_non_empty(card.get("why_now"), card.get("plain_summary"), card.get("video_context_summary")),
+            "channels": ", ".join(card.get("source_channels", [])[:3]) or str(card.get("channel_count", 0)),
+            "signal_note": card.get("signal_note", ""),
+        }
+        for card in sorted_cards[:limit]
+    ]
 
 
 def _ranking_why_now(item: dict[str, Any]) -> str:
@@ -414,6 +466,17 @@ def _signal_note(item: dict[str, Any]) -> str:
     if channel_count > 1:
         return f"{channel_count}채널 MIXED"
     return "SINGLE SOURCE"
+
+
+def _feed_source_label(card: dict[str, Any]) -> str:
+    expert_views = card.get("expert_views", [])
+    if expert_views:
+        lead = expert_views[0]
+        return f"{lead.get('expert', '-')}" + (f" · {lead.get('topic')}" if lead.get("topic") else "")
+    channels = card.get("source_channels", [])
+    if channels:
+        return ", ".join(channels[:2])
+    return card.get("signal_note", "")
 
 
 def _translate_recommendation(value: str) -> str:

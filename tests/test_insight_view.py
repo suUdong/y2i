@@ -5,8 +5,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from dashboard.insight_view import (
     build_channel_focus_payload,
+    build_feed_items,
     build_header_metrics,
     build_priority_signal_rows,
+    build_ranking_items,
     build_recent_video_rows,
     build_stock_insight_cards,
 )
@@ -230,3 +232,47 @@ def test_build_stock_insight_cards_merges_experts_masters_and_fundamentals():
     assert cards[0]["fundamental_rows"][0]["label"] == "현재가"
     assert "애널리스트 42명" in cards[0]["analyst_summary"]
     assert "$1,000.00" in cards[0]["price_target_summary"]
+
+
+def test_build_feed_and_ranking_items_surface_scan_data():
+    cards = [
+        {
+            "ticker": "NVDA",
+            "ticker_display": "NVDA NVIDIA",
+            "score": 88.5,
+            "verdict": "BUY",
+            "why_now": "AI 인프라와 데이터센터 수요",
+            "plain_summary": "좋은 회사지만 기대치가 높다.",
+            "video_context_summary": "데이터센터 수요를 근거로 제시",
+            "source_channels": ["삼프로TV", "IT의 신"],
+            "expert_views": [{"expert": "김철수", "topic": "AI 반도체"}],
+            "signal_note": "2채널 STRONG",
+            "last_signal_at": "2026-04-08",
+            "latest_checked_at": "2026-04-08T00:00:00+00:00",
+            "conviction": "HIGH",
+            "channel_count": 2,
+        },
+        {
+            "ticker": "005930.KS",
+            "ticker_display": "005930 삼성전자",
+            "score": 75.0,
+            "verdict": "WATCH",
+            "why_now": "HBM 회복 기대",
+            "plain_summary": "",
+            "video_context_summary": "",
+            "source_channels": ["삼프로TV"],
+            "expert_views": [],
+            "signal_note": "SINGLE SOURCE",
+            "last_signal_at": "2026-04-07",
+            "latest_checked_at": "2026-04-08T00:00:00+00:00",
+            "conviction": "MEDIUM",
+            "channel_count": 1,
+        },
+    ]
+    feed_items = build_feed_items(cards)
+    ranking_items = build_ranking_items(cards)
+
+    assert feed_items[0]["ticker"] == "NVDA"
+    assert feed_items[0]["source"] == "김철수 · AI 반도체"
+    assert ranking_items[0]["ticker"] == "NVDA"
+    assert ranking_items[0]["channels"] == "삼프로TV, IT의 신"
