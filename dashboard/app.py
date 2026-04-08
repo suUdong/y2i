@@ -29,10 +29,10 @@ from dashboard.data_loader import (
 )
 from dashboard.insight_view import (
     build_channel_focus_payload,
-    build_feed_items,
     build_header_metrics,
     build_ranking_items,
     build_stock_insight_cards,
+    build_video_feed_items,
 )
 from omx_brainstorm.utils import load_env_file
 
@@ -190,57 +190,138 @@ st.markdown(
 )
 
 
-def _select_card(cards: list[dict], *, state_key: str) -> dict | None:
-    if not cards:
+def _translate_verdict(value: str) -> str:
+    verdict = value.strip().upper()
+    return {
+        "STRONG_BUY": "강한 매수",
+        "BUY": "매수",
+        "WATCH": "관찰",
+        "HOLD": "중립",
+        "SELL": "매도",
+        "REJECT": "제외",
+    }.get(verdict, value)
+
+
+def _translate_conviction(value: str) -> str:
+    return {
+        "HIGH": "높음",
+        "MEDIUM": "중간",
+        "WATCH": "관찰",
+    }.get(value, value)
+
+
+def _translate_signal_kind(value: str) -> str:
+    kind = value.strip().upper()
+    return {
+        "CONSENSUS": "합의",
+        "SINGLE_SOURCE": "단일 출처",
+    }.get(kind, value)
+
+
+def _translate_master(value: str) -> str:
+    key = value.strip().lower()
+    return {
+        "druckenmiller": "드러큰밀러 Druckenmiller",
+        "buffett": "버핏 Buffett",
+        "soros": "소로스 Soros",
+    }.get(key, value)
+
+
+def _select_by_key(items: list[dict], *, state_key: str, item_key: str) -> dict | None:
+    if not items:
         return None
-    tickers = {card["ticker"] for card in cards}
+    values = {item[item_key] for item in items}
     selected = st.session_state.get(state_key)
-    if selected not in tickers:
-        st.session_state[state_key] = cards[0]["ticker"]
-        selected = cards[0]["ticker"]
-    for card in cards:
-        if card["ticker"] == selected:
-            return card
-    return cards[0]
+    if selected not in values:
+        st.session_state[state_key] = items[0][item_key]
+        selected = items[0][item_key]
+    for item in items:
+        if item[item_key] == selected:
+            return item
+    return items[0]
 
 
-def _render_compact_signal_list(
+def _render_video_feed_list(
     items: list[dict],
     *,
-    cards: list[dict],
     state_key: str,
-    key_prefix: str,
+    detail_kind_key: str,
     empty_message: str,
 ) -> dict | None:
-    if not items or not cards:
+    if not items:
         st.info(empty_message)
         return None
 
-    selected = _select_card(cards, state_key=state_key)
-    selected_ticker = selected["ticker"] if selected else ""
+    selected = _select_by_key(items, state_key=state_key, item_key="video_id")
+    selected_video_id = selected["video_id"] if selected else ""
     for item in items:
-        is_selected = item["ticker"] == selected_ticker
+        is_selected = item["video_id"] == selected_video_id
+        source_bits = [item["channel"], item["video_type_label"], item["signal_label"]]
+        if item.get("lead_expert"):
+            source_bits.append(item["lead_expert"])
+        elif item.get("lead_stock"):
+            source_bits.append(item["lead_stock"])
         st.markdown(
             (
                 "<div class='list-card'>"
-                f"<div class='list-kicker'>{item.get('signal_note', '')} · {item.get('freshness', '')}</div>"
-                f"<div><strong>{item['ticker_display']}</strong> · {item['verdict']} · {float(item['score']):.1f}</div>"
-                f"<div class='list-summary'>{item.get('summary', '')}</div>"
-                f"<div class='list-summary'>{item.get('source', item.get('channels', ''))}</div>"
+                f"<div class='list-kicker'>새 영상 · {item.get('published_at', '-')}</div>"
+                f"<div><strong>{item['title']}</strong></div>"
+                f"<div class='list-summary'>{' · '.join(bit for bit in source_bits if bit)}</div>"
+                f"<div class='list-summary'>점수 {item['signal_score']:.1f} · {item['summary']}</div>"
                 "</div>"
             ),
             unsafe_allow_html=True,
         )
         if st.button(
-            "상세 보기",
-            key=f"{key_prefix}_{item['ticker']}",
+            "이 영상 보기",
+            key=f"feed_video_{item['video_id']}",
+            use_container_width=True,
+            type="primary" if is_selected else "secondary",
+        ):
+            st.session_state[state_key] = item["video_id"]
+            st.session_state[detail_kind_key] = "video"
+            selected_video_id = item["video_id"]
+
+    return _select_by_key(items, state_key=state_key, item_key="video_id")
+
+
+def _render_ranking_list(
+    items: list[dict],
+    *,
+    state_key: str,
+    detail_kind_key: str,
+    empty_message: str,
+) -> dict | None:
+    if not items:
+        st.info(empty_message)
+        return None
+
+    selected = _select_by_key(items, state_key=state_key, item_key="ticker")
+    selected_ticker = selected["ticker"] if selected else ""
+    for index, item in enumerate(items, start=1):
+        is_selected = item["ticker"] == selected_ticker
+        st.markdown(
+            (
+                "<div class='list-card'>"
+                f"<div class='list-kicker'>랭킹 {index}위 · {_translate_signal_kind(item.get('signal_kind_label', item.get('signal_note', '')))}</div>"
+                f"<div><strong>{item['ticker_display']}</strong> · {_translate_verdict(item['verdict'])} · {float(item['score']):.1f}</div>"
+                f"<div class='list-summary'>확신도 {_translate_conviction(item.get('conviction', ''))} · {item.get('channels', '')}</div>"
+                f"<div class='list-summary'>{item.get('summary', '')}</div>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "이 종목 보기",
+            key=f"ranking_stock_{item['ticker']}",
             use_container_width=True,
             type="primary" if is_selected else "secondary",
         ):
             st.session_state[state_key] = item["ticker"]
+            st.session_state[detail_kind_key] = "stock"
             selected_ticker = item["ticker"]
 
-    return _select_card(cards, state_key=state_key)
+    return _select_by_key(items, state_key=state_key, item_key="ticker")
 
 
 def _render_stock_detail(card: dict | None, *, empty_message: str) -> None:
@@ -251,7 +332,7 @@ def _render_stock_detail(card: dict | None, *, empty_message: str) -> None:
     st.markdown(
         (
             "<div class='insight-card'>"
-            f"<div class='insight-eyebrow'>{card['signal_note']} · Conviction {card['conviction']}</div>"
+            f"<div class='insight-eyebrow'>{card['signal_note']} · 확신도 {_translate_conviction(card['conviction'])}</div>"
             f"<div class='insight-headline'>{card['ticker_display']}</div>"
             f"<div class='insight-copy'>{card['why_now']}</div>"
             "</div>"
@@ -259,51 +340,104 @@ def _render_stock_detail(card: dict | None, *, empty_message: str) -> None:
         unsafe_allow_html=True,
     )
     metric_columns = st.columns(4)
-    metric_columns[0].metric("Verdict", card["verdict"])
+    metric_columns[0].metric("판단", _translate_verdict(card["verdict"]))
     metric_columns[1].metric("Score", f"{card['score']:.1f}")
-    metric_columns[2].metric("Signal", card["signal_kind"])
-    metric_columns[3].metric("Channels", str(card["channel_count"]))
+    metric_columns[2].metric("시그널", _translate_signal_kind(card["signal_kind"]))
+    metric_columns[3].metric("출처 채널", str(card["channel_count"]))
 
     if card.get("video_context_summary"):
         st.markdown(f"**영상 문맥**  \n{card['video_context_summary']}")
     if card.get("plain_summary"):
-        st.markdown(f"**LLM + 재무 요약**  \n{card['plain_summary']}")
+        st.markdown(f"**LLM 판단 요약**  \n{card['plain_summary']}")
 
-    left_col, right_col = st.columns([1.15, 0.85], gap="large")
-    with left_col:
-        if card.get("expert_views"):
-            st.markdown("**유튜브 전문가 의견**")
-            for view in card["expert_views"]:
-                st.markdown(
-                    f"- **{view['expert']}** ({view['topic']}) · {view['sentiment']} · {view['summary']}"
-                )
-                for claim in view.get("claims", [])[:2]:
-                    claim_text = claim.get("claim") or ""
-                    if claim_text:
-                        confidence = float(claim.get("confidence", 0) or 0)
-                        st.caption(f"{claim.get('direction', 'NEUTRAL')} {confidence:.0%} · {claim_text}")
-        if card.get("supporting_videos"):
-            st.markdown("**근거 영상 / 원문 맥락**")
-            for video in card["supporting_videos"]:
-                st.markdown(
-                    f"- {video['title']} · {video['verdict']} {video['score']:.1f} · {video['summary']}"
-                )
+    if card.get("expert_views"):
+        st.markdown("**유튜브 전문가 의견**")
+        for view in card["expert_views"]:
+            st.markdown(
+                f"- **{view['expert']}** ({view['topic']}) · {view['sentiment']} · {view['summary']}"
+            )
+            for claim in view.get("claims", [])[:2]:
+                claim_text = claim.get("claim") or ""
+                if claim_text:
+                    confidence = float(claim.get("confidence", 0) or 0)
+                    st.caption(f"{claim.get('direction', 'NEUTRAL')} {confidence:.0%} · {claim_text}")
 
-    with right_col:
-        if card.get("master_views"):
-            st.markdown("**구루 관점**")
-            for view in card["master_views"]:
-                st.markdown(
-                    f"- **{view['master']}** · {view['verdict']} {view['score']:.1f} · {view['one_liner']}"
-                )
-        if card.get("analyst_summary") or card.get("price_target_summary") or card.get("fundamental_rows"):
-            st.markdown("**재무 / 컨센서스**")
-            if card.get("analyst_summary"):
-                st.markdown(f"- 컨센서스: {card['analyst_summary']}")
-            if card.get("price_target_summary"):
-                st.markdown(f"- 목표가: {card['price_target_summary']}")
-            for row in card.get("fundamental_rows", []):
-                st.markdown(f"- {row['label']}: {row['value']}")
+    if card.get("master_views"):
+        st.markdown("**구루 관점**")
+        for view in card["master_views"]:
+            st.markdown(
+                f"- **{_translate_master(view['master'])}** · {_translate_verdict(view['verdict'])} {view['score']:.1f} · {view['one_liner']}"
+            )
+
+    if card.get("analyst_summary") or card.get("price_target_summary") or card.get("fundamental_rows"):
+        st.markdown("**재무 / 컨센서스**")
+        if card.get("analyst_summary"):
+            st.markdown(f"- 컨센서스: {card['analyst_summary']}")
+        if card.get("price_target_summary"):
+            st.markdown(f"- 목표가: {card['price_target_summary']}")
+        for row in card.get("fundamental_rows", []):
+            st.markdown(f"- {row['label']}: {row['value']}")
+
+    if card.get("supporting_videos"):
+        st.markdown("**근거 영상 / 원문 맥락**")
+        for video in card["supporting_videos"]:
+            st.markdown(
+                f"- {video['title']} · {_translate_verdict(video['verdict'])} {video['score']:.1f} · {video['summary']}"
+            )
+
+
+def _render_video_detail(video: dict | None, *, empty_message: str) -> None:
+    if video is None:
+        st.info(empty_message)
+        return
+
+    st.markdown(
+        (
+            "<div class='insight-card'>"
+            f"<div class='insight-eyebrow'>{video.get('_channel_display', video.get('_channel', ''))} · {video.get('published_at', '-')}</div>"
+            f"<div class='insight-headline'>{video.get('title', '')}</div>"
+            f"<div class='insight-copy'>{video.get('video_summary') or video.get('reason') or video.get('skip_reason') or ''}</div>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+    metric_columns = st.columns(4)
+    metric_columns[0].metric("시그널", str(video.get("video_signal_class", "-")))
+    metric_columns[1].metric("점수", f"{float(video.get('signal_score', 0) or 0):.1f}")
+    metric_columns[2].metric("유형", str(video.get("video_type", "-")))
+    metric_columns[3].metric("종목 수", str(len(video.get("stocks", []) or [])))
+
+    experts = [expert for expert in video.get("expert_insights", []) or [] if isinstance(expert, dict)]
+    if experts:
+        st.markdown("**영상 속 전문가 의견**")
+        for expert in experts:
+            st.markdown(
+                f"- **{expert.get('expert_name', '-') }** ({expert.get('topic', '-')}) · {expert.get('summary') or ''}"
+            )
+            for claim in [claim for claim in expert.get("structured_claims", []) if isinstance(claim, dict)][:2]:
+                claim_text = claim.get("claim") or ""
+                if claim_text:
+                    confidence = float(claim.get("confidence", 0) or 0)
+                    st.caption(f"{claim.get('direction', 'NEUTRAL')} {confidence:.0%} · {claim_text}")
+
+    stocks = [stock for stock in video.get("stocks", []) or [] if isinstance(stock, dict)]
+    if stocks:
+        st.markdown("**이 영상에서 본 종목**")
+        for stock in stocks[:5]:
+            ticker_display = stock.get("ticker")
+            if stock.get("company_name"):
+                ticker_display = f"{stock.get('ticker')} {stock.get('company_name')}"
+            st.markdown(
+                f"- **{ticker_display}** · {_translate_verdict(str(stock.get('final_verdict', '-')))} {float(stock.get('final_score', 0) or 0):.1f} · {stock.get('video_context_summary') or stock.get('plain_summary') or stock.get('basic_signal_summary') or ''}"
+            )
+
+    macro_points = [item for item in video.get("macro_insights", []) or [] if isinstance(item, dict)]
+    if macro_points:
+        st.markdown("**매크로 포인트**")
+        for macro in macro_points[:4]:
+            st.markdown(
+                f"- {macro.get('label') or macro.get('indicator') or '-'} · {macro.get('direction', '-')} · 신뢰도 {float(macro.get('confidence', 0) or 0):.0%}"
+            )
 
 
 OUTPUT_DIR = data_loader_runtime.DEFAULT_OUTPUT_DIR
@@ -321,12 +455,7 @@ header_metrics = build_header_metrics(
 )
 
 st.title("Y2I 투자 시그널")
-st.caption("피드에서 후보를 고르고, 랭킹에서 우선순위를 확인한 뒤, 상세 패널에서 전문가·LLM·구루·재무를 한 번에 읽는 화면")
-
-st.markdown(
-    "<div class='insight-note'>핵심 원칙: 피드는 짧게 스캔하고, 상세 패널에서 <b>전문가 의견 + LLM 해석 + 구루 관점 + 재무/컨센서스</b>를 한 번에 읽습니다.</div>",
-    unsafe_allow_html=True,
-)
+st.caption("피드는 새 영상을 보고, 랭킹은 종목 우선순위를 보고, 상세에서 전문가·LLM·구루·재무를 한 번에 읽는 화면")
 
 metric_columns = st.columns(len(header_metrics))
 for column, metric in zip(metric_columns, header_metrics):
@@ -342,46 +471,60 @@ selected_scope = st.selectbox(
 if selected_scope == "__all__":
     scope_label = "전체 채널"
     scope_cards = build_stock_insight_cards(rankings, limit=24)
+    scope_videos = list(live_feed.get("recent_videos", []) if isinstance(live_feed, dict) else [])
 else:
     channel_data = load_30d_results(selected_scope, OUTPUT_DIR)
     focus = build_channel_focus_payload(selected_scope, channel_data if isinstance(channel_data, dict) else {})
     scope_label = focus["channel_name"]
     scope_cards = focus.get("stock_cards", [])
+    scope_videos = []
+    for video in list(channel_data.get("videos", []) if isinstance(channel_data, dict) else []):
+        row = dict(video)
+        row["_channel"] = selected_scope
+        row["_channel_display"] = focus["channel_name"]
+        scope_videos.append(row)
 
-st.markdown(f"**현재 범위:** {scope_label} · 종목 인사이트 {len(scope_cards)}개")
+for video in scope_videos:
+    video.setdefault("_channel_display", channel_names.get(str(video.get("_channel", "")), str(video.get("_channel", ""))))
 
-feed_items = build_feed_items(scope_cards, limit=12)
+st.markdown(f"**현재 범위:** {scope_label} · 새 영상 {len(scope_videos)}개 · 종목 인사이트 {len(scope_cards)}개")
+
+feed_items = build_video_feed_items(scope_videos, channel_names, limit=12)
 ranking_items = build_ranking_items(scope_cards, limit=12)
-detail_state_key = f"selected_detail::{selected_scope}"
+video_state_key = f"selected_video::{selected_scope}"
+stock_state_key = f"selected_stock::{selected_scope}"
+detail_kind_key = f"selected_detail_kind::{selected_scope}"
 
-feed_tab, ranking_tab = st.tabs(["피드", "랭킹"])
+feed_tab, ranking_tab, detail_tab = st.tabs(["피드", "랭킹", "상세"])
 
 with feed_tab:
-    st.caption("피드는 지금 새로 보거나 변화가 생긴 종목을 짧게 스캔하는 영역이다.")
-    feed_left, feed_right = st.columns([0.9, 1.1], gap="large")
-    with feed_left:
-        selected_feed_card = _render_compact_signal_list(
-            feed_items,
-            cards=scope_cards,
-            state_key=detail_state_key,
-            key_prefix=f"feed::{selected_scope}",
-            empty_message="피드에 표시할 종목이 없습니다.",
-        )
-    with feed_right:
-        st.subheader("상세 패널")
-        _render_stock_detail(selected_feed_card, empty_message="피드에서 종목을 선택하면 상세가 표시됩니다.")
+    st.caption("피드는 기본적으로 새 영상이다. 어떤 영상이 방금 나왔고, 그 안에 어떤 전문가/종목 포인트가 있었는지만 짧게 본다.")
+    selected_feed_video = _render_video_feed_list(
+        feed_items,
+        state_key=video_state_key,
+        detail_kind_key=detail_kind_key,
+        empty_message="피드에 표시할 새 영상이 없습니다.",
+    )
+    if selected_feed_video:
+        st.info("영상을 선택했다. 상단의 `상세` 탭에서 전체 인사이트를 볼 수 있다.")
 
 with ranking_tab:
-    st.caption("랭킹은 지금 기준으로 가장 강한 아이디어를 우선순위대로 정리한 영역이다.")
-    ranking_left, ranking_right = st.columns([0.9, 1.1], gap="large")
-    with ranking_left:
-        selected_ranking_card = _render_compact_signal_list(
-            ranking_items,
-            cards=scope_cards,
-            state_key=detail_state_key,
-            key_prefix=f"ranking::{selected_scope}",
-            empty_message="랭킹에 표시할 종목이 없습니다.",
-        )
-    with ranking_right:
-        st.subheader("상세 패널")
-        _render_stock_detail(selected_ranking_card, empty_message="랭킹에서 종목을 선택하면 상세가 표시됩니다.")
+    st.caption("랭킹은 지금 바로 읽어야 할 종목 우선순위다. 새 영상 여부보다 종목 판단 강도를 본다.")
+    selected_ranking_card = _render_ranking_list(
+        ranking_items,
+        state_key=stock_state_key,
+        detail_kind_key=detail_kind_key,
+        empty_message="랭킹에 표시할 종목이 없습니다.",
+    )
+    if selected_ranking_card:
+        st.info("종목을 선택했다. 상단의 `상세` 탭에서 전문가·LLM·구루·재무를 함께 볼 수 있다.")
+
+with detail_tab:
+    st.caption("상세는 마지막으로 고른 영상 또는 종목을 깊게 읽는 영역이다.")
+    detail_kind = st.session_state.get(detail_kind_key, "video" if feed_items else "stock")
+    selected_video = _select_by_key(scope_videos, state_key=video_state_key, item_key="video_id")
+    selected_stock = _select_by_key(scope_cards, state_key=stock_state_key, item_key="ticker")
+    if detail_kind == "video":
+        _render_video_detail(selected_video, empty_message="피드에서 영상을 고르면 여기서 자세히 볼 수 있다.")
+    else:
+        _render_stock_detail(selected_stock, empty_message="랭킹에서 종목을 고르면 여기서 자세히 볼 수 있다.")

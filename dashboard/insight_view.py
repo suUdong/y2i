@@ -25,11 +25,11 @@ def build_header_metrics(
     overall_accuracy = signal_accuracy.get("overall", {}) if isinstance(signal_accuracy, dict) else {}
     consensus_signals = comparison.get("consensus_signals", []) if isinstance(comparison, dict) else []
     return [
-        {"label": "Last Update", "value": str(live_feed.get("last_update") or "-")},
-        {"label": "Channels", "value": str(int(pipeline_summary.get("total_channels", overview.get("channel_count", 0)) or 0))},
-        {"label": "Actionable Videos", "value": str(int(pipeline_summary.get("actionable_videos", overview.get("analyzable_count", 0)) or 0))},
-        {"label": "Tracked Signals", "value": str(int(overall_accuracy.get("total_signals", 0) or 0))},
-        {"label": "Consensus Signals", "value": str(len(consensus_signals) if isinstance(consensus_signals, list) else 0)},
+        {"label": "업데이트", "value": str(live_feed.get("last_update") or "-")},
+        {"label": "채널", "value": str(int(pipeline_summary.get("total_channels", overview.get("channel_count", 0)) or 0))},
+        {"label": "액션 가능 영상", "value": str(int(pipeline_summary.get("actionable_videos", overview.get("analyzable_count", 0)) or 0))},
+        {"label": "추적 시그널", "value": str(int(overall_accuracy.get("total_signals", 0) or 0))},
+        {"label": "합의 시그널", "value": str(len(consensus_signals) if isinstance(consensus_signals, list) else 0)},
     ]
 
 
@@ -184,8 +184,11 @@ def build_stock_insight_cards(
                 "company_name": company_name,
                 "score": round(float(item.get("aggregate_score", 0) or 0), 1),
                 "verdict": str(item.get("aggregate_verdict") or "-"),
+                "verdict_label": _translate_verdict(str(item.get("aggregate_verdict") or "-")),
                 "conviction": _conviction_label(item),
+                "conviction_label": _translate_conviction(_conviction_label(item)),
                 "signal_kind": str(item.get("signal_kind") or ("CONSENSUS" if item.get("consensus_signal") else "SINGLE_SOURCE")),
+                "signal_kind_label": _translate_signal_kind(str(item.get("signal_kind") or ("CONSENSUS" if item.get("consensus_signal") else "SINGLE_SOURCE"))),
                 "signal_note": _signal_note(item),
                 "channel_count": int(item.get("channel_count", 1) or 1),
                 "source_channels": list(item.get("_source_channels_display", []) or []),
@@ -231,13 +234,53 @@ def build_feed_items(cards: list[dict[str, Any]], *, limit: int = 12) -> list[di
             "ticker_display": card["ticker_display"],
             "score": float(card["score"]),
             "verdict": card["verdict"],
+            "verdict_label": card.get("verdict_label", card["verdict"]),
             "summary": first_non_empty(card.get("why_now"), card.get("plain_summary"), card.get("video_context_summary")),
             "source": _feed_source_label(card),
             "freshness": card.get("last_signal_at") or card.get("latest_checked_at") or "-",
             "signal_note": card.get("signal_note", ""),
+            "signal_kind_label": card.get("signal_kind_label", ""),
         }
         for card in sorted_cards[:limit]
     ]
+
+
+def build_video_feed_items(
+    recent_videos: list[dict[str, Any]],
+    channel_names: dict[str, str],
+    *,
+    limit: int = 12,
+) -> list[dict[str, Any]]:
+    sorted_videos = sorted(
+        recent_videos,
+        key=lambda video: (
+            str(video.get("published_at") or ""),
+            float(video.get("signal_score", 0) or 0),
+            str(video.get("title") or ""),
+        ),
+        reverse=True,
+    )
+    items: list[dict[str, Any]] = []
+    for video in sorted_videos[:limit]:
+        experts = [expert for expert in video.get("expert_insights", []) or [] if isinstance(expert, dict)]
+        stocks = [stock for stock in video.get("stocks", []) or [] if isinstance(stock, dict)]
+        lead_stock = stocks[0] if stocks else {}
+        lead_expert = experts[0] if experts else {}
+        items.append(
+            {
+                "video_id": str(video.get("video_id") or ""),
+                "title": str(video.get("title") or ""),
+                "channel": channel_names.get(str(video.get("_channel", "")), str(video.get("_channel", ""))),
+                "signal_label": translate_signal_class(str(video.get("video_signal_class", "UNKNOWN"))),
+                "signal_score": round(float(video.get("signal_score", 0) or 0), 1),
+                "video_type_label": translate_video_type(str(video.get("video_type", "OTHER"))),
+                "published_at": str(video.get("published_at") or ""),
+                "summary": first_non_empty(video.get("video_summary"), video.get("skip_reason"), video.get("reason")),
+                "lead_stock": format_ticker_display(str(lead_stock.get("ticker", "")), str(lead_stock.get("company_name") or "")) if lead_stock else "",
+                "lead_expert": str(lead_expert.get("expert_name") or ""),
+            }
+        )
+    return items
 
 
 def build_ranking_items(cards: list[dict[str, Any]], *, limit: int = 12) -> list[dict[str, Any]]:
@@ -256,10 +299,13 @@ def build_ranking_items(cards: list[dict[str, Any]], *, limit: int = 12) -> list
             "ticker_display": card["ticker_display"],
             "score": float(card["score"]),
             "verdict": card["verdict"],
+            "verdict_label": card.get("verdict_label", card["verdict"]),
             "conviction": card.get("conviction", ""),
+            "conviction_label": card.get("conviction_label", card.get("conviction", "")),
             "summary": first_non_empty(card.get("why_now"), card.get("plain_summary"), card.get("video_context_summary")),
             "channels": ", ".join(card.get("source_channels", [])[:3]) or str(card.get("channel_count", 0)),
             "signal_note": card.get("signal_note", ""),
+            "signal_kind_label": card.get("signal_kind_label", ""),
         }
         for card in sorted_cards[:limit]
     ]
@@ -334,7 +380,9 @@ def _collect_master_views(summaries: list[dict[str, Any]]) -> list[dict[str, Any
             if current is None or score > float(current.get("score", 0) or 0):
                 best_by_master[master] = {
                     "master": master,
+                    "master_label": _translate_master(master),
                     "verdict": str(opinion.get("verdict") or "-"),
+                    "verdict_label": _translate_verdict(str(opinion.get("verdict") or "-")),
                     "score": round(score, 1),
                     "one_liner": str(opinion.get("one_liner") or ""),
                 }
@@ -488,6 +536,43 @@ def _translate_recommendation(value: str) -> str:
         "underperform": "비중축소",
         "sell": "매도",
     }.get(key, value.upper())
+
+
+def _translate_verdict(value: str) -> str:
+    verdict = value.strip().upper()
+    return {
+        "STRONG_BUY": "강한 매수",
+        "BUY": "매수",
+        "WATCH": "관찰",
+        "HOLD": "중립",
+        "SELL": "매도",
+        "REJECT": "제외",
+    }.get(verdict, value)
+
+
+def _translate_conviction(value: str) -> str:
+    return {
+        "HIGH": "높음",
+        "MEDIUM": "중간",
+        "WATCH": "관찰",
+    }.get(value, value)
+
+
+def _translate_signal_kind(value: str) -> str:
+    kind = value.strip().upper()
+    return {
+        "CONSENSUS": "합의",
+        "SINGLE_SOURCE": "단일 출처",
+    }.get(kind, value)
+
+
+def _translate_master(value: str) -> str:
+    key = value.strip().lower()
+    return {
+        "druckenmiller": "드러큰밀러 Druckenmiller",
+        "buffett": "버핏 Buffett",
+        "soros": "소로스 Soros",
+    }.get(key, value)
 
 
 def _analyst_distribution_summary(fundamentals: dict[str, Any]) -> str:

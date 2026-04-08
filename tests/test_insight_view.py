@@ -11,6 +11,7 @@ from dashboard.insight_view import (
     build_ranking_items,
     build_recent_video_rows,
     build_stock_insight_cards,
+    build_video_feed_items,
 )
 
 
@@ -276,3 +277,38 @@ def test_build_feed_and_ranking_items_surface_scan_data():
     assert feed_items[0]["source"] == "김철수 · AI 반도체"
     assert ranking_items[0]["ticker"] == "NVDA"
     assert ranking_items[0]["channels"] == "삼프로TV, IT의 신"
+
+
+def test_build_video_feed_items_prioritizes_recent_videos():
+    items = build_video_feed_items(
+        [
+            {
+                "_channel": "sampro",
+                "video_id": "v1",
+                "title": "오래된 영상",
+                "video_signal_class": "ACTIONABLE",
+                "signal_score": 60.0,
+                "video_type": "STOCK_PICK",
+                "published_at": "2026-04-07",
+                "video_summary": "이전 영상",
+                "expert_insights": [],
+                "stocks": [{"ticker": "005930.KS", "company_name": "Samsung Electronics"}],
+            },
+            {
+                "_channel": "sampro",
+                "video_id": "v2",
+                "title": "새 영상",
+                "video_signal_class": "ACTIONABLE",
+                "signal_score": 72.0,
+                "video_type": "EXPERT_INTERVIEW",
+                "published_at": "2026-04-08",
+                "video_summary": "최신 전문가 의견",
+                "expert_insights": [{"expert_name": "김철수"}],
+                "stocks": [],
+            },
+        ],
+        {"sampro": "삼프로TV"},
+    )
+    assert items[0]["video_id"] == "v2"
+    assert items[0]["channel"] == "삼프로TV"
+    assert items[0]["lead_expert"] == "김철수"
