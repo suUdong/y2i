@@ -177,6 +177,7 @@ def build_stock_insight_cards(
         ticker = str(item.get("ticker", ""))
         company_name = str(item.get("company_name") or fundamentals.get("company_name") or "")
         price_target = item.get("price_target") if isinstance(item.get("price_target"), dict) else {}
+        transcript_status = _resolve_card_transcript_status(ticker, summaries=summaries, videos=list(videos or []))
         cards.append(
             {
                 "ticker": ticker,
@@ -194,6 +195,8 @@ def build_stock_insight_cards(
                 "source_channels": list(item.get("_source_channels_display", []) or []),
                 "last_signal_at": str(item.get("last_signal_at") or ""),
                 "latest_checked_at": str(item.get("latest_checked_at") or ""),
+                "transcript_status": transcript_status,
+                "transcript_status_label": _transcript_status_label(transcript_status),
                 "why_now": _ranking_why_now(item),
                 "plain_summary": first_non_empty(
                     lead_summary.get("plain_summary"),
@@ -275,6 +278,8 @@ def build_video_feed_items(
                 "signal_score": round(float(video.get("signal_score", 0) or 0), 1),
                 "video_type_label": translate_video_type(str(video.get("video_type", "OTHER"))),
                 "published_at": str(video.get("published_at") or ""),
+                "transcript_status": _video_transcript_status(video),
+                "transcript_status_label": _transcript_status_label(_video_transcript_status(video)),
                 "summary": first_non_empty(video.get("video_summary"), video.get("skip_reason"), video.get("reason")),
                 "lead_stock": format_ticker_display(str(lead_stock.get("ticker", "")), str(lead_stock.get("company_name") or "")) if lead_stock else "",
                 "lead_expert": str(lead_expert.get("expert_name") or ""),
@@ -525,6 +530,49 @@ def _feed_source_label(card: dict[str, Any]) -> str:
     if channels:
         return ", ".join(channels[:2])
     return card.get("signal_note", "")
+
+
+def _resolve_card_transcript_status(
+    ticker: str,
+    *,
+    summaries: list[dict[str, Any]],
+    videos: list[dict[str, Any]],
+) -> str:
+    if not videos:
+        return "unknown"
+    source_titles = {str(summary.get("video_title") or "") for summary in summaries if summary.get("video_title")}
+    matched_statuses: list[str] = []
+    for video in videos:
+        video_title = str(video.get("title") or "")
+        related = video_title in source_titles or any(
+            str(stock.get("ticker") or "").upper() == ticker.upper()
+            for stock in video.get("stocks", []) or []
+            if isinstance(stock, dict)
+        )
+        if related:
+            matched_statuses.append(_video_transcript_status(video))
+    if not matched_statuses:
+        return "unknown"
+    if any(status == "backed" for status in matched_statuses):
+        return "backed"
+    return "metadata_only"
+
+
+def _video_transcript_status(video: dict[str, Any]) -> str:
+    language = str(video.get("transcript_language") or "").strip().lower()
+    if not language:
+        return "unknown"
+    if language.endswith("metadata_fallback"):
+        return "metadata_only"
+    return "backed"
+
+
+def _transcript_status_label(value: str) -> str:
+    return {
+        "backed": "실자막 근거",
+        "metadata_only": "메타데이터 기반",
+        "unknown": "실자막 상태 확인 필요",
+    }.get(value, value)
 
 
 def _translate_recommendation(value: str) -> str:

@@ -103,7 +103,12 @@ def _is_older_timestamp(candidate: str, current: str) -> bool:
 
 
 def _is_transcript_backed(language: str | None) -> bool:
-    return (language or "").startswith("cache") or language not in {None, "", "metadata_fallback"}
+    normalized = (language or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized.endswith("metadata_fallback"):
+        return False
+    return normalized.startswith("cache:") or normalized not in {"metadata_fallback"}
 
 
 def _compose_live_feed_events(
@@ -708,6 +713,7 @@ def get_recent_videos(
             row["_channel"] = slug
             row["_updated_at"] = updated_at
             row["skip_reason"] = row.get("skip_reason", row.get("reason", ""))
+            row["transcript_backed"] = _is_transcript_backed(row.get("transcript_language"))
             recent.append(row)
     recent.sort(
         key=lambda item: (
@@ -804,11 +810,13 @@ def build_overview_report(
             signal_class = video.get("video_signal_class", "UNKNOWN")
             signal_distribution[signal_class] = signal_distribution.get(signal_class, 0) + 1
 
-            if video.get("should_analyze_stocks") or signal_class == "ACTIONABLE":
+            transcript_backed = _is_transcript_backed(video.get("transcript_language"))
+
+            if transcript_backed and (video.get("should_analyze_stocks") or signal_class == "ACTIONABLE"):
                 analyzable_count += 1
-            if video.get("macro_insights") or video_type in {"MACRO", "MARKET_REVIEW"}:
+            if transcript_backed and (video.get("macro_insights") or video_type in {"MACRO", "MARKET_REVIEW"}):
                 macro_video_count += 1
-            if video.get("expert_insights") or video_type == "EXPERT_INTERVIEW":
+            if transcript_backed and (video.get("expert_insights") or video_type == "EXPERT_INTERVIEW"):
                 expert_video_count += 1
 
             per_video.append({

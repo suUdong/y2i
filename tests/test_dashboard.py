@@ -75,6 +75,7 @@ def tmp_output(tmp_path: Path) -> Path:
                 "video_signal_class": "ACTIONABLE",
                 "signal_score": 70.0,
                 "should_analyze_stocks": True,
+                "transcript_language": "ko",
                 "published_at": "20260320",
                 "stocks": [],
                 "macro_insights": [
@@ -693,6 +694,33 @@ class TestBuildOverviewReport:
         report = build_overview_report(tmp_output)
         assert report["per_video"][0]["channel"] in {"Test Channel", "IT God"}
 
+    def test_excludes_metadata_only_videos_from_analyzable_counts(self, tmp_path: Path):
+        payload = {
+            "channel_slug": "sampro",
+            "channel_name": "Test Channel",
+            "videos": [
+                {
+                    "video_id": "meta1",
+                    "title": "메타 기반 영상",
+                    "video_type": "EXPERT_INTERVIEW",
+                    "video_signal_class": "ACTIONABLE",
+                    "signal_score": 80.0,
+                    "should_analyze_stocks": True,
+                    "transcript_language": "cache:metadata_fallback",
+                    "expert_insights": [{"expert_name": "김철수"}],
+                    "macro_insights": [{"label": "금리"}],
+                }
+            ],
+            "cross_video_ranking": [],
+        }
+        (tmp_path / "sampro_30d_20260408T000000Z.json").write_text(json.dumps(payload), encoding="utf-8")
+
+        report = build_overview_report(tmp_path)
+
+        assert report["analyzable_count"] == 0
+        assert report["expert_video_count"] == 0
+        assert report["macro_video_count"] == 0
+
 
 class TestLoadSignalAccuracySummary:
     def test_loads_embedded_or_fallback_tracker_summary(self, tmp_output: Path):
@@ -930,3 +958,10 @@ def test_streamlit_app_blocks_without_auth(tmp_output: Path, monkeypatch: pytest
     assert len(at.title) == 0
     assert len(at.markdown) == 1
     assert "403 Forbidden" in at.markdown[0].value
+
+
+def test_dashboard_transcript_backed_detection_handles_cached_metadata_fallback():
+    assert data_loader_module._is_transcript_backed("ko") is True
+    assert data_loader_module._is_transcript_backed("cache:ko") is True
+    assert data_loader_module._is_transcript_backed("metadata_fallback") is False
+    assert data_loader_module._is_transcript_backed("cache:metadata_fallback") is False

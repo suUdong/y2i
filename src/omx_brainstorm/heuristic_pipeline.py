@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from collections import Counter
-from dataclasses import asdict
+from dataclasses import asdict, replace
 import logging
 import re
 from typing import Any
 
 from .expert_interview import extract_expert_insights
+from .evidence import INSUFFICIENT_TRANSCRIPT_REASON, is_transcript_backed
 from .fundamentals import FundamentalsFetcher
 from .macro_signals import extract_macro_insights, indirect_macro_mentions
 from .market_review import extract_market_review
@@ -199,16 +200,35 @@ def analyze_video_heuristic(
         tags=video.tags,
         transcript_source=evidence_source,
     )
+    transcript_backed = is_transcript_backed(transcript_language, evidence_source)
     video_type = VideoType(signal.video_type)
     cached_video = (cached_entry or {}).get("video", {}) if isinstance(cached_entry, dict) else {}
     published_at = video.published_at or cached_video.get("published_at")
+    source_quality_note = ""
+
+    if not transcript_backed:
+        source_quality_note = INSUFFICIENT_TRANSCRIPT_REASON
+        metrics = dict(signal.metrics or {})
+        metrics["source_quality"] = "metadata_only"
+        metrics["transcript_backed"] = False
+        signal = signal.__class__(
+            signal_score=min(float(signal.signal_score), 54.0),
+            video_signal_class="LOW_SIGNAL",
+            should_analyze_stocks=False,
+            reason=INSUFFICIENT_TRANSCRIPT_REASON,
+            skip_reason=INSUFFICIENT_TRANSCRIPT_REASON,
+            video_type=signal.video_type,
+            metrics=metrics,
+        )
 
     # VideoType-based enrichment
     macro_insights_data = []
     market_review_data = None
     expert_insights_data = []
 
-    if video_type == VideoType.MARKET_REVIEW:
+    if not transcript_backed:
+        pass
+    elif video_type == VideoType.MARKET_REVIEW:
         try:
             mr = extract_market_review(video.title, analysis_text)
         except Exception as exc:
@@ -246,6 +266,9 @@ def analyze_video_heuristic(
         "skip_reason": signal.skip_reason or (signal.reason if not signal.should_analyze_stocks else ""),
         "signal_metrics": dict(signal.metrics),
         "transcript_language": transcript_language,
+        "transcript_backed": transcript_backed,
+        "source_quality_note": source_quality_note,
+        "video_summary": INSUFFICIENT_TRANSCRIPT_REASON if not transcript_backed else "",
         "macro_insights": macro_insights_data,
         "market_review": market_review_data,
         "expert_insights": expert_insights_data,
@@ -427,6 +450,9 @@ def heuristic_rows_to_reports(rows: list[dict]) -> list[VideoAnalysisReport]:
             macro_insights=macro_insights,
             market_review=market_review,
             expert_insights=expert_insights,
+            transcript_backed=bool(row.get("transcript_backed", False)),
+            source_quality_note=row.get("source_quality_note", ""),
+            video_summary=row.get("video_summary", ""),
         ))
     return reports
 

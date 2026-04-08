@@ -112,3 +112,33 @@ def test_is_stale_returns_true_for_missing_cached_at(tmp_path):
     del data["cached_at"]
     path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     assert cache.is_stale("notime1") is True
+
+
+def test_metadata_fallback_entries_expire_faster_than_real_transcripts(tmp_path):
+    cache = TranscriptCache(tmp_path / "cache", max_age_hours=168)
+    video = VideoInput(video_id="meta1", title="제목", url="https://youtube.com/watch?v=meta1")
+    cache.save(video, "meta text", "metadata_fallback", "metadata_fallback")
+
+    path = cache.path_for("meta1")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    from datetime import datetime, timedelta, timezone
+    stale_time = (datetime.now(timezone.utc) - timedelta(hours=7)).isoformat()
+    data["cached_at"] = stale_time
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    assert cache.is_stale("meta1") is True
+
+
+def test_real_transcript_entries_keep_standard_ttl(tmp_path):
+    cache = TranscriptCache(tmp_path / "cache", max_age_hours=168)
+    video = VideoInput(video_id="real1", title="제목", url="https://youtube.com/watch?v=real1")
+    cache.save(video, "real text", "ko", "transcript_api")
+
+    path = cache.path_for("real1")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    from datetime import datetime, timedelta, timezone
+    fresh_time = (datetime.now(timezone.utc) - timedelta(hours=7)).isoformat()
+    data["cached_at"] = fresh_time
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    assert cache.is_stale("real1") is False

@@ -290,6 +290,7 @@ def test_build_video_feed_items_prioritizes_recent_videos():
                 "signal_score": 60.0,
                 "video_type": "STOCK_PICK",
                 "published_at": "2026-04-07",
+                "transcript_language": "metadata_fallback",
                 "video_summary": "이전 영상",
                 "expert_insights": [],
                 "stocks": [{"ticker": "005930.KS", "company_name": "Samsung Electronics"}],
@@ -302,6 +303,7 @@ def test_build_video_feed_items_prioritizes_recent_videos():
                 "signal_score": 72.0,
                 "video_type": "EXPERT_INTERVIEW",
                 "published_at": "2026-04-08",
+                "transcript_language": "ko",
                 "video_summary": "최신 전문가 의견",
                 "expert_insights": [{"expert_name": "김철수"}],
                 "stocks": [],
@@ -312,3 +314,5 @@ def test_build_video_feed_items_prioritizes_recent_videos():
     assert items[0]["video_id"] == "v2"
     assert items[0]["channel"] == "삼프로TV"
     assert items[0]["lead_expert"] == "김철수"
+    assert items[0]["transcript_status_label"] == "실자막 근거"
+    assert items[1]["transcript_status_label"] == "메타데이터 기반"

@@ -439,6 +439,43 @@ def test_heuristic_cached_metadata_fallback_keeps_macro_only_video_out_of_stock_
     assert result["video_signal_class"] in {"NOISE", "LOW_SIGNAL", "SECTOR_ONLY"}
     assert result["should_analyze_stocks"] is False
     assert result["stocks"] == []
+    assert result["transcript_backed"] is False
+    assert result["expert_insights"] == []
+    assert result["macro_insights"] == []
+    assert result["source_quality_note"]
+    assert result["video_summary"] == result["source_quality_note"]
+
+
+def test_heuristic_metadata_fallback_blocks_expert_interview_claims(tmp_path):
+    class _MetadataOnlyFetcher:
+        def fetch(self, video_id, preferred_languages=None):
+            raise RuntimeError("no transcript")
+
+        def join_segments(self, segments):
+            return ""
+
+    video = VideoInput(
+        video_id="h-meta-expert",
+        title="김영호 대표 인터뷰 반도체 전망",
+        url="https://youtube.com/watch?v=h-meta-expert",
+        description="김영호 삼성증권 대표와의 인터뷰",
+        tags=["인터뷰", "반도체"],
+    )
+
+    result = analyze_video_heuristic(
+        video,
+        TranscriptCache(tmp_path / "cache"),
+        _MetadataOnlyFetcher(),
+        _DummyFundamentals(),
+    )
+
+    assert result["video_type"] == "EXPERT_INTERVIEW"
+    assert result["transcript_language"] == "metadata_fallback"
+    assert result["transcript_backed"] is False
+    assert result["video_signal_class"] == "LOW_SIGNAL"
+    assert result["should_analyze_stocks"] is False
+    assert result["expert_insights"] == []
+    assert result["stocks"] == []
 
 
 def test_heuristic_extracts_price_target(tmp_path, monkeypatch):

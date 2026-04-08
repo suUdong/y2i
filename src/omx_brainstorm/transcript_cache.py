@@ -15,6 +15,7 @@ SAFE_VIDEO_ID_RE = re.compile(r"[^A-Za-z0-9_-]")
 
 
 DEFAULT_MAX_AGE_HOURS = 168  # 7 days
+DEFAULT_METADATA_FALLBACK_MAX_AGE_HOURS = 6
 
 
 def _normalize_transcript_language(language: str | None) -> str | None:
@@ -61,6 +62,8 @@ class TranscriptCache:
             cached_time = datetime.fromisoformat(cached_at)
             age = datetime.now(timezone.utc) - cached_time
             limit = max_age_hours if max_age_hours is not None else self.max_age_hours
+            if _is_metadata_fallback_entry(entry):
+                limit = min(limit, DEFAULT_METADATA_FALLBACK_MAX_AGE_HOURS)
             return age.total_seconds() > limit * 3600
         except (ValueError, TypeError):
             return True
@@ -130,3 +133,9 @@ class TranscriptCache:
             if self.warm_from_report_artifact(artifact_path):
                 count += 1
         return count
+
+
+def _is_metadata_fallback_entry(entry: dict[str, Any]) -> bool:
+    source = str(entry.get("source") or "").strip().lower()
+    language = _normalize_transcript_language(entry.get("transcript_language"))
+    return source == "metadata_fallback" or language == "metadata_fallback"

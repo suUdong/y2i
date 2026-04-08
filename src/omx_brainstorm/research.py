@@ -170,6 +170,8 @@ def build_cross_video_ranking(videos: list[dict[str, Any]]) -> list[RankedStock]
                     "signal_summary": stock.get("basic_signal_summary", ""),
                     "plain_summary": stock.get("plain_summary", ""),
                     "video_context_summary": stock.get("video_context_summary", ""),
+                    "transcript_backed": bool(video.get("transcript_backed", False)),
+                    "source_quality_note": video.get("source_quality_note", ""),
                     "master_opinions": stock.get("master_opinions", []),
                     "fundamentals": fundamentals,
                 }

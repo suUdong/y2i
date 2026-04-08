@@ -264,7 +264,7 @@ def _render_video_feed_list(
         st.markdown(
             (
                 "<div class='list-card'>"
-                f"<div class='list-kicker'>새 영상 · {item.get('published_at', '-')}</div>"
+                f"<div class='list-kicker'>새 영상 · {item.get('published_at', '-')} · {item.get('transcript_status_label', '')}</div>"
                 f"<div><strong>{item['title']}</strong></div>"
                 f"<div class='list-summary'>{' · '.join(bit for bit in source_bits if bit)}</div>"
                 f"<div class='list-summary'>점수 {item['signal_score']:.1f} · {item['summary']}</div>"
@@ -343,7 +343,12 @@ def _render_stock_detail(card: dict | None, *, empty_message: str) -> None:
     metric_columns[0].metric("판단", _translate_verdict(card["verdict"]))
     metric_columns[1].metric("Score", f"{card['score']:.1f}")
     metric_columns[2].metric("시그널", _translate_signal_kind(card["signal_kind"]))
-    metric_columns[3].metric("출처 채널", str(card["channel_count"]))
+    metric_columns[3].metric("근거 상태", card.get("transcript_status_label", "확인 필요"))
+
+    if card.get("transcript_status") == "metadata_only":
+        st.warning("이 종목 인사이트는 실자막 없이 메타데이터 기반 영상에서 만들어졌다. 정밀한 전문가 발언 해석으로 보면 안 된다.")
+    elif card.get("transcript_status") == "unknown":
+        st.info("이 종목 인사이트의 실자막 확보 여부를 현재 데이터만으로는 확정하지 못했다.")
 
     if card.get("video_context_summary"):
         st.markdown(f"**영상 문맥**  \n{card['video_context_summary']}")
@@ -394,7 +399,7 @@ def _render_video_detail(video: dict | None, *, empty_message: str) -> None:
     st.markdown(
         (
             "<div class='insight-card'>"
-            f"<div class='insight-eyebrow'>{video.get('_channel_display', video.get('_channel', ''))} · {video.get('published_at', '-')}</div>"
+            f"<div class='insight-eyebrow'>{video.get('_channel_display', video.get('_channel', ''))} · {video.get('published_at', '-')} · {video.get('transcript_status_label', '')}</div>"
             f"<div class='insight-headline'>{video.get('title', '')}</div>"
             f"<div class='insight-copy'>{video.get('video_summary') or video.get('reason') or video.get('skip_reason') or ''}</div>"
             "</div>"
@@ -402,10 +407,16 @@ def _render_video_detail(video: dict | None, *, empty_message: str) -> None:
         unsafe_allow_html=True,
     )
     metric_columns = st.columns(4)
-    metric_columns[0].metric("시그널", str(video.get("video_signal_class", "-")))
+    metric_columns[0].metric("시그널", str(video.get("signal_label") or video.get("video_signal_class", "-")))
     metric_columns[1].metric("점수", f"{float(video.get('signal_score', 0) or 0):.1f}")
-    metric_columns[2].metric("유형", str(video.get("video_type", "-")))
-    metric_columns[3].metric("종목 수", str(len(video.get("stocks", []) or [])))
+    metric_columns[2].metric("유형", str(video.get("video_type_label") or video.get("video_type", "-")))
+    metric_columns[3].metric("근거 상태", str(video.get("transcript_status_label") or "확인 필요"))
+
+    transcript_language = str(video.get("transcript_language", "") or "")
+    if transcript_language.lower().endswith("metadata_fallback"):
+        st.warning("이 영상은 실자막이 아니라 제목/설명/태그 기반으로만 해석됐다. 전문가 발언 인용은 신뢰하면 안 된다.")
+    elif not transcript_language:
+        st.info("이 영상의 실자막 확보 여부를 확인하지 못했다.")
 
     experts = [expert for expert in video.get("expert_insights", []) or [] if isinstance(expert, dict)]
     if experts:
