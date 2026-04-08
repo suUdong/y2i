@@ -26,12 +26,16 @@ def resolve_transcript_text(video, cache: TranscriptCache, fetcher: TranscriptFe
             return cached["transcript_text"], "cache:metadata_fallback", "metadata_fallback", cached
         return cached["transcript_text"], f"cache:{cached_language}", cached_source, cached
     try:
-        segments, language = fetcher.fetch(video.video_id)
+        if hasattr(fetcher, "fetch_with_source"):
+            segments, language, source = fetcher.fetch_with_source(video.video_id)  # type: ignore[attr-defined]
+        else:
+            segments, language = fetcher.fetch(video.video_id)
+            source = "transcript_api"
         transcript_text = fetcher.join_segments(segments)
         if not transcript_text:
             raise ValueError(f"Transcript fetch returned empty text for {video.video_id}")
-        cache.save(video, transcript_text, language, "transcript_api")
-        return transcript_text, language or "unknown", "transcript_api", cache.load(video.video_id)
+        cache.save(video, transcript_text, language, source)
+        return transcript_text, language or "unknown", source, cache.load(video.video_id)
     except Exception as exc:
         logger.warning("Transcript fetch failed for %s: %s", video.video_id, describe_youtube_error(exc))
         if cached and cached.get("transcript_text"):

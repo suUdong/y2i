@@ -9,7 +9,9 @@ from pathlib import Path
 from urllib.request import urlopen
 from xml.etree import ElementTree as ET
 
+from omx_brainstorm.analysis_rows import analyze_resolved_videos_to_rows
 from omx_brainstorm.app_config import AppConfig, load_app_config
+from omx_brainstorm.artifact_cleanup import cleanup_generated_artifacts
 from omx_brainstorm.backtest import YFinanceHistoryProvider
 from omx_brainstorm.comparison import RunContext, compare_channels, quality_scorecard, save_channel_artifacts
 from omx_brainstorm.daily_report import (
@@ -18,11 +20,10 @@ from omx_brainstorm.daily_report import (
     save_daily_report,
 )
 from omx_brainstorm.evaluation import ranking_validation
-from omx_brainstorm.fundamentals import FundamentalsFetcher
-from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic
 from omx_brainstorm.kindshot_feed import export_signals_for_kindshot
 from omx_brainstorm.logging_utils import configure_logging
 from omx_brainstorm.master_engine import validate_cross_stock_master_quality
+from omx_brainstorm.output_layout import build_run_output_dir
 from omx_brainstorm.research import build_consensus_ranking, build_cross_video_ranking
 from omx_brainstorm.signal_alerts import (
     build_channel_signal_summary,
@@ -39,7 +40,7 @@ from omx_brainstorm.signal_tracker import (
     update_price_snapshots,
 )
 from omx_brainstorm.transcript_cache import TranscriptCache
-from omx_brainstorm.youtube import ChannelRegistry, TranscriptFetcher, YoutubeResolver, describe_youtube_error
+from omx_brainstorm.youtube import ChannelRegistry, YoutubeResolver, describe_youtube_error
 
 logger = logging.getLogger(__name__)
 
@@ -329,12 +330,14 @@ def recent_feed_video_ids(channel_id: str, days: int = 30, *, today: str | None 
 def run_comparison_job(config: AppConfig) -> dict:
     """Run the multi-channel paper-trading comparison job from configuration."""
     output_dir = Path(config.output_dir)
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    run_output_dir = build_run_output_dir(output_dir, run_id)
     registry_path = Path(config.registry_path)
     window_days = config.strategy.window_days
     context = RunContext(
-        run_id=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"),
+        run_id=run_id,
         today=date.today().isoformat(),
-        output_dir=output_dir,
+        output_dir=run_output_dir,
         window_days=window_days,
     )
     configured_channels = {
@@ -407,7 +410,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         if updated:
             logger.info("Updated price snapshots for %d signals", updated)
         accuracy_by_channel, leaderboard, signal_accuracy_summary = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
-        accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, output_dir, context.run_id)
+        accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, run_output_dir, context.run_id)
         signal_accuracy_report = {"json_path": str(accuracy_json), "txt_path": str(accuracy_txt)}
         kindshot_feed = export_signals_for_kindshot(
             tracker_db,
@@ -426,7 +429,7 @@ def run_comparison_job(config: AppConfig) -> dict:
     if not accuracy_by_channel:
         try:
             accuracy_by_channel, leaderboard, signal_accuracy_summary = enrich_comparison_with_signal_accuracy(comparison, tracker_db)
-            accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, output_dir, context.run_id)
+            accuracy_json, accuracy_txt = save_signal_accuracy_report(signal_accuracy_summary, run_output_dir, context.run_id)
             signal_accuracy_report = {"json_path": str(accuracy_json), "txt_path": str(accuracy_txt)}
             kindshot_feed = export_signals_for_kindshot(
                 tracker_db,
@@ -442,7 +445,7 @@ def run_comparison_job(config: AppConfig) -> dict:
         except Exception as exc:
             logger.warning("Signal accuracy enrichment retry failed (non-fatal): %s", exc)
     try:
-        signal_tracker_snapshot = save_signal_tracker_snapshot(tracker_db, output_dir / "signal_tracker.json")
+        signal_tracker_snapshot = save_signal_tracker_snapshot(tracker_db, run_output_dir / "signal_tracker.json")
     except Exception as exc:
         logger.warning("Signal tracker snapshot export failed (non-fatal): %s", exc)
     comparison["consensus_signals"] = telegram_payload.get("analysis_summary", {}).get("consensus_signals", [])
@@ -507,6 +510,15 @@ def run_comparison_job(config: AppConfig) -> dict:
         "signal_tracker_snapshot": signal_tracker_snapshot,
         "kindshot_feed": kindshot_feed,
     }
+    if config.retention.enabled:
+        payload["cleanup"] = cleanup_generated_artifacts(
+            output_dir=output_dir,
+            report_dir=output_dir.parent / "reports",
+            log_dir=Path(config.logging.log_dir),
+            output_days=config.retention.output_days,
+            report_days=config.retention.report_days,
+            log_days=config.logging.retention_days,
+        )
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return payload
 
@@ -517,25 +529,33 @@ def _analyze_channel_rows(
     config: AppConfig,
 ) -> list[dict]:
     resolver = YoutubeResolver()
-    fetcher = TranscriptFetcher()
-    fundamentals = FundamentalsFetcher(max_workers=config.strategy.fundamentals_workers)
 
     if not video_ids:
         return []
 
+    resolved_videos = _resolve_video_inputs(video_ids, resolver, config)
+    return analyze_resolved_videos_to_rows(
+        resolved_videos,
+        config=config,
+        transcript_cache=cache,
+        output_dir=Path(config.output_dir),
+        persist=False,
+    )
+
+
+def _resolve_video_inputs(
+    video_ids: list[str],
+    resolver: YoutubeResolver,
+    config: AppConfig,
+):
     workers = min(max(1, config.strategy.video_workers), len(video_ids))
     if workers == 1:
-        rows = []
-        for video_id in video_ids:
-            row = _analyze_single_video(video_id, resolver, fetcher, fundamentals, cache, config)
-            if row is not None:
-                rows.append(row)
-        return rows
+        return [video for video in (_resolve_single_video(video_id, resolver) for video_id in video_ids) if video is not None]
 
-    results: list[dict | None] = [None] * len(video_ids)
+    results = [None] * len(video_ids)
     with ThreadPoolExecutor(max_workers=workers) as pool:
         future_to_index = {
-            pool.submit(_analyze_single_video, video_id, resolver, fetcher, fundamentals, cache, config): idx
+            pool.submit(_resolve_single_video, video_id, resolver): idx
             for idx, video_id in enumerate(video_ids)
         }
         for future in as_completed(future_to_index):
@@ -544,29 +564,15 @@ def _analyze_channel_rows(
                 results[idx] = future.result()
             except Exception as exc:
                 failed_video_id = video_ids[idx] if idx < len(video_ids) else "unknown"
-                logger.warning("Parallel video analysis failed for %s: %s", failed_video_id, describe_youtube_error(exc))
-    return [row for row in results if row is not None]
+                logger.warning("Parallel video resolve failed for %s: %s", failed_video_id, describe_youtube_error(exc))
+    return [video for video in results if video is not None]
 
 
-def _analyze_single_video(
-    video_id: str,
-    resolver: YoutubeResolver,
-    fetcher: TranscriptFetcher,
-    fundamentals: FundamentalsFetcher,
-    cache: TranscriptCache,
-    config: AppConfig,
-) -> dict | None:
+def _resolve_single_video(video_id: str, resolver: YoutubeResolver):
     try:
-        video = resolver.resolve_video(video_id)
-        return analyze_video_heuristic(
-            video,
-            cache,
-            fetcher,
-            fundamentals,
-            max_fundamental_workers=config.strategy.fundamentals_workers,
-        )
+        return resolver.resolve_video(video_id)
     except Exception as exc:
-        logger.warning("Skipping video %s due to resolve/analyze failure: %s", video_id, describe_youtube_error(exc))
+        logger.warning("Skipping video %s due to resolve failure: %s", video_id, describe_youtube_error(exc))
         return None
 
 

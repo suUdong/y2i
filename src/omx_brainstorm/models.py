@@ -171,6 +171,9 @@ class StockAnalysis:
     price_targets: list[PriceTarget] = field(default_factory=list)
     plain_summary: str = ""
     video_context_summary: str = ""
+    evidence_bullets: list[str] = field(default_factory=list)
+    reasoning_strength: str = "UNKNOWN"
+    reasoning_strength_summary: str = ""
 
 
 @dataclass(slots=True)
@@ -179,6 +182,7 @@ class StructuredClaim:
     reasoning: str = ""
     confidence: float = 0.5
     direction: str = "NEUTRAL"  # "BULLISH", "BEARISH", "NEUTRAL"
+    evidence: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -190,6 +194,7 @@ class ExpertInsight:
     sentiment: str = "NEUTRAL"  # "BULLISH", "BEARISH", "NEUTRAL"
     mentioned_tickers: list[str] = field(default_factory=list)
     structured_claims: list[StructuredClaim] = field(default_factory=list)
+    summary: str = ""
 
 
 @dataclass(slots=True)
@@ -207,6 +212,9 @@ class VideoAnalysisReport:
     macro_insights: list[MacroInsight] = field(default_factory=list)
     market_review: MarketReviewSummary | None = None
     expert_insights: list[ExpertInsight] = field(default_factory=list)
+    transcript_backed: bool = False
+    source_quality_note: str = ""
+    video_summary: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

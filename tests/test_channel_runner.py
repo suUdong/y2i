@@ -97,6 +97,9 @@ def test_quality_scorecard_transcript_coverage_counts_cache():
 
 def test_analyze_channel_rows_ignores_parallel_future_exception(monkeypatch, tmp_path):
     class DummyConfig:
+        provider = "mock"
+        output_dir = str(tmp_path)
+
         class Strategy:
             video_workers = 2
             fundamentals_workers = 1
@@ -104,15 +107,14 @@ def test_analyze_channel_rows_ignores_parallel_future_exception(monkeypatch, tmp
         strategy = Strategy()
 
     monkeypatch.setattr("scripts.run_channel_30d_comparison.YoutubeResolver", lambda: object())
-    monkeypatch.setattr("scripts.run_channel_30d_comparison.TranscriptFetcher", lambda: object())
-    monkeypatch.setattr("scripts.run_channel_30d_comparison.FundamentalsFetcher", lambda max_workers=1: object())
-
-    def fake_analyze_single_video(video_id, resolver, fetcher, fundamentals, cache, config):
-        if video_id == "bad-video":
-            raise RuntimeError("boom")
-        return {"video_id": video_id, "stocks": []}
-
-    monkeypatch.setattr("scripts.run_channel_30d_comparison._analyze_single_video", fake_analyze_single_video)
+    monkeypatch.setattr(
+        "scripts.run_channel_30d_comparison._resolve_video_inputs",
+        lambda video_ids, resolver, config: [type("Video", (), {"video_id": "good-video"})()],
+    )
+    monkeypatch.setattr(
+        "scripts.run_channel_30d_comparison.analyze_resolved_videos_to_rows",
+        lambda videos, config, transcript_cache, output_dir, persist=False: [{"video_id": "good-video", "stocks": []}],
+    )
 
     config = DummyConfig()
     rows = _analyze_channel_rows(["good-video", "bad-video"], cache=object(), config=config)

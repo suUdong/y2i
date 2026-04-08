@@ -1,6 +1,6 @@
 # OMX Pipeline Dashboard (6-Month / 180-Day Analysis)
 
-> Auto-generated: 2026-03-28 03:36 UTC
+> Auto-generated: 2026-04-08 04:38 UTC
 > Channels analyzed: 11/11
 > Data source: `output/` directory pipeline results
 
@@ -10,91 +10,90 @@
 
 | Channel | Videos | Analyzable | Strict ACTIONABLE | Ratio | Stocks Found | Quality Score |
 |---------|------:|-----------:|------------------:|------:|------------:|--------------:|
-| 이효석아카데미 | 80 | 49 | 42 | 61.3% | 26 | 86.9 |
-| IT의 신 이형수 | 15 | 13 | 12 | 86.7% | 30 | 67.3 |
-| 전인구경제연구소 | 15 | 12 | 12 | 80.0% | 11 | 65.9 |
-| 내일은 투자왕 - 김단테 | 15 | 4 | 4 | 26.7% | 11 | 55.0 |
-| 김작가TV | 15 | 3 | 1 | 20.0% | 7 | 47.1 |
-| 미키피디아 | 80 | 18 | 14 | 22.5% | 23 | 71.7 |
-| 머니인사이드 | 15 | 7 | 3 | 46.7% | 10 | 57.4 |
-| 삼프로TV | 15 | 13 | 6 | 86.7% | 10 | 50.0 |
-| 소수몽키 | 80 | 17 | 9 | 21.2% | 16 | 81.4 |
-| 슈카월드 | 15 | 6 | 4 | 40.0% | 7 | 72.3 |
-| 달란트투자 | 15 | 7 | 5 | 46.7% | 17 | 46.5 |
+| 이효석아카데미 | 80 | 29 | 23 | 36.2% | 20 | 50.8 |
+| IT의 신 이형수 | 15 | 15 | 14 | 100.0% | 22 | 48.6 |
+| 전인구경제연구소 | 74 | 50 | 36 | 67.6% | 15 | 70.3 |
+| 내일은 투자왕 - 김단테 | 80 | 11 | 1 | 13.8% | 12 | 54.1 |
+| 김작가TV | 15 | 6 | 5 | 40.0% | 7 | 30.9 |
+| 미키피디아 | 80 | 21 | 14 | 26.2% | 22 | 57.9 |
+| 머니인사이드 | 80 | 13 | 4 | 16.2% | 13 | 54.9 |
+| 삼프로TV | 80 | 43 | 28 | 53.8% | 19 | 45.8 |
+| 소수몽키 | 80 | 9 | 3 | 11.2% | 10 | 53.4 |
+| 슈카월드 | 80 | 8 | 5 | 10.0% | 7 | 53.0 |
+| 달란트투자 | 80 | 27 | 18 | 33.8% | 22 | 47.8 |
 
 ## Pipeline Health
 
 | Metric | Value |
 |--------|------:|
-| Snapshot run | 2026-03-28 03:19 UTC |
+| Snapshot run | 2026-04-08 04:06 UTC |
 | Channels | 11 |
-| Videos | 360 |
-| Analyzable | 149 |
-| Strict ACTIONABLE | 112 |
-| Skipped | 211 |
-| Transcript-backed | 360 |
-| Metadata fallback | 0 |
-| Latest reference | 2026-03-28 (게시) |
+| Videos | 744 |
+| Analyzable | 232 |
+| Strict ACTIONABLE | 151 |
+| Skipped | 512 |
+| Transcript-backed | 0 |
+| Metadata fallback | 744 |
+| Latest reference | 2026-04-08 (게시) |
 
 ### Top Skip Reasons
 
 | Reason | Count |
 |--------|------:|
-| 종목 분석에 활용할 실질 신호가 부족함 | 185 |
-| 시황/섹터 일반론 위주로 종목 추출 근거가 약함 | 14 |
-| 섹터 흐름은 유효하지만 구체 종목 연결 근거가 부족해 종목 분석은 건너뜀 | 10 |
-| 종목 추출 근거가 부족해 종목 분석을 건너뜀 | 1 |
+| 종목 분석에 활용할 실질 신호가 부족함 | 209 |
+| 시황/섹터 일반론 위주로 종목 추출 근거가 약함 | 164 |
+| 섹터 흐름은 유효하지만 구체 종목 연결 근거가 부족해 종목 분석은 건너뜀 | 138 |
 
 ### Channel Gate Health
 
 | Channel | Skipped | Metadata Fallback | Latest Reference | Top Skip Reason |
 |---------|--------:|------------------:|------------------|-----------------|
-| 이효석아카데미 | 31 | 0 | 2026-03-27 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
-| IT의 신 이형수 | 2 | 0 | 2026-03-27 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
-| 전인구경제연구소 | 3 | 0 | 2026-03-28 (게시) | 시황/섹터 일반론 위주로 종목 추출 근거가 약함 |
-| 내일은 투자왕 - 김단테 | 11 | 0 | 2026-03-27 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
-| 김작가TV | 12 | 0 | 2026-03-27 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
-| 미키피디아 | 62 | 0 | 2026-03-23 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
-| 머니인사이드 | 8 | 0 | 2026-03-27 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
-| 삼프로TV | 2 | 0 | 2026-03-28 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
-| 소수몽키 | 63 | 0 | 2026-03-25 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
-| 슈카월드 | 9 | 0 | 2026-03-27 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
-| 달란트투자 | 8 | 0 | 2026-03-28 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
+| 이효석아카데미 | 51 | 80 | 2026-04-07 (게시) | 섹터 흐름은 유효하지만 구체 종목 연결 근거가 부족해 종목 분석은 건너뜀 |
+| IT의 신 이형수 | 0 | 15 | 2026-04-07 (게시) | N/A |
+| 전인구경제연구소 | 24 | 74 | 2026-04-08 (게시) | 시황/섹터 일반론 위주로 종목 추출 근거가 약함 |
+| 내일은 투자왕 - 김단테 | 69 | 80 | 2026-04-07 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
+| 김작가TV | 9 | 15 | 2026-04-08 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
+| 미키피디아 | 59 | 80 | 2026-04-06 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
+| 머니인사이드 | 67 | 80 | 2026-04-07 (게시) | 섹터 흐름은 유효하지만 구체 종목 연결 근거가 부족해 종목 분석은 건너뜀 |
+| 삼프로TV | 37 | 80 | 2026-04-08 (게시) | 시황/섹터 일반론 위주로 종목 추출 근거가 약함 |
+| 소수몽키 | 71 | 80 | 2026-04-07 (게시) | 시황/섹터 일반론 위주로 종목 추출 근거가 약함 |
+| 슈카월드 | 72 | 80 | 2026-04-07 (게시) | 종목 분석에 활용할 실질 신호가 부족함 |
+| 달란트투자 | 53 | 80 | 2026-04-07 (게시) | 섹터 흐름은 유효하지만 구체 종목 연결 근거가 부족해 종목 분석은 건너뜀 |
 
 ## Quality Scorecard Comparison
 
 | Metric | 이효석아카데미 | IT의 신 이형수 | 전인구경제연구소 | 내일은 투자왕 - 김단테 | 김작가TV | 미키피디아 | 머니인사이드 | 삼프로TV | 소수몽키 | 슈카월드 | 달란트투자 |
 |--------|------:|------:|------:|------:|------:|------:|------:|------:|------:|------:|------:|
-| Transcript Coverage | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 |
-| Actionable Density | 73.5 | 100.0 | 96.0 | 32.0 | 24.0 | 27.0 | 56.0 | 100.0 | 25.5 | 48.0 | 56.0 |
-| Ranking Predictive Power | 74.2 | 37.2 | 48.4 | 52.9 | 59.6 | 59.7 | 62.4 | 0.0 | 100.0 | 63.4 | 25.0 |
-| Horizon Adequacy | 100.0 | 31.9 | 19.3 | 35.0 | 5.0 | 100.0 | 11.0 | 0.0 | 100.0 | 78.0 | 5.0 |
-| Overall | 86.9 | 67.3 | 65.9 | 55.0 | 47.1 | 71.7 | 57.4 | 50.0 | 81.4 | 72.3 | 46.5 |
+| Transcript Coverage | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| Actionable Density | 43.5 | 100.0 | 81.1 | 16.5 | 48.0 | 31.5 | 19.5 | 64.5 | 13.5 | 12.0 | 40.5 |
+| Ranking Predictive Power | 59.8 | 55.2 | 100.0 | 100.0 | 70.8 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 |
+| Horizon Adequacy | 100.0 | 39.1 | 100.0 | 100.0 | 5.0 | 100.0 | 100.0 | 18.8 | 100.0 | 100.0 | 50.7 |
+| Overall | 50.8 | 48.6 | 70.3 | 54.1 | 30.9 | 57.9 | 54.9 | 45.8 | 53.4 | 53.0 | 47.8 |
 
 ## Cross-Channel Top Stocks
 
 | Ticker | Company | Channels | Total Score | Mentions | Consensus |
 |--------|---------|---------|------------:|---------:|-----------|
-| `005930.KS` | Samsung Electronics Co... | IT의 신 이형수, 김작가TV, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (11) | 541.7 | 140 | **REJECT** |
-| `000660.KS` | SK hynix Inc. | IT의 신 이형수, 김작가TV, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 이효석아카데미, 전인구경제연구소 (10) | 511.0 | 120 | **REJECT** |
-| `047810.KS` | Korea Aerospace Industr.. | 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (9) | 501.1 | 38 | **WATCH** |
-| `240810.KQ` | Wonik IPS Co., Ltd. | IT의 신 이형수, 김작가TV, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 이효석아카데미 (9) | 484.9 | 49 | **REJECT** |
-| `012450.KS` | Hanwha Aerospace Co., L.. | 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (9) | 474.9 | 44 | **REJECT** |
-| `042700.KS` | HANMI Semiconductor Co... | IT의 신 이형수, 김작가TV, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 이효석아카데미 (9) | 454.8 | 52 | **REJECT** |
-| `042660.KS` | Hanwha Ocean Co., Ltd. | 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (9) | 421.8 | 45 | **REJECT** |
-| `329180.KS` | HD Hyundai Heavy Indust.. | 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (9) | 411.1 | 43 | **REJECT** |
-| `NVDA` | NVIDIA | IT의 신 이형수, 달란트투자, 머니인사이드, 미키피디아, 소수몽키, 이효석아카데미, 전인구경제연구소 (7) | 395.2 | 109 | **WATCH** |
-| `GOOGL` | Alphabet Inc. | IT의 신 이형수, 미키피디아, 삼프로TV, 소수몽키, 이효석아카데미, 전인구경제연구소 (6) | 272.3 | 65 | **REJECT** |
-| `035720.KS` | Kakao Corp. | 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 전인구경제연구소 (5) | 248.0 | 75 | **REJECT** |
-| `MU` | Micron Technology, Inc. | IT의 신 이형수, 내일은 투자왕 - 김단테, 달란트투자, 소수몽키, 이효석아카데미 (5) | 234.1 | 7 | **REJECT** |
-| `005380.KS` | Hyundai Motor Company | IT의 신 이형수, 김작가TV, 달란트투자, 미키피디아 (4) | 234.2 | 21 | **WATCH** |
-| `TSLA` | Tesla, Inc. | 달란트투자, 미키피디아, 이효석아카데미, 전인구경제연구소 (4) | 204.4 | 63 | **REJECT** |
-| `035420.KS` | NAVER Corporation | IT의 신 이형수, 미키피디아, 소수몽키, 전인구경제연구소 (4) | 191.9 | 30 | **REJECT** |
-| `META` | Meta Platforms, Inc. | 머니인사이드, 미키피디아, 소수몽키, 이효석아카데미 (4) | 178.2 | 9 | **REJECT** |
-| `AVGO` | Broadcom Inc. | IT의 신 이형수, 미키피디아, 소수몽키 (3) | 158.7 | 8 | **REJECT** |
-| `AAPL` | Apple Inc. | IT의 신 이형수, 미키피디아, 이효석아카데미 (3) | 156.6 | 14 | **WATCH** |
-| `AMZN` | Amazon.com, Inc. | 미키피디아, 소수몽키, 이효석아카데미 (3) | 139.2 | 22 | **REJECT** |
-| `006800.KS` | Mirae Asset Securities .. | IT의 신 이형수, 이효석아카데미 (2) | 119.1 | 12 | **WATCH** |
+| `000660.KS` | SK hynix Inc. | IT의 신 이형수, 김작가TV, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (11) | 603.9 | 287 | **WATCH** |
+| `005930.KS` | Samsung Electronics Co... | IT의 신 이형수, 김작가TV, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (11) | 583.7 | 384 | **REJECT** |
+| `042700.KS` | HANMI Semiconductor Co... | IT의 신 이형수, 김작가TV, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (11) | 574.8 | 98 | **REJECT** |
+| `240810.KQ` | Wonik IPS Co., Ltd. | IT의 신 이형수, 김작가TV, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (11) | 571.5 | 92 | **REJECT** |
+| `NVDA` | NVIDIA Corporation | IT의 신 이형수, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 소수몽키, 이효석아카데미, 전인구경제연구소 (9) | 497.3 | 155 | **REJECT** |
+| `GOOGL` | Alphabet Inc. | IT의 신 이형수, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 소수몽키, 슈카월드, 이효석아카데미, 전인구경제연구소 (9) | 438.4 | 77 | **REJECT** |
+| `012450.KS` | Hanwha Aerospace Co., L.. | IT의 신 이형수, 김작가TV, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 이효석아카데미, 전인구경제연구소 (8) | 417.1 | 53 | **REJECT** |
+| `TSLA` | Tesla, Inc. | IT의 신 이형수, 내일은 투자왕 - 김단테, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 이효석아카데미, 전인구경제연구소 (8) | 398.4 | 112 | **REJECT** |
+| `042660.KS` | Hanwha Ocean Co., Ltd. | IT의 신 이형수, 김작가TV, 달란트투자, 머니인사이드, 미키피디아, 삼프로TV, 이효석아카데미, 전인구경제연구소 (8) | 373.6 | 66 | **REJECT** |
+| `005380.KS` | Hyundai Motor Company | IT의 신 이형수, 달란트투자, 머니인사이드, 미키피디아, 슈카월드, 전인구경제연구소 (6) | 331.8 | 39 | **WATCH** |
+| `047810.KS` | Korea Aerospace Industr.. | IT의 신 이형수, 달란트투자, 미키피디아, 삼프로TV, 이효석아카데미, 전인구경제연구소 (6) | 330.3 | 36 | **REJECT** |
+| `MU` | Micron Technology, Inc. | IT의 신 이형수, 내일은 투자왕 - 김단테, 달란트투자, 삼프로TV, 소수몽키, 이효석아카데미 (6) | 279.0 | 19 | **REJECT** |
+| `035420.KS` | NAVER Corporation | 달란트투자, 미키피디아, 삼프로TV, 소수몽키, 전인구경제연구소 (5) | 243.2 | 83 | **REJECT** |
+| `329180.KS` | HD Hyundai Heavy Indust.. | IT의 신 이형수, 달란트투자, 삼프로TV, 이효석아카데미, 전인구경제연구소 (5) | 236.1 | 47 | **REJECT** |
+| `035720.KS` | Kakao Corp. | 미키피디아, 삼프로TV, 소수몽키, 전인구경제연구소 (4) | 201.3 | 201 | **REJECT** |
+| `TSM` | Taiwan Semiconductor Ma.. | 내일은 투자왕 - 김단테, 달란트투자, 미키피디아, 삼프로TV (4) | 194.4 | 60 | **REJECT** |
+| `AVGO` | Broadcom Inc. | IT의 신 이형수, 내일은 투자왕 - 김단테, 미키피디아, 소수몽키 (4) | 187.7 | 18 | **REJECT** |
+| `AAPL` | Apple Inc. | 내일은 투자왕 - 김단테, 미키피디아, 슈카월드, 이효석아카데미 (4) | 170.8 | 21 | **REJECT** |
+| `006800.KS` | Mirae Asset Securities .. | IT의 신 이형수, 삼프로TV, 이효석아카데미 (3) | 172.4 | 15 | **WATCH** |
+| `AMD` | Advanced Micro Devices,.. | 달란트투자, 미키피디아, 전인구경제연구소 (3) | 157.2 | 6 | **WATCH** |
 
 ## Per-Channel Stock Rankings (180 Days)
 
@@ -102,249 +101,281 @@
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `006800.KS` | Mirae Asset Securities Co., .. | 63.3 | **WATCH** | 10 | 67,100 KRW |
-| 2. | `047810.KS` | Korea Aerospace Industries, .. | 59.5 | **WATCH** | 16 | 186,500 KRW |
-| 3. | `240810.KQ` | Wonik IPS Co., Ltd. | 58.5 | **WATCH** | 17 | 121,000 KRW |
-| 4. | `010120.KS` | LS ELECTRIC Co., Ltd. | 58.4 | **WATCH** | 4 | 801,000 KRW |
-| 5. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 57.2 | **WATCH** | 18 | 1,335,000 KRW |
-| 6. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 55.9 | **WATCH** | 18 | 275,500 KRW |
-| 7. | `000660.KS` | SK hynix Inc. | 55.3 | **WATCH** | 43 | 922,000 KRW |
-| 8. | `005930.KS` | Samsung Electronics Co., Ltd. | 53.8 | **REJECT** | 40 | 179,700 KRW |
-| 9. | `NVDA` | NVIDIA | 53.7 | **REJECT** | 24 | 100 None |
-| 10. | `GOOGL` | Alphabet Inc. | 52.7 | **REJECT** | 33 | 274 USD |
-| 11. | `042660.KS` | Hanwha Ocean Co., Ltd. | 51.4 | **REJECT** | 18 | 123,200 KRW |
-| 12. | `329180.KS` | HD Hyundai Heavy Industries .. | 51.0 | **REJECT** | 19 | 498,500 KRW |
-| 13. | `298040.KS` | Hyosung Heavy Industries Cor.. | 50.2 | **REJECT** | 4 | 2,676,000 KRW |
-| 14. | `034020.KS` | Doosan Enerbility Co., Ltd. | 49.9 | **REJECT** | 4 | 98,100 KRW |
-| 15. | `267260.KS` | HD Hyundai Electric Co., Ltd. | 49.0 | **REJECT** | 4 | 915,000 KRW |
+| 1. | `006800.KS` | Mirae Asset Securities Co., .. | 63.3 | **WATCH** | 10 | 61,500 KRW |
+| 2. | `010120.KS` | LS ELECTRIC Co., Ltd. | 58.4 | **WATCH** | 4 | 788,000 KRW |
+| 3. | `000660.KS` | SK hynix Inc. | 56.2 | **WATCH** | 42 | 916,000 KRW |
+| 4. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 55.5 | **WATCH** | 15 | 253,500 KRW |
+| 5. | `240810.KQ` | Wonik IPS Co., Ltd. | 54.9 | **REJECT** | 15 | 114,100 KRW |
+| 6. | `005930.KS` | Samsung Electronics Co., Ltd. | 54.6 | **REJECT** | 41 | 196,500 KRW |
+| 7. | `NVDA` | NVIDIA Corporation | 53.4 | **REJECT** | 23 | 178 USD |
+| 8. | `047810.KS` | Korea Aerospace Industries, .. | 53.2 | **REJECT** | 1 | 186,300 KRW |
+| 9. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 52.3 | **REJECT** | 4 | 1,537,000 KRW |
+| 10. | `298040.KS` | Hyosung Heavy Industries Cor.. | 50.2 | **REJECT** | 4 | 2,804,000 KRW |
+| 11. | `034020.KS` | Doosan Enerbility Co., Ltd. | 50.1 | **REJECT** | 4 | 94,900 KRW |
+| 12. | `329180.KS` | HD Hyundai Heavy Industries .. | 49.9 | **REJECT** | 5 | 470,000 KRW |
+| 13. | `267260.KS` | HD Hyundai Electric Co., Ltd. | 49.0 | **REJECT** | 4 | 961,000 KRW |
+| 14. | `GOOGL` | Alphabet Inc. | 48.5 | **REJECT** | 9 | 305 USD |
+| 15. | `042660.KS` | Hanwha Ocean Co., Ltd. | 46.7 | **REJECT** | 4 | 120,900 KRW |
 
 ### IT의 신 이형수 - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `NVDA` | NVIDIA | 67.1 | **WATCH** | 18 | 100 None |
-| 2. | `036930.KQ` | JUSUNG ENGINEERING Co.,Ltd. | 63.8 | **WATCH** | 4 | 70,000 KRW |
-| 3. | `399720.KQ` | Gaonchips Co., Ltd. | 63.1 | **WATCH** | 4 | 64,000 KRW |
-| 4. | `222800.KQ` | SIMMTECH Co., Ltd. | 62.8 | **WATCH** | 2 | 56,200 KRW |
-| 5. | `015760.KS` | Korea Electric Power Corpora.. | 62.0 | **WATCH** | 1 | 43,900 KRW |
-| 6. | `AVGO` | Broadcom Inc. | 61.7 | **WATCH** | 1 | 302 USD |
-| 7. | `131970.KQ` | DOOSAN TESNA Inc. | 60.4 | **WATCH** | 6 | 108,300 KRW |
-| 8. | `058470.KQ` | LEENO Industrial Inc. | 60.4 | **WATCH** | 2 | 104,900 KRW |
-| 9. | `MRVL` | Marvell Technology, Inc. | 59.7 | **WATCH** | 1 | 94 USD |
-| 10. | `036010.KQ` | ABCO Electronics Co., Ltd. | 59.5 | **WATCH** | 2 | 8,890 KRW |
-| 11. | `240810.KQ` | Wonik IPS Co., Ltd. | 59.1 | **WATCH** | 10 | 121,000 KRW |
-| 12. | `005930.KS` | Samsung Electronics Co., Ltd. | 58.8 | **WATCH** | 23 | 179,700 KRW |
-| 13. | `007660.KS` | ISU Petasys Co., Ltd. | 58.6 | **WATCH** | 2 | 110,500 KRW |
-| 14. | `MU` | Micron Technology, Inc. | 58.1 | **WATCH** | 2 | 358 USD |
-| 15. | `253590.KQ` | Neosem Inc. | 58.0 | **WATCH** | 2 | 16,570 KRW |
+| 1. | `373220.KS` | LG Energy Solution, Ltd. | 67.9 | **WATCH** | 4 | 408,500 KRW |
+| 2. | `036930.KQ` | JUSUNG ENGINEERING Co.,Ltd. | 63.8 | **WATCH** | 4 | 60,500 KRW |
+| 3. | `005380.KS` | Hyundai Motor Company | 59.7 | **WATCH** | 2 | 473,000 KRW |
+| 4. | `000660.KS` | SK hynix Inc. | 58.4 | **WATCH** | 37 | 916,000 KRW |
+| 5. | `005290.KS` | Dongjin Semichem Co Ltd | 56.2 | **WATCH** | 2 | 37,600 KRW |
+| 6. | `005930.KS` | Samsung Electronics Co., Ltd. | 56.0 | **WATCH** | 29 | 196,500 KRW |
+| 7. | `240810.KQ` | Wonik IPS Co., Ltd. | 55.9 | **WATCH** | 14 | 114,100 KRW |
+| 8. | `006800.KS` | Mirae Asset Securities Co., .. | 55.8 | **WATCH** | 2 | 61,500 KRW |
+| 9. | `131970.KQ` | DOOSAN TESNA Inc. | 55.6 | **WATCH** | 4 | 92,200 KRW |
+| 10. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 55.1 | **WATCH** | 12 | 253,500 KRW |
+| 11. | `NVDA` | NVIDIA Corporation | 54.0 | **REJECT** | 4 | 178 USD |
+| 12. | `TSLA` | Tesla, Inc. | 54.0 | **REJECT** | 2 | 347 USD |
+| 13. | `047810.KS` | Korea Aerospace Industries, .. | 53.2 | **REJECT** | 1 | 186,300 KRW |
+| 14. | `399720.KQ` | Gaonchips Co., Ltd. | 52.9 | **REJECT** | 2 | 60,600 KRW |
+| 15. | `MU` | Micron Technology, Inc. | 52.1 | **REJECT** | 6 | 378 USD |
 
 ### 전인구경제연구소 - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `035720.KS` | Kakao Corp. | 60.4 | **WATCH** | 44 | 48,800 KRW |
-| 2. | `005930.KS` | Samsung Electronics Co., Ltd. | 60.0 | **WATCH** | 12 | 179,700 KRW |
-| 3. | `NVDA` | NVIDIA | 56.8 | **WATCH** | 8 | 100 None |
-| 4. | `000660.KS` | SK hynix Inc. | 56.3 | **WATCH** | 2 | 922,000 KRW |
-| 5. | `TSLA` | Tesla, Inc. | 55.8 | **WATCH** | 6 | 362 USD |
-| 6. | `047810.KS` | Korea Aerospace Industries, .. | 54.6 | **REJECT** | 2 | 186,500 KRW |
-| 7. | `035420.KS` | NAVER Corporation | 54.2 | **REJECT** | 22 | 212,500 KRW |
-| 8. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 51.6 | **REJECT** | 2 | 1,335,000 KRW |
-| 9. | `GOOGL` | Alphabet Inc. | 48.5 | **REJECT** | 2 | 274 USD |
-| 10. | `042660.KS` | Hanwha Ocean Co., Ltd. | 45.8 | **REJECT** | 2 | 123,200 KRW |
-| 11. | `329180.KS` | HD Hyundai Heavy Industries .. | 44.5 | **REJECT** | 2 | 498,500 KRW |
+| 1. | `NVDA` | NVIDIA Corporation | 57.7 | **WATCH** | 29 | 178 USD |
+| 2. | `005930.KS` | Samsung Electronics Co., Ltd. | 57.1 | **WATCH** | 62 | 196,500 KRW |
+| 3. | `000660.KS` | SK hynix Inc. | 56.6 | **WATCH** | 30 | 916,000 KRW |
+| 4. | `047810.KS` | Korea Aerospace Industries, .. | 56.6 | **WATCH** | 17 | 186,300 KRW |
+| 5. | `TSLA` | Tesla, Inc. | 55.6 | **WATCH** | 26 | 347 USD |
+| 6. | `005380.KS` | Hyundai Motor Company | 54.6 | **REJECT** | 3 | 473,000 KRW |
+| 7. | `035720.KS` | Kakao Corp. | 54.4 | **REJECT** | 114 | 46,400 KRW |
+| 8. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 54.0 | **REJECT** | 18 | 1,537,000 KRW |
+| 9. | `GOOGL` | Alphabet Inc. | 53.9 | **REJECT** | 2 | 305 USD |
+| 10. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 53.3 | **REJECT** | 10 | 253,500 KRW |
+| 11. | `240810.KQ` | Wonik IPS Co., Ltd. | 52.8 | **REJECT** | 10 | 114,100 KRW |
+| 12. | `035420.KS` | NAVER Corporation | 51.5 | **REJECT** | 66 | 195,900 KRW |
+| 13. | `042660.KS` | Hanwha Ocean Co., Ltd. | 47.7 | **REJECT** | 17 | 120,900 KRW |
+| 14. | `329180.KS` | HD Hyundai Heavy Industries .. | 47.1 | **REJECT** | 18 | 470,000 KRW |
+| 15. | `AMD` | Advanced Micro Devices, Inc. | 44.8 | **REJECT** | 1 | 222 USD |
 
 ### 내일은 투자왕 - 김단테 - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `047810.KS` | Korea Aerospace Industries, .. | 54.9 | **REJECT** | 3 | 186,500 KRW |
-| 2. | `240810.KQ` | Wonik IPS Co., Ltd. | 52.3 | **REJECT** | 1 | 121,000 KRW |
-| 3. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 52.0 | **REJECT** | 3 | 1,335,000 KRW |
-| 4. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 49.5 | **REJECT** | 1 | 275,500 KRW |
-| 5. | `042660.KS` | Hanwha Ocean Co., Ltd. | 46.9 | **REJECT** | 3 | 123,200 KRW |
-| 6. | `000660.KS` | SK hynix Inc. | 46.5 | **REJECT** | 1 | 922,000 KRW |
-| 7. | `010950.KS` | S-Oil Corporation | 46.4 | **REJECT** | 1 | 109,700 KRW |
-| 8. | `096770.KS` | SK Innovation Co., Ltd. | 45.7 | **REJECT** | 1 | 111,400 KRW |
-| 9. | `329180.KS` | HD Hyundai Heavy Industries .. | 45.6 | **REJECT** | 3 | 498,500 KRW |
-| 10. | `005930.KS` | Samsung Electronics Co., Ltd. | 43.4 | **REJECT** | 2 | 179,700 KRW |
-| 11. | `MU` | Micron Technology, Inc. | 42.9 | **REJECT** | 1 | 358 USD |
+| 1. | `NVDA` | NVIDIA Corporation | 54.3 | **REJECT** | 32 | 178 USD |
+| 2. | `240810.KQ` | Wonik IPS Co., Ltd. | 48.8 | **REJECT** | 1 | 114,100 KRW |
+| 3. | `AVGO` | Broadcom Inc. | 46.5 | **REJECT** | 5 | 334 USD |
+| 4. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 46.0 | **REJECT** | 2 | 253,500 KRW |
+| 5. | `MU` | Micron Technology, Inc. | 45.8 | **REJECT** | 5 | 378 USD |
+| 6. | `000660.KS` | SK hynix Inc. | 41.9 | **REJECT** | 3 | 916,000 KRW |
+| 7. | `TSM` | Taiwan Semiconductor Manufac.. | 41.5 | **REJECT** | 5 | 345 USD |
+| 8. | `AAPL` | Apple Inc. | 41.5 | **REJECT** | 3 | 254 USD |
+| 9. | `005930.KS` | Samsung Electronics Co., Ltd. | 40.9 | **REJECT** | 3 | 196,500 KRW |
+| 10. | `TSLA` | Tesla, Inc. | 40.6 | **REJECT** | 2 | 347 USD |
+| 11. | `PLTR` | Palantir Technologies Inc. | 39.5 | **REJECT** | 4 | 150 USD |
+| 12. | `GOOGL` | Alphabet Inc. | 37.3 | **REJECT** | 3 | 305 USD |
 
 ### 김작가TV - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `000660.KS` | SK hynix Inc. | 50.8 | **REJECT** | 18 | 922,000 KRW |
-| 2. | `005380.KS` | Hyundai Motor Company | 50.6 | **REJECT** | 5 | 495,000 KRW |
-| 3. | `240810.KQ` | Wonik IPS Co., Ltd. | 49.7 | **REJECT** | 2 | 121,000 KRW |
-| 4. | `005930.KS` | Samsung Electronics Co., Ltd. | 47.5 | **REJECT** | 14 | 179,700 KRW |
-| 5. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 46.3 | **REJECT** | 3 | 275,500 KRW |
-| 6. | `000270.KS` | Kia Corporation | 43.6 | **REJECT** | 5 | 155,800 KRW |
-| 7. | `012330.KS` | Hyundai Mobis Co.,Ltd | 43.2 | **REJECT** | 4 | 408,500 KRW |
+| 1. | `005930.KS` | Samsung Electronics Co., Ltd. | 56.8 | **WATCH** | 35 | 196,500 KRW |
+| 2. | `000660.KS` | SK hynix Inc. | 56.4 | **WATCH** | 34 | 916,000 KRW |
+| 3. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 51.6 | **REJECT** | 2 | 1,537,000 KRW |
+| 4. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 50.8 | **REJECT** | 6 | 253,500 KRW |
+| 5. | `240810.KQ` | Wonik IPS Co., Ltd. | 50.2 | **REJECT** | 6 | 114,100 KRW |
+| 6. | `000720.KS` | Hyundai Engineering & Constr.. | 47.9 | **REJECT** | 2 | 179,600 KRW |
+| 7. | `042660.KS` | Hanwha Ocean Co., Ltd. | 45.9 | **REJECT** | 2 | 120,900 KRW |
 
 ### 미키피디아 - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `005380.KS` | Hyundai Motor Company | 67.7 | **WATCH** | 2 | 495,000 KRW |
-| 2. | `NVDA` | NVIDIA | 63.0 | **WATCH** | 43 | 100 None |
-| 3. | `373220.KS` | LG Energy Solution, Ltd. | 58.2 | **WATCH** | 2 | 394,500 KRW |
-| 4. | `000660.KS` | SK hynix Inc. | 57.8 | **WATCH** | 20 | 922,000 KRW |
-| 5. | `005930.KS` | Samsung Electronics Co., Ltd. | 57.3 | **WATCH** | 25 | 179,700 KRW |
-| 6. | `240810.KQ` | Wonik IPS Co., Ltd. | 57.0 | **WATCH** | 6 | 121,000 KRW |
-| 7. | `TSLA` | Tesla, Inc. | 55.8 | **WATCH** | 51 | 362 USD |
-| 8. | `AMZN` | Amazon.com, Inc. | 55.7 | **WATCH** | 10 | 199 USD |
-| 9. | `AAPL` | Apple Inc. | 55.4 | **WATCH** | 11 | 249 USD |
-| 10. | `047810.KS` | Korea Aerospace Industries, .. | 55.1 | **WATCH** | 2 | 186,500 KRW |
-| 11. | `MSFT` | Microsoft Corporation | 54.7 | **REJECT** | 10 | 357 USD |
-| 12. | `AMD` | Advanced Micro Devices, Inc. | 54.6 | **REJECT** | 2 | 202 USD |
-| 13. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 54.2 | **REJECT** | 8 | 275,500 KRW |
-| 14. | `PLTR` | Palantir Technologies Inc. | 53.2 | **REJECT** | 8 | 143 USD |
-| 15. | `GOOGL` | Alphabet Inc. | 52.3 | **REJECT** | 16 | 274 USD |
+| 1. | `NVDA` | NVIDIA Corporation | 59.4 | **WATCH** | 44 | 178 USD |
+| 2. | `373220.KS` | LG Energy Solution, Ltd. | 58.3 | **WATCH** | 2 | 408,500 KRW |
+| 3. | `005380.KS` | Hyundai Motor Company | 57.9 | **WATCH** | 6 | 473,000 KRW |
+| 4. | `000660.KS` | SK hynix Inc. | 56.5 | **WATCH** | 22 | 916,000 KRW |
+| 5. | `005930.KS` | Samsung Electronics Co., Ltd. | 55.3 | **WATCH** | 30 | 196,500 KRW |
+| 6. | `TSLA` | Tesla, Inc. | 55.3 | **WATCH** | 55 | 347 USD |
+| 7. | `AMD` | Advanced Micro Devices, Inc. | 55.1 | **WATCH** | 2 | 222 USD |
+| 8. | `AMZN` | Amazon.com, Inc. | 55.0 | **WATCH** | 12 | 214 USD |
+| 9. | `047810.KS` | Korea Aerospace Industries, .. | 54.2 | **REJECT** | 1 | 186,300 KRW |
+| 10. | `MSFT` | Microsoft Corporation | 53.1 | **REJECT** | 12 | 372 USD |
+| 11. | `PLTR` | Palantir Technologies Inc. | 53.0 | **REJECT** | 8 | 150 USD |
+| 12. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 52.3 | **REJECT** | 10 | 253,500 KRW |
+| 13. | `GOOGL` | Alphabet Inc. | 51.7 | **REJECT** | 25 | 305 USD |
+| 14. | `035420.KS` | NAVER Corporation | 51.5 | **REJECT** | 4 | 195,900 KRW |
+| 15. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 51.3 | **REJECT** | 1 | 1,537,000 KRW |
 
 ### 머니인사이드 - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `047810.KS` | Korea Aerospace Industries, .. | 55.7 | **WATCH** | 2 | 186,500 KRW |
-| 2. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 52.7 | **REJECT** | 3 | 1,335,000 KRW |
-| 3. | `NVDA` | NVIDIA | 47.5 | **REJECT** | 6 | 100 None |
-| 4. | `042660.KS` | Hanwha Ocean Co., Ltd. | 46.9 | **REJECT** | 3 | 123,200 KRW |
-| 5. | `240810.KQ` | Wonik IPS Co., Ltd. | 46.7 | **REJECT** | 3 | 121,000 KRW |
-| 6. | `329180.KS` | HD Hyundai Heavy Industries .. | 45.6 | **REJECT** | 2 | 498,500 KRW |
-| 7. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 44.2 | **REJECT** | 3 | 275,500 KRW |
-| 8. | `000660.KS` | SK hynix Inc. | 42.2 | **REJECT** | 4 | 922,000 KRW |
-| 9. | `005930.KS` | Samsung Electronics Co., Ltd. | 40.7 | **REJECT** | 4 | 179,700 KRW |
-| 10. | `META` | Meta Platforms, Inc. | 38.8 | **REJECT** | 1 | 526 USD |
+| 1. | `NVDA` | NVIDIA Corporation | 54.8 | **REJECT** | 11 | 178 USD |
+| 2. | `000660.KS` | SK hynix Inc. | 54.0 | **REJECT** | 23 | 916,000 KRW |
+| 3. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 50.0 | **REJECT** | 6 | 253,500 KRW |
+| 4. | `240810.KQ` | Wonik IPS Co., Ltd. | 49.3 | **REJECT** | 6 | 114,100 KRW |
+| 5. | `GOOGL` | Alphabet Inc. | 48.8 | **REJECT** | 4 | 305 USD |
+| 6. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 46.6 | **REJECT** | 3 | 1,537,000 KRW |
+| 7. | `005930.KS` | Samsung Electronics Co., Ltd. | 46.5 | **REJECT** | 11 | 196,500 KRW |
+| 8. | `META` | Meta Platforms, Inc. | 44.4 | **REJECT** | 1 | 575 USD |
+| 9. | `005380.KS` | Hyundai Motor Company | 42.7 | **REJECT** | 2 | 473,000 KRW |
+| 10. | `AMZN` | Amazon.com, Inc. | 42.3 | **REJECT** | 1 | 214 USD |
+| 11. | `TSLA` | Tesla, Inc. | 41.6 | **REJECT** | 7 | 347 USD |
+| 12. | `PLTR` | Palantir Technologies Inc. | 41.3 | **REJECT** | 4 | 150 USD |
+| 13. | `042660.KS` | Hanwha Ocean Co., Ltd. | 40.8 | **REJECT** | 3 | 120,900 KRW |
 
 ### 삼프로TV - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `047810.KS` | Korea Aerospace Industries, .. | 55.3 | **WATCH** | 4 | 186,500 KRW |
-| 2. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 52.3 | **REJECT** | 4 | 1,335,000 KRW |
-| 3. | `240810.KQ` | Wonik IPS Co., Ltd. | 51.5 | **REJECT** | 2 | 121,000 KRW |
-| 4. | `035720.KS` | Kakao Corp. | 48.8 | **REJECT** | 22 | 48,800 KRW |
-| 5. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 48.7 | **REJECT** | 2 | 275,500 KRW |
-| 6. | `000660.KS` | SK hynix Inc. | 46.8 | **REJECT** | 2 | 922,000 KRW |
-| 7. | `042660.KS` | Hanwha Ocean Co., Ltd. | 46.5 | **REJECT** | 4 | 123,200 KRW |
-| 8. | `005930.KS` | Samsung Electronics Co., Ltd. | 45.4 | **REJECT** | 2 | 179,700 KRW |
-| 9. | `329180.KS` | HD Hyundai Heavy Industries .. | 45.2 | **REJECT** | 4 | 498,500 KRW |
-| 10. | `GOOGL` | Alphabet Inc. | 41.7 | **REJECT** | 2 | 274 USD |
+| 1. | `NVDA` | NVIDIA Corporation | 58.0 | **WATCH** | 2 | 178 USD |
+| 2. | `MSFT` | Microsoft Corporation | 57.4 | **WATCH** | 2 | 372 USD |
+| 3. | `047810.KS` | Korea Aerospace Industries, .. | 57.0 | **WATCH** | 11 | 186,300 KRW |
+| 4. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 54.9 | **REJECT** | 12 | 1,537,000 KRW |
+| 5. | `000660.KS` | SK hynix Inc. | 54.7 | **REJECT** | 30 | 916,000 KRW |
+| 6. | `047040.KS` | Daewoo Engineering & Constru.. | 54.1 | **REJECT** | 1 | 18,810 KRW |
+| 7. | `005930.KS` | Samsung Electronics Co., Ltd. | 53.7 | **REJECT** | 33 | 196,500 KRW |
+| 8. | `006800.KS` | Mirae Asset Securities Co., .. | 53.3 | **REJECT** | 3 | 61,500 KRW |
+| 9. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 52.7 | **REJECT** | 15 | 253,500 KRW |
+| 10. | `240810.KQ` | Wonik IPS Co., Ltd. | 51.8 | **REJECT** | 14 | 114,100 KRW |
+| 11. | `035720.KS` | Kakao Corp. | 51.6 | **REJECT** | 82 | 46,400 KRW |
+| 12. | `042660.KS` | Hanwha Ocean Co., Ltd. | 49.1 | **REJECT** | 12 | 120,900 KRW |
+| 13. | `TSLA` | Tesla, Inc. | 48.8 | **REJECT** | 3 | 347 USD |
+| 14. | `MU` | Micron Technology, Inc. | 48.0 | **REJECT** | 4 | 378 USD |
+| 15. | `000720.KS` | Hyundai Engineering & Constr.. | 47.5 | **REJECT** | 1 | 179,600 KRW |
 
 ### 소수몽키 - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `047810.KS` | Korea Aerospace Industries, .. | 55.3 | **WATCH** | 4 | 186,500 KRW |
-| 2. | `240810.KQ` | Wonik IPS Co., Ltd. | 53.4 | **REJECT** | 5 | 121,000 KRW |
-| 3. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 52.3 | **REJECT** | 4 | 1,335,000 KRW |
-| 4. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 50.6 | **REJECT** | 5 | 275,500 KRW |
-| 5. | `000660.KS` | SK hynix Inc. | 50.2 | **REJECT** | 8 | 922,000 KRW |
-| 6. | `NVDA` | NVIDIA | 50.2 | **REJECT** | 8 | 100 None |
-| 7. | `AVGO` | Broadcom Inc. | 47.8 | **REJECT** | 6 | 302 USD |
-| 8. | `035720.KS` | Kakao Corp. | 47.3 | **REJECT** | 4 | 48,800 KRW |
-| 9. | `005930.KS` | Samsung Electronics Co., Ltd. | 47.1 | **REJECT** | 6 | 179,700 KRW |
-| 10. | `042660.KS` | Hanwha Ocean Co., Ltd. | 46.5 | **REJECT** | 4 | 123,200 KRW |
-| 11. | `329180.KS` | HD Hyundai Heavy Industries .. | 45.2 | **REJECT** | 4 | 498,500 KRW |
-| 12. | `MU` | Micron Technology, Inc. | 44.3 | **REJECT** | 2 | 358 USD |
-| 13. | `GOOGL` | Alphabet Inc. | 41.7 | **REJECT** | 10 | 274 USD |
-| 14. | `META` | Meta Platforms, Inc. | 40.1 | **REJECT** | 2 | 526 USD |
-| 15. | `AMZN` | Amazon.com, Inc. | 37.7 | **REJECT** | 2 | 199 USD |
+| 1. | `000660.KS` | SK hynix Inc. | 50.4 | **REJECT** | 6 | 916,000 KRW |
+| 2. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 50.4 | **REJECT** | 3 | 253,500 KRW |
+| 3. | `240810.KQ` | Wonik IPS Co., Ltd. | 49.8 | **REJECT** | 3 | 114,100 KRW |
+| 4. | `NVDA` | NVIDIA Corporation | 48.8 | **REJECT** | 8 | 178 USD |
+| 5. | `035720.KS` | Kakao Corp. | 47.3 | **REJECT** | 4 | 46,400 KRW |
+| 6. | `005930.KS` | Samsung Electronics Co., Ltd. | 46.5 | **REJECT** | 4 | 196,500 KRW |
+| 7. | `MU` | Micron Technology, Inc. | 44.3 | **REJECT** | 2 | 378 USD |
+| 8. | `AVGO` | Broadcom Inc. | 44.1 | **REJECT** | 6 | 334 USD |
+| 9. | `GOOGL` | Alphabet Inc. | 42.7 | **REJECT** | 10 | 305 USD |
+| 10. | `035420.KS` | NAVER Corporation | 37.2 | **REJECT** | 2 | 195,900 KRW |
 
 ### 슈카월드 - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `047810.KS` | Korea Aerospace Industries, .. | 55.3 | **WATCH** | 4 | 186,500 KRW |
-| 2. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 52.3 | **REJECT** | 4 | 1,335,000 KRW |
-| 3. | `377300.KS` | Kakao Pay Corp. | 47.0 | **REJECT** | 4 | 53,500 KRW |
-| 4. | `042660.KS` | Hanwha Ocean Co., Ltd. | 46.5 | **REJECT** | 4 | 123,200 KRW |
-| 5. | `329180.KS` | HD Hyundai Heavy Industries .. | 45.2 | **REJECT** | 4 | 498,500 KRW |
-| 6. | `035720.KS` | Kakao Corp. | 43.5 | **REJECT** | 4 | 48,800 KRW |
-| 7. | `005930.KS` | Samsung Electronics Co., Ltd. | 35.7 | **REJECT** | 2 | 179,700 KRW |
+| 1. | `000660.KS` | SK hynix Inc. | 58.5 | **WATCH** | 25 | 916,000 KRW |
+| 2. | `005930.KS` | Samsung Electronics Co., Ltd. | 53.8 | **REJECT** | 22 | 196,500 KRW |
+| 3. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 52.0 | **REJECT** | 5 | 253,500 KRW |
+| 4. | `240810.KQ` | Wonik IPS Co., Ltd. | 51.4 | **REJECT** | 5 | 114,100 KRW |
+| 5. | `005380.KS` | Hyundai Motor Company | 51.3 | **REJECT** | 6 | 473,000 KRW |
+| 6. | `GOOGL` | Alphabet Inc. | 41.1 | **REJECT** | 4 | 305 USD |
+| 7. | `AAPL` | Apple Inc. | 36.0 | **REJECT** | 2 | 254 USD |
 
 ### 달란트투자 - Stock Ranking
 
 | Rank | Ticker | Company | Score | Verdict | Mentions | Price |
 |-----:|--------|---------|------:|---------|--------:|------:|
-| 1. | `005380.KS` | Hyundai Motor Company | 60.3 | **WATCH** | 10 | 495,000 KRW |
-| 2. | `034020.KS` | Doosan Enerbility Co., Ltd. | 58.9 | **WATCH** | 8 | 98,100 KRW |
-| 3. | `NVDA` | NVIDIA | 56.9 | **WATCH** | 2 | 100 None |
-| 4. | `240810.KQ` | Wonik IPS Co., Ltd. | 56.7 | **WATCH** | 3 | 121,000 KRW |
-| 5. | `047810.KS` | Korea Aerospace Industries, .. | 55.4 | **WATCH** | 1 | 186,500 KRW |
-| 6. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 52.4 | **REJECT** | 4 | 1,335,000 KRW |
-| 7. | `005930.KS` | Samsung Electronics Co., Ltd. | 52.0 | **REJECT** | 10 | 179,700 KRW |
-| 8. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 51.1 | **REJECT** | 4 | 275,500 KRW |
-| 9. | `AMD` | Advanced Micro Devices, Inc. | 50.0 | **REJECT** | 1 | 202 USD |
-| 10. | `000660.KS` | SK hynix Inc. | 48.0 | **REJECT** | 4 | 922,000 KRW |
-| 11. | `086520.KQ` | Ecopro Co., Ltd. | 47.6 | **REJECT** | 2 | 149,000 KRW |
-| 12. | `TSLA` | Tesla, Inc. | 46.2 | **REJECT** | 2 | 362 USD |
-| 13. | `329180.KS` | HD Hyundai Heavy Industries .. | 45.7 | **REJECT** | 4 | 498,500 KRW |
-| 14. | `005490.KS` | POSCO Holdings Inc. | 45.1 | **REJECT** | 2 | 343,000 KRW |
-| 15. | `042660.KS` | Hanwha Ocean Co., Ltd. | 45.0 | **REJECT** | 5 | 123,200 KRW |
+| 1. | `GOOGL` | Alphabet Inc. | 69.1 | **BUY** | 16 | 305 USD |
+| 2. | `005380.KS` | Hyundai Motor Company | 65.6 | **WATCH** | 20 | 473,000 KRW |
+| 3. | `005930.KS` | Samsung Electronics Co., Ltd. | 62.5 | **WATCH** | 114 | 196,500 KRW |
+| 4. | `000660.KS` | SK hynix Inc. | 60.3 | **WATCH** | 35 | 916,000 KRW |
+| 5. | `035420.KS` | NAVER Corporation | 59.7 | **WATCH** | 8 | 195,900 KRW |
+| 6. | `034020.KS` | Doosan Enerbility Co., Ltd. | 59.3 | **WATCH** | 13 | 94,900 KRW |
+| 7. | `TSLA` | Tesla, Inc. | 59.3 | **WATCH** | 11 | 347 USD |
+| 8. | `TSM` | Taiwan Semiconductor Manufac.. | 58.6 | **WATCH** | 52 | 345 USD |
+| 9. | `247540.KQ` | EcoPro BM Co., Ltd. | 57.4 | **WATCH** | 2 | 208,500 KRW |
+| 10. | `AMD` | Advanced Micro Devices, Inc. | 57.3 | **WATCH** | 3 | 222 USD |
+| 11. | `086520.KQ` | Ecopro Co., Ltd. | 57.1 | **WATCH** | 17 | 152,200 KRW |
+| 12. | `NVDA` | NVIDIA Corporation | 56.9 | **WATCH** | 2 | 178 USD |
+| 13. | `042700.KS` | HANMI Semiconductor Co., Ltd. | 56.7 | **WATCH** | 14 | 253,500 KRW |
+| 14. | `012450.KS` | Hanwha Aerospace Co., Ltd. | 56.1 | **WATCH** | 12 | 1,537,000 KRW |
+| 15. | `047810.KS` | Korea Aerospace Industries, .. | 56.1 | **WATCH** | 5 | 186,300 KRW |
 
 ## Macro Signals (All Channels)
 
 | Indicator | Direction | Sentiment | Frequency |
 |-----------|-----------|-----------|----------:|
-| geopolitics | UP | BEARISH | 50 |
-| us_policy | NEUTRAL | NEUTRAL | 44 |
-| ai_tech | NEUTRAL | BULLISH | 41 |
-| semiconductor | NEUTRAL | BULLISH | 15 |
-| etf | NEUTRAL | NEUTRAL | 12 |
-| nvidia | NEUTRAL | BULLISH | 8 |
-| oil | NEUTRAL | NEUTRAL | 4 |
-| tariff | UP | BEARISH | 4 |
-| interest_rate | NEUTRAL | NEUTRAL | 3 |
-| tesla | NEUTRAL | NEUTRAL | 3 |
-| dividend | NEUTRAL | BULLISH | 3 |
-| bitcoin | NEUTRAL | NEUTRAL | 2 |
-| crypto | NEUTRAL | NEUTRAL | 2 |
-| energy | UP | NEUTRAL | 1 |
-| employment | NEUTRAL | NEUTRAL | 1 |
-| fx | NEUTRAL | NEUTRAL | 1 |
+| geopolitics | UP | BEARISH | 144 |
+| us_policy | NEUTRAL | NEUTRAL | 61 |
+| ai_tech | NEUTRAL | BULLISH | 57 |
+| semiconductor | NEUTRAL | BULLISH | 28 |
+| crypto | NEUTRAL | NEUTRAL | 18 |
+| etf | NEUTRAL | NEUTRAL | 18 |
+| bitcoin | NEUTRAL | NEUTRAL | 14 |
+| oil | NEUTRAL | NEUTRAL | 12 |
+| nvidia | NEUTRAL | BULLISH | 12 |
+| tesla | NEUTRAL | NEUTRAL | 7 |
+| tariff | UP | BEARISH | 6 |
+| fx | NEUTRAL | NEUTRAL | 5 |
+| dividend | NEUTRAL | BULLISH | 5 |
+| interest_rate | NEUTRAL | NEUTRAL | 4 |
+| energy | UP | NEUTRAL | 3 |
+| defense | UP | BULLISH | 2 |
 | trade | NEUTRAL | NEUTRAL | 1 |
 
 ## Content Type Distribution (삼프로TV)
 
 ```
-OTHER                █████████████████████████ 160 (44.4%)
-STOCK_PICK           ████████████░░░░░░░░░░░░░  80 (22.2%)
-NEWS_EVENT           ████████░░░░░░░░░░░░░░░░░  50 (13.9%)
-EXPERT_INTERVIEW     ██████░░░░░░░░░░░░░░░░░░░  37 (10.3%)
-MARKET_REVIEW        ██░░░░░░░░░░░░░░░░░░░░░░░  15 ( 4.2%)
-SECTOR               ██░░░░░░░░░░░░░░░░░░░░░░░  11 ( 3.1%)
-MACRO                █░░░░░░░░░░░░░░░░░░░░░░░░   7 ( 1.9%)
+OTHER                █████████████████████████ 332 (44.6%)
+EXPERT_INTERVIEW     ███████████░░░░░░░░░░░░░░ 152 (20.4%)
+STOCK_PICK           ███████░░░░░░░░░░░░░░░░░░  98 (13.2%)
+NEWS_EVENT           ██████░░░░░░░░░░░░░░░░░░░  85 (11.4%)
+MARKET_REVIEW        ███░░░░░░░░░░░░░░░░░░░░░░  39 ( 5.2%)
+SECTOR               ██░░░░░░░░░░░░░░░░░░░░░░░  23 ( 3.1%)
+MACRO                █░░░░░░░░░░░░░░░░░░░░░░░░  15 ( 2.0%)
 ```
 
 | Type | Count | % |
 |------|------:|---:|
-| OTHER | 160 | 44.4% |
-| STOCK_PICK | 80 | 22.2% |
-| NEWS_EVENT | 50 | 13.9% |
-| EXPERT_INTERVIEW | 37 | 10.3% |
-| MARKET_REVIEW | 15 | 4.2% |
-| SECTOR | 11 | 3.1% |
-| MACRO | 7 | 1.9% |
+| OTHER | 332 | 44.6% |
+| EXPERT_INTERVIEW | 152 | 20.4% |
+| STOCK_PICK | 98 | 13.2% |
+| NEWS_EVENT | 85 | 11.4% |
+| MARKET_REVIEW | 39 | 5.2% |
+| SECTOR | 23 | 3.1% |
+| MACRO | 15 | 2.0% |
 
 ## Expert Insights (삼프로TV)
 
 | Expert | Appearances | Video Types | Signal Classes |
 |--------|----------:|-------------|----------------|
-| **박세익** | 4 | EXPERT_INTERVIEW | LOW_SIGNAL, NOISE, SECTOR_ONLY |
-| **한문도** | 2 | EXPERT_INTERVIEW | ACTIONABLE, LOW_SIGNAL |
-| **강대권** | 2 | EXPERT_INTERVIEW | ACTIONABLE, NOISE |
-| **홍춘욱** | 2 | EXPERT_INTERVIEW | LOW_SIGNAL, NOISE |
-| **곽수종** | 2 | EXPERT_INTERVIEW | ACTIONABLE, LOW_SIGNAL |
-| **배재규** | 2 | EXPERT_INTERVIEW | NOISE, SECTOR_ONLY |
-| **조진표** | 2 | EXPERT_INTERVIEW | ACTIONABLE |
-| **조윤남** | 1 | EXPERT_INTERVIEW | NOISE |
+| **조한범** | 7 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **박현도** | 6 | EXPERT_INTERVIEW | ACTIONABLE, LOW_SIGNAL, SECTOR_ONLY |
+| **박병창** | 6 | EXPERT_INTERVIEW | ACTIONABLE, SECTOR_ONLY |
+| **이춘근** | 6 | EXPERT_INTERVIEW | NOISE, SECTOR_ONLY |
+| **박정호** | 4 | EXPERT_INTERVIEW | ACTIONABLE, NOISE, SECTOR_ONLY |
+| **김정호** | 4 | EXPERT_INTERVIEW | ACTIONABLE, NOISE, SECTOR_ONLY |
+| **엄경아** | 4 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **조진표** | 4 | EXPERT_INTERVIEW | ACTIONABLE |
+| **최성규** | 4 | EXPERT_INTERVIEW | NOISE |
+| **김종율** | 3 | EXPERT_INTERVIEW | NOISE |
+| **김창익** | 3 | EXPERT_INTERVIEW | NOISE, SECTOR_ONLY |
+| **성일광** | 3 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **곽수종** | 3 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **안정식** | 3 | EXPERT_INTERVIEW | NOISE, SECTOR_ONLY |
+| **이상민** | 3 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **진재일** | 3 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **이영주** | 2 | EXPERT_INTERVIEW | LOW_SIGNAL, SECTOR_ONLY |
+| **이재홍** | 2 | EXPERT_INTERVIEW | LOW_SIGNAL |
+| **한문도** | 2 | EXPERT_INTERVIEW | LOW_SIGNAL |
+| **문근식** | 2 | EXPERT_INTERVIEW | ACTIONABLE |
+| **이선엽** | 2 | EXPERT_INTERVIEW | ACTIONABLE |
+| **이문영** | 2 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **배재규** | 2 | EXPERT_INTERVIEW | ACTIONABLE, LOW_SIGNAL |
+| **염승환** | 2 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **이형수** | 2 | EXPERT_INTERVIEW | ACTIONABLE |
+| **김지훈** | 2 | EXPERT_INTERVIEW | ACTIONABLE |
+| **황용국** | 1 | EXPERT_INTERVIEW | LOW_SIGNAL |
+| **반도체** | 1 | EXPERT_INTERVIEW | ACTIONABLE |
+| **유지** | 1 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **이수빈** | 1 | EXPERT_INTERVIEW | ACTIONABLE |
+| **이승원** | 1 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **곽상준** | 1 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **손정우** | 1 | EXPERT_INTERVIEW | ACTIONABLE |
 | **유응준** | 1 | EXPERT_INTERVIEW | SECTOR_ONLY |
-| **김정호** | 1 | EXPERT_INTERVIEW | ACTIONABLE |
-| **염승환** | 1 | EXPERT_INTERVIEW | ACTIONABLE |
-| **이춘근** | 1 | EXPERT_INTERVIEW | NOISE |
-| **최성규** | 1 | EXPERT_INTERVIEW | NOISE |
-| **이상민** | 1 | EXPERT_INTERVIEW | NOISE |
-| **성일광** | 1 | EXPERT_INTERVIEW | SECTOR_ONLY |
-| **엄경아** | 1 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **최홍섭** | 1 | EXPERT_INTERVIEW | LOW_SIGNAL |
+| **이충헌** | 1 | EXPERT_INTERVIEW | LOW_SIGNAL |
+| **쟁글** | 1 | EXPERT_INTERVIEW | LOW_SIGNAL |
+| **이지은** | 1 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **강준영** | 1 | EXPERT_INTERVIEW | SECTOR_ONLY |
+| **조현승** | 1 | EXPERT_INTERVIEW | SECTOR_ONLY |

@@ -278,8 +278,11 @@ def test_pipeline_uses_metadata_fallback_when_transcript_fetch_fails(tmp_path: P
 
     report, paths = pipeline.analyze_video("https://youtube.com/watch?v=abc123def45")
 
-    assert report.signal_assessment.video_signal_class != "NOISE"
+    assert report.signal_assessment.should_analyze_stocks is False
+    assert report.stock_analyses == []
     assert report.transcript_language == "metadata_fallback"
+    assert report.transcript_backed is False
+    assert report.source_quality_note
     assert "HD현대일렉트릭" in report.transcript_text
     assert paths[0].exists()
 
@@ -328,6 +331,9 @@ def test_pipeline_uses_metadata_fallback_when_transcript_is_empty(tmp_path: Path
     report, _ = pipeline.analyze_video("https://youtube.com/watch?v=abc123def45")
 
     assert report.transcript_language == "metadata_fallback"
+    assert report.transcript_backed is False
+    assert report.signal_assessment.should_analyze_stocks is False
+    assert report.stock_analyses == []
     assert "HD현대일렉트릭" in report.transcript_text
 
 
@@ -391,7 +397,25 @@ def test_pipeline_cached_metadata_fallback_does_not_analyze_macro_only_video(tmp
     report, _ = pipeline.analyze_video("https://youtube.com/watch?v=metaonly12345")
 
     assert report.transcript_language == "metadata_fallback"
+    assert report.transcript_backed is False
     assert report.signal_assessment.video_signal_class in {"NOISE", "LOW_SIGNAL", "SECTOR_ONLY"}
     assert report.signal_assessment.should_analyze_stocks is False
     assert report.ticker_mentions == []
     assert report.stock_analyses == []
+
+
+def test_pipeline_enriches_stock_analysis_with_evidence_and_reasoning_strength(tmp_path: Path):
+    pipeline = OMXPipeline(provider_name="mock", output_dir=tmp_path, transcript_cache=TranscriptCache(tmp_path / "cache"))
+    pipeline.resolver = DummyResolver()
+    pipeline.fetcher = DummyFetcher()
+    pipeline.fundamentals = DummyFundamentals()
+
+    report, _ = pipeline.analyze_video("https://youtube.com/watch?v=abc123def45")
+
+    assert report.transcript_backed is True
+    assert report.video_summary
+    assert report.stock_analyses
+    stock = report.stock_analyses[0]
+    assert stock.evidence_bullets
+    assert stock.reasoning_strength in {"STRONG", "MODERATE", "LIMITED", "WEAK"}
+    assert stock.reasoning_strength_summary

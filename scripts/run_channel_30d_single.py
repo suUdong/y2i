@@ -5,17 +5,21 @@ import json
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+from omx_brainstorm.analysis_rows import analyze_resolved_videos_to_reports
 from omx_brainstorm.app_config import load_app_config
+from omx_brainstorm.artifact_cleanup import cleanup_generated_artifacts
 from omx_brainstorm.comparison import RunContext, quality_scorecard, save_channel_artifacts
+from omx_brainstorm.comparison_rows import reports_to_comparison_rows
 from omx_brainstorm.evaluation import ranking_validation
-from omx_brainstorm.fundamentals import FundamentalsFetcher
-from omx_brainstorm.heuristic_pipeline import analyze_video_heuristic, render_heuristic_dashboard
 from omx_brainstorm.logging_utils import configure_logging
 from omx_brainstorm.notifications import notify_all
 from omx_brainstorm.master_engine import validate_cross_stock_master_quality
+from omx_brainstorm.pipeline import OMXPipeline
+from omx_brainstorm.output_layout import build_run_output_dir
+from omx_brainstorm.reporting import save_combined_dashboard
 from omx_brainstorm.research import build_cross_video_ranking
 from omx_brainstorm.transcript_cache import TranscriptCache
-from omx_brainstorm.youtube import TranscriptFetcher, YoutubeResolver
+from omx_brainstorm.youtube import YoutubeResolver
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -36,10 +40,14 @@ def main() -> None:
     videos = resolver.resolve_channel_videos_since(channel.url, days=config.strategy.window_days, reference_date=date.today())
     cache = TranscriptCache()
     cache.warm_from_output_dir(Path(config.output_dir))
-    fetcher = TranscriptFetcher()
-    fundamentals = FundamentalsFetcher()
-
-    rows = [analyze_video_heuristic(video, cache, fetcher, fundamentals) for video in videos]
+    reports = analyze_resolved_videos_to_reports(
+        videos,
+        config=config,
+        transcript_cache=cache,
+        output_dir=Path(config.output_dir),
+        persist=False,
+    )
+    rows = reports_to_comparison_rows(reports)
     validate_cross_stock_master_quality([stock for row in rows for stock in row["stocks"]])
     ranking = build_cross_video_ranking(rows)
     context = RunContext(
@@ -50,6 +58,8 @@ def main() -> None:
     )
     validation = ranking_validation(ranking, context.today)
     scorecard = quality_scorecard(rows, validation, ranking)
+    run_output_dir = build_run_output_dir(config.output_dir, context.run_id)
+    context.output_dir = run_output_dir
     json_path, txt_path = save_channel_artifacts(
         channel.slug,
         channel.display_name,
@@ -60,7 +70,16 @@ def main() -> None:
         scorecard,
         context,
     )
-    dashboard_path = render_heuristic_dashboard(rows, Path(config.output_dir), label=f"{channel.slug}_30d_dashboard")
+    dashboard_path = save_combined_dashboard(reports, run_output_dir, label=f"{channel.slug}_30d_dashboard") if reports else None
+    if config.retention.enabled:
+        cleanup_generated_artifacts(
+            output_dir=Path(config.output_dir),
+            report_dir=Path(config.output_dir).parent / "reports",
+            log_dir=Path(config.logging.log_dir),
+            output_days=config.retention.output_days,
+            report_days=config.retention.report_days,
+            log_days=config.logging.retention_days,
+        )
     summary = f"[OMX] {channel.display_name} 30일 분석 완료: {len(rows)}개 영상, {len(ranking)}개 종목 랭킹"
     notify_all(config.notifications, summary)
     print(json.dumps({

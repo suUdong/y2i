@@ -53,6 +53,14 @@ def test_transcript_cache_warm_from_output_dir_counts_valid_files(tmp_path):
     assert cache.warm_from_output_dir(out) == 1
 
 
+def test_transcript_cache_warm_from_output_dir_recurses_into_run_dirs(tmp_path):
+    cache = TranscriptCache(tmp_path / "cache")
+    nested = tmp_path / "out" / "runs" / "20260408" / "20260408T000000Z"
+    nested.mkdir(parents=True)
+    (nested / "a.json").write_text(json.dumps({"video": {"video_id": "a", "title": "A", "url": "u"}, "transcript_text": "x"}), encoding="utf-8")
+    assert cache.warm_from_output_dir(tmp_path / "out") == 1
+
+
 def test_transcript_cache_path_for_uses_json_extension(tmp_path):
     cache = TranscriptCache(tmp_path / "cache")
     assert cache.path_for("abc").name == "abc.json"

@@ -5,6 +5,7 @@ from dataclasses import asdict
 from .llm import LLMProvider
 from .master_engine import validate_master_opinions
 from .models import AnalysisScore, FundamentalSnapshot, MasterOpinion, StockAnalysis, TickerMention
+from .plain_summary import build_plain_summary
 from .price_targets import extract_price_targets
 from .prompts import ANALYSIS_SYSTEM, analysis_user_prompt
 from .utils import chunk_text
@@ -86,5 +87,6 @@ class StockAnalyzer:
             citations=list(payload.get("citations", []) or []),
             raw_llm_payload=payload,
             price_targets=price_targets,
+            plain_summary=payload.get("plain_summary") or build_plain_summary(fundamentals),
             video_context_summary=payload.get("video_context_summary", ""),
         )

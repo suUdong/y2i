@@ -40,7 +40,7 @@ REFERENCE_KIND_LABELS = {
 
 def _latest_file(pattern: str, directory: Path | None = None) -> Path | None:
     d = directory or OUTPUT_DIR
-    matches = sorted(d.glob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
+    matches = sorted(d.rglob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
     return matches[0] if matches else None
 
 
@@ -50,6 +50,9 @@ def _file_for_run(pattern_template: str, run_id: str | None, directory: Path | N
         exact = d / pattern_template.format(run_id=run_id)
         if exact.exists():
             return exact
+        exact_matches = sorted(d.rglob(pattern_template.format(run_id=run_id)), key=lambda p: p.stat().st_mtime, reverse=True)
+        if exact_matches:
+            return exact_matches[0]
     return _latest_file(pattern_template.format(run_id="*"), d)
 
 
@@ -79,7 +82,7 @@ def get_available_channels(directory: Path | None = None) -> list[str]:
     d = directory or OUTPUT_DIR
     slugs = {
         p.stem.split("_30d_")[0]
-        for p in d.glob("*_30d_*.json")
+        for p in d.rglob("*_30d_*.json")
         if not p.stem.startswith("channel_comparison")
     }
     return sorted(slugs)

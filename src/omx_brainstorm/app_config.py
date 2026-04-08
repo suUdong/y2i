@@ -61,6 +61,14 @@ class LoggingConfig:
 
 
 @dataclass(slots=True)
+class RetentionConfig:
+    """Retention policy for generated artifacts."""
+    enabled: bool = True
+    output_days: int = 14
+    report_days: int = 30
+
+
+@dataclass(slots=True)
 class AppConfig:
     """Top-level application configuration."""
     config_path: str = "config.toml"
@@ -73,6 +81,7 @@ class AppConfig:
     notifications: NotificationConfig = field(default_factory=NotificationConfig)
     schedule: ScheduleConfig = field(default_factory=ScheduleConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
+    retention: RetentionConfig = field(default_factory=RetentionConfig)
 
 
 DEFAULT_CHANNELS = [
@@ -106,6 +115,7 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
     notifications_payload = payload.get("notifications", {})
     schedule_payload = payload.get("schedule", {})
     logging_payload = payload.get("logging", {})
+    retention_payload = payload.get("retention", {})
 
     try:
         channels = [
@@ -157,6 +167,11 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
             json=_env_or_dotenv_bool("OMX_JSON_LOGS", dotenv_payload, logging_payload.get("json", True)),
             log_dir=_env_or_dotenv("OMX_LOG_DIR", dotenv_payload, logging_payload.get("log_dir", ".omx/logs")),
             retention_days=int(_env_or_dotenv("OMX_LOG_RETENTION_DAYS", dotenv_payload, logging_payload.get("retention_days", 7))),
+        ),
+        retention=RetentionConfig(
+            enabled=_env_or_dotenv_bool("OMX_RETENTION_ENABLED", dotenv_payload, retention_payload.get("enabled", True)),
+            output_days=int(_env_or_dotenv("OMX_OUTPUT_RETENTION_DAYS", dotenv_payload, retention_payload.get("output_days", 14))),
+            report_days=int(_env_or_dotenv("OMX_REPORT_RETENTION_DAYS", dotenv_payload, retention_payload.get("report_days", 30))),
         ),
     )
 

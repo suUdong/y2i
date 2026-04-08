@@ -7,6 +7,14 @@ import uuid
 from pathlib import Path
 
 from .analysis import StockAnalyzer
+from .evidence import (
+    INSUFFICIENT_TRANSCRIPT_REASON,
+    assess_reasoning_strength,
+    build_stock_context_summary,
+    build_stock_evidence,
+    build_video_summary,
+    is_transcript_backed,
+)
 from .expert_interview import extract_expert_insights, extract_expert_insights_with_llm
 from .extractors import HybridTickerExtractor
 from .fundamentals import FundamentalsFetcher
@@ -55,7 +63,7 @@ class OMXPipeline:
         ]
         return mentions, analyses
 
-    def _analyze_resolved_video(self, video):
+    def _analyze_resolved_video(self, video, *, persist: bool = True):
         transcript_text, language, transcript_source = self._resolve_transcript(video)
         metadata_text = " ".join(part for part in [video.title, video.description or "", " ".join(video.tags)] if part).strip()
         extraction_text = " ".join(part for part in [transcript_text, video.description or "", " ".join(video.tags)] if part).strip()
@@ -67,15 +75,33 @@ class OMXPipeline:
             transcript_source=transcript_source,
         )
         analysis_text = transcript_text or metadata_text
+        transcript_backed = is_transcript_backed(language, transcript_source)
         video_type = VideoType(signal_assessment.video_type)
-        should = signal_assessment.should_analyze_stocks
+        should = signal_assessment.should_analyze_stocks and transcript_backed
+        source_quality_note = ""
+
+        if not transcript_backed:
+            source_quality_note = INSUFFICIENT_TRANSCRIPT_REASON
+            metrics = dict(signal_assessment.metrics or {})
+            metrics["source_quality"] = "metadata_only"
+            metrics["transcript_backed"] = False
+            signal_assessment = replace(
+                signal_assessment,
+                video_signal_class="LOW_SIGNAL",
+                should_analyze_stocks=False,
+                reason=INSUFFICIENT_TRANSCRIPT_REASON,
+                skip_reason=INSUFFICIENT_TRANSCRIPT_REASON,
+                metrics=metrics,
+            )
 
         # --- VideoType-based branching ---
         macro_insights = []
         market_review = None
         expert_insights = []
 
-        if video_type in (VideoType.STOCK_PICK, VideoType.SECTOR):
+        if not transcript_backed:
+            pass
+        elif video_type in (VideoType.STOCK_PICK, VideoType.SECTOR):
             pass  # stock analysis only
         elif video_type == VideoType.MARKET_REVIEW:
             try:
@@ -113,6 +139,35 @@ class OMXPipeline:
                 skip_reason=downgrade_reason,
             )
 
+        enriched_analyses = []
+        for mention, analysis in zip(mentions, analyses):
+            evidence_bullets = build_stock_evidence(analysis_text, mention)
+            reasoning_strength, reasoning_strength_summary = assess_reasoning_strength(
+                evidence_bullets=evidence_bullets,
+                fundamentals=analysis.fundamentals,
+                master_opinions=analysis.master_opinions,
+                transcript_backed=transcript_backed,
+            )
+            enriched_analyses.append(
+                replace(
+                    analysis,
+                    evidence_bullets=evidence_bullets,
+                    reasoning_strength=reasoning_strength,
+                    reasoning_strength_summary=reasoning_strength_summary,
+                    video_context_summary=analysis.video_context_summary or build_stock_context_summary(
+                        evidence_bullets,
+                        analysis.thesis_summary,
+                    ),
+                )
+            )
+        analyses = enriched_analyses
+
+        video_summary = (
+            build_video_summary(video.title, analysis_text)
+            if transcript_backed
+            else INSUFFICIENT_TRANSCRIPT_REASON
+        )
+
         self.transcript_cache.save(
             video=video,
             transcript_text=analysis_text,
@@ -134,8 +189,12 @@ class OMXPipeline:
             macro_insights=macro_insights,
             market_review=market_review,
             expert_insights=expert_insights,
+            transcript_backed=transcript_backed,
+            source_quality_note=source_quality_note,
+            video_summary=video_summary,
         )
-        return report, save_report(report, self.output_dir)
+        paths = save_report(report, self.output_dir) if persist else None
+        return report, paths
 
     def _resolve_transcript(self, video) -> tuple[str, str, str]:
         """Resolve transcript text from cache, live fetch, or metadata fallback."""
@@ -146,16 +205,27 @@ class OMXPipeline:
         video = self.resolver.resolve_video(url_or_id)
         return self._analyze_resolved_video(video)
 
-    def _analyze_batch(self, videos, max_workers: int | None = None):
+    def analyze_resolved_video(self, video, *, persist: bool = True):
+        return self._analyze_resolved_video(video, persist=persist)
+
+    def _dispatch_analyze_resolved_video(self, video, *, persist: bool):
+        try:
+            return self._analyze_resolved_video(video, persist=persist)
+        except TypeError as exc:
+            if "persist" not in str(exc):
+                raise
+            return self._analyze_resolved_video(video)
+
+    def _analyze_batch(self, videos, max_workers: int | None = None, *, persist: bool = True):
         """Analyze a batch of videos with optional parallelism."""
         if len(videos) <= 1 or max_workers == 1:
-            return [self._analyze_resolved_video(video) for video in videos]
+            return [self._dispatch_analyze_resolved_video(video, persist=persist) for video in videos]
 
         workers = min(max_workers or 4, len(videos))
         results = [None] * len(videos)
         with ThreadPoolExecutor(max_workers=workers) as pool:
             future_to_idx = {
-                pool.submit(self._analyze_resolved_video, video): idx
+                pool.submit(self._dispatch_analyze_resolved_video, video, persist=persist): idx
                 for idx, video in enumerate(videos)
             }
             for future in as_completed(future_to_idx):
@@ -183,3 +253,6 @@ class OMXPipeline:
             dashboard_path = save_combined_dashboard(reports, self.output_dir, label="channel_dashboard")
             logger.info("Combined dashboard saved to %s", dashboard_path)
         return results
+
+    def analyze_resolved_videos(self, videos, max_workers: int | None = None, *, persist: bool = True):
+        return self._analyze_batch(videos, max_workers=max_workers, persist=persist)

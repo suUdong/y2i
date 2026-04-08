@@ -39,12 +39,68 @@ def render_markdown(report: VideoAnalysisReport) -> str:
         f"- Mode: `{report.mode}`",
         f"- Video: {report.video.url}",
         f"- Transcript Language: {report.transcript_language or 'unknown'}",
+        f"- Transcript Backed: `{report.transcript_backed}`",
         f"- Signal Class: `{report.signal_assessment.video_signal_class}` ({report.signal_assessment.signal_score:.1f})",
         f"- Should Analyze Stocks: `{report.signal_assessment.should_analyze_stocks}`",
         f"- Signal Reason: {report.signal_assessment.reason}",
         "",
-        "## 추출 종목",
+        "## 영상 핵심 요약",
+        "",
+        report.video_summary or "요약 없음",
+        "",
     ]
+    if report.source_quality_note:
+        lines.extend(
+            [
+                "> 소스 품질 경고",
+                f"> {report.source_quality_note}",
+                "",
+            ]
+        )
+
+    if report.macro_insights:
+        lines.extend(
+            [
+                "## 매크로 관찰",
+                "",
+                "| 지표 | 방향 | 센티먼트 | 신뢰도 | 수혜 섹터 |",
+                "|---|---|---|---:|---|",
+            ]
+        )
+        for insight in report.macro_insights:
+            sectors = ", ".join(insight.beneficiary_sectors[:3]) if insight.beneficiary_sectors else "-"
+            lines.append(
+                f"| {insight.label} | {insight.direction} | {insight.sentiment} | {insight.confidence:.2f} | {sectors} |"
+            )
+        lines.append("")
+
+    if report.expert_insights:
+        lines.extend(["## 전문가 인사이트", ""])
+        for insight in report.expert_insights:
+            lines.append(f"### {insight.expert_name} ({insight.affiliation or '소속 미상'})")
+            lines.append("")
+            lines.append(f"- 주제: {insight.topic or '-'}")
+            lines.append(f"- 톤: {insight.sentiment}")
+            if insight.summary:
+                lines.append(f"- 요약: {insight.summary}")
+            claims = insight.structured_claims or []
+            if claims:
+                lines.append("")
+                lines.append("| 주장 | 방향 | 확신 | 근거 |")
+                lines.append("|---|---|---:|---|")
+                for claim in claims[:5]:
+                    evidence = ", ".join(claim.evidence[:2]) if claim.evidence else "-"
+                    lines.append(f"| {claim.claim} | {claim.direction} | {claim.confidence:.2f} | {evidence} |")
+                    if claim.reasoning:
+                        lines.append(f"| ↳ reasoning | - | - | {claim.reasoning} |")
+            elif insight.key_claims:
+                for claim in insight.key_claims[:5]:
+                    lines.append(f"- {claim}")
+            lines.append("")
+
+    lines.extend([
+        "## 추출 종목",
+    ])
     for mention in report.ticker_mentions:
         lines.extend(
             [
@@ -56,6 +112,7 @@ def render_markdown(report: VideoAnalysisReport) -> str:
     lines.append("")
     lines.append("## 종목별 분석")
     for stock in report.stock_analyses:
+        evidence_lines = [f"- {item}" for item in stock.evidence_bullets] or ["- 근거 문장 없음"]
         lines.extend(
             [
                 f"### {stock.ticker} - {stock.final_verdict} ({stock.total_score:.1f}/{stock.max_score:.1f})",
@@ -65,7 +122,13 @@ def render_markdown(report: VideoAnalysisReport) -> str:
                 f"- 기본 평가: {stock.basic_signal_verdict}",
                 f"- 기본 요약: {stock.basic_signal_summary}",
                 f"- Thesis: {stock.thesis_summary}",
+                f"- 근거 강도: {stock.reasoning_strength} | {stock.reasoning_strength_summary or '-'}",
+                f"- 영상 문맥 요약: {stock.video_context_summary or '-'}",
                 f"- Invalidation: {', '.join(stock.invalidation_triggers) if stock.invalidation_triggers else '-'}",
+                "",
+                "#### 영상 근거",
+                "",
+                *evidence_lines,
                 "",
                 "#### 현재 기본 지표",
                 "",
@@ -94,18 +157,50 @@ def render_text(report: VideoAnalysisReport) -> str:
         f"Provider: {report.provider}",
         f"Mode: {report.mode}",
         f"Video: {report.video.url}",
+        f"Transcript Backed: {report.transcript_backed}",
         f"Signal: {report.signal_assessment.video_signal_class} ({report.signal_assessment.signal_score:.1f})",
         f"Signal analyze flag: {report.signal_assessment.should_analyze_stocks}",
         f"Signal reason: {report.signal_assessment.reason}",
         "",
-        "[추출 종목]",
+        "[영상 핵심 요약]",
+        report.video_summary or "요약 없음",
     ]
+    if report.source_quality_note:
+        lines.extend(["", f"소스 품질 경고: {report.source_quality_note}"])
+    if report.macro_insights:
+        lines.extend(["", "[매크로 관찰]"])
+        for insight in report.macro_insights:
+            sectors = ", ".join(insight.beneficiary_sectors[:3]) if insight.beneficiary_sectors else "-"
+            lines.append(
+                f"- {insight.label} | 방향 {insight.direction} | 톤 {insight.sentiment} | 신뢰도 {insight.confidence:.2f} | 수혜섹터 {sectors}"
+            )
+    if report.expert_insights:
+        lines.extend(["", "[전문가 인사이트]"])
+        for insight in report.expert_insights:
+            lines.append(f"- {insight.expert_name} ({insight.affiliation or '소속 미상'}) | 주제 {insight.topic or '-'} | 톤 {insight.sentiment}")
+            if insight.summary:
+                lines.append(f"  요약: {insight.summary}")
+            claims = insight.structured_claims or []
+            if claims:
+                for claim in claims[:5]:
+                    evidence = ", ".join(claim.evidence[:2]) if claim.evidence else "-"
+                    lines.append(f"  주장: {claim.claim} | 방향 {claim.direction} | 확신 {claim.confidence:.2f} | 근거 {evidence}")
+                    if claim.reasoning:
+                        lines.append(f"  reasoning: {claim.reasoning}")
+            else:
+                for claim in insight.key_claims[:5]:
+                    lines.append(f"  주장: {claim}")
+    lines.extend([
+        "",
+        "[추출 종목]",
+    ])
     for mention in report.ticker_mentions:
         lines.append(f"- {mention.ticker} ({mention.company_name or 'unknown'}) conf={mention.confidence:.2f} | {mention.reason}")
     lines.append("")
     lines.append("[종목별 결과]")
     for stock in report.stock_analyses:
         invalidations = [f"- {item}" for item in stock.invalidation_triggers] if stock.invalidation_triggers else ["- 없음"]
+        evidence_lines = [f"- {item}" for item in stock.evidence_bullets] or ["- 근거 문장 없음"]
         lines.extend(
             [
                 "",
@@ -115,6 +210,10 @@ def render_text(report: VideoAnalysisReport) -> str:
                 f"기본평가: {stock.basic_signal_verdict}",
                 f"기본지표요약: {stock.basic_signal_summary}",
                 f"투자테제: {stock.thesis_summary}",
+                f"근거 강도: {stock.reasoning_strength} | {stock.reasoning_strength_summary or '-'}",
+                f"영상 문맥 요약: {stock.video_context_summary or '-'}",
+                "영상 근거:",
+                *evidence_lines,
                 "현재 기본 지표:",
                 *render_fundamentals_lines(stock.fundamentals),
                 "가격 타겟:",

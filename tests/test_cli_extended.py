@@ -239,3 +239,121 @@ def test_cli_export_kindshot_feed(monkeypatch, tmp_path, capsys):
     assert payload["signal_count"] == 1
     written = json.loads(output_path.read_text(encoding="utf-8"))
     assert written["signals"][0]["ticker"] == "005930.KS"
+
+
+def test_cli_run_harness(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "omx-brainstorm",
+            "--output-dir",
+            str(tmp_path),
+            "run-harness",
+            "--scenario",
+            "basic",
+        ],
+    )
+
+    main()
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["scenario"] == "basic"
+    assert payload["provider"] == "mock"
+    assert Path(payload["summary_path"]).exists()
+
+
+def test_cli_run_harness_lists_scenarios(monkeypatch, capsys):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "omx-brainstorm",
+            "run-harness",
+            "--list-scenarios",
+        ],
+    )
+
+    main()
+    payload = json.loads(capsys.readouterr().out)
+    scenario_names = {item["name"] for item in payload}
+    assert "basic" in scenario_names
+    assert "metadata_fallback" in scenario_names
+
+
+def test_cli_session_status(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "omx_brainstorm.session_harness.collect_session_status",
+        lambda limit=12: {"git_branch": "feat/codex-harness", "git_status_counts": {"dirty": 3}, "limit": limit},
+    )
+    monkeypatch.setattr(sys, "argv", ["omx-brainstorm", "session-status", "--limit", "7"])
+
+    main()
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["git_branch"] == "feat/codex-harness"
+    assert payload["limit"] == 7
+
+
+def test_cli_session_open(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "omx_brainstorm.session_harness.build_session_open_brief",
+        lambda limit=12: {"startup_focus": "resume now", "must_read": [], "limit": limit},
+    )
+    monkeypatch.setattr(sys, "argv", ["omx-brainstorm", "session-open", "--limit", "6"])
+
+    main()
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["startup_focus"] == "resume now"
+    assert payload["limit"] == 6
+
+
+def test_cli_session_checkpoint(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "omx_brainstorm.session_harness.write_session_checkpoint",
+        lambda **kwargs: {"task": kwargs["task"], "next_step": kwargs["next_step"], "notes": kwargs["notes"]},
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "omx-brainstorm",
+            "session-checkpoint",
+            "--task",
+            "build codex harness",
+            "--next-step",
+            "verify CLI flow",
+            "--note",
+            "keep it resumable",
+        ],
+    )
+
+    main()
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["task"] == "build codex harness"
+    assert payload["next_step"] == "verify CLI flow"
+    assert payload["notes"] == ["keep it resumable"]
+
+
+def test_cli_session_handoff(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "omx_brainstorm.session_harness.write_session_handoff",
+        lambda **kwargs: {"path": kwargs["path"], "status": {"ok": True}},
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "omx-brainstorm",
+            "session-handoff",
+            "--summary",
+            "current progress",
+            "--next-step",
+            "finish verification",
+            "--path",
+            "SESSION_HANDOFF.md",
+        ],
+    )
+
+    main()
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["path"] == "SESSION_HANDOFF.md"
+    assert payload["status"]["ok"] is True

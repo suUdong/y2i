@@ -67,6 +67,7 @@ def extract_expert_insights(
             topic=topic,
             sentiment=sentiment,
             mentioned_tickers=mentioned_tickers[:5],
+            summary=_build_expert_summary(name, claims[:2], topic),
         )
         for name, affiliation in experts
     ]
@@ -204,6 +205,7 @@ Return a JSON object with a "claims" array. Each claim has:
 - "reasoning": why the expert believes this (Korean, 1-2 sentences)
 - "confidence": 0.0-1.0 how confident the expert sounds
 - "direction": "BULLISH", "BEARISH", or "NEUTRAL"
+- "evidence": short direct transcript snippets that support the claim
 Return at most 5 claims. Focus on actionable investment insights.
 """
 
@@ -220,6 +222,7 @@ def extract_expert_claims_llm(provider, title: str, text: str) -> list[Structure
                 reasoning=item.get("reasoning", ""),
                 confidence=float(item.get("confidence", 0.5)),
                 direction=item.get("direction", "NEUTRAL"),
+                evidence=list(item.get("evidence", []) or []),
             ))
         return claims[:5]
     except Exception as exc:
@@ -243,11 +246,21 @@ def extract_expert_insights_with_llm(
         # Fallback: convert heuristic claims into structured format
         for insight in insights:
             insight.structured_claims = [
-                StructuredClaim(claim=c, direction=insight.sentiment)
+                StructuredClaim(claim=c, direction=insight.sentiment, evidence=[c])
                 for c in insight.key_claims[:5]
             ]
     else:
         for insight in insights:
             insight.structured_claims = structured_claims
+            if not insight.summary:
+                insight.summary = _build_expert_summary(insight.expert_name, insight.key_claims[:2], insight.topic)
 
     return insights
+
+
+def _build_expert_summary(name: str, claims: list[str], topic: str) -> str:
+    if claims:
+        return f"{name}는 {topic} 관련해서 {claims[0]}"
+    if topic:
+        return f"{name}의 {topic} 관련 인터뷰"
+    return f"{name}의 인터뷰 핵심 요약"

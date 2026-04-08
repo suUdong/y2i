@@ -75,6 +75,23 @@ retention_days = 3
     assert config.logging.retention_days == 3
 
 
+def test_load_app_config_reads_retention_section(tmp_path):
+    path = tmp_path / "cfg.toml"
+    path.write_text(
+        """
+[retention]
+enabled = true
+output_days = 5
+report_days = 21
+        """.strip(),
+        encoding="utf-8",
+    )
+    config = load_app_config(path)
+    assert config.retention.enabled is True
+    assert config.retention.output_days == 5
+    assert config.retention.report_days == 21
+
+
 def test_load_app_config_reads_scheduler_extensions(tmp_path):
     path = tmp_path / "cfg.toml"
     path.write_text(
@@ -126,6 +143,16 @@ def test_load_app_config_env_overrides_logging(tmp_path, monkeypatch):
     config = load_app_config(path)
     assert config.logging.json is True
     assert config.logging.retention_days == 9
+
+
+def test_load_app_config_env_overrides_retention(tmp_path, monkeypatch):
+    path = tmp_path / "cfg.toml"
+    path.write_text("[retention]\noutput_days = 10\nreport_days = 20", encoding="utf-8")
+    monkeypatch.setenv("OMX_OUTPUT_RETENTION_DAYS", "3")
+    monkeypatch.setenv("OMX_REPORT_RETENTION_DAYS", "7")
+    config = load_app_config(path)
+    assert config.retention.output_days == 3
+    assert config.retention.report_days == 7
 
 
 def test_load_app_config_reads_adjacent_dotenv(tmp_path, monkeypatch):

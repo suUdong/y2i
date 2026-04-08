@@ -1,12 +1,15 @@
 """Extended tests for youtube.py: resolver, fetcher, parse helpers."""
 from dataclasses import asdict
 from datetime import date
+import logging
 from unittest.mock import MagicMock, patch
 
 from youtube_transcript_api import RequestBlocked
 from yt_dlp import DownloadError
 
 from omx_brainstorm.models import TranscriptSegment, VideoInput
+from omx_brainstorm.transcript_cache import TranscriptCache
+from omx_brainstorm.transcript_runtime import resolve_transcript_text
 from omx_brainstorm.youtube import (
     ChannelRegistry,
     YoutubeResolver,
@@ -616,3 +619,103 @@ def test_transcript_fetcher_retries_timeout_error(monkeypatch):
     assert language == "ko"
     assert calls["count"] == 2
     assert sleeps == [2.0]
+
+
+def test_transcript_fetcher_uses_ytdlp_auto_captions_fallback(monkeypatch):
+    class FakeApi:
+        def fetch(self, video_id, languages):
+            raise RequestBlocked(video_id)
+
+    class FakeResponse:
+        text = """WEBVTT
+
+00:00:00.000 --> 00:00:02.000
+엔비디아가 아직 더 갈 수 있다
+
+00:00:02.000 --> 00:00:04.000
+데이터센터 수요가 강하다
+"""
+
+        def raise_for_status(self):
+            return None
+
+    class FakeYDL:
+        def __init__(self, opts):
+            self.opts = opts
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def extract_info(self, url, download=False):
+            return {
+                "automatic_captions": {
+                    "ko": [
+                        {"ext": "vtt", "url": "https://example.com/captions.ko.vtt"},
+                    ]
+                }
+            }
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda: FakeApi())
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+    monkeypatch.setattr("omx_brainstorm.youtube.requests.get", lambda url, timeout=20: FakeResponse())
+
+    fetcher = TranscriptFetcher()
+    segments, language, source = fetcher.fetch_with_source("dQw4w9WgXcQ")
+
+    assert [segment.text for segment in segments] == ["엔비디아가 아직 더 갈 수 있다", "데이터센터 수요가 강하다"]
+    assert language == "ko"
+    assert source == "yt_dlp_auto_captions"
+
+
+def test_resolve_transcript_text_uses_ytdlp_source(monkeypatch, tmp_path):
+    class FakeApi:
+        def fetch(self, video_id, languages):
+            raise RequestBlocked(video_id)
+
+    class FakeResponse:
+        text = """WEBVTT
+
+00:00:00.000 --> 00:00:02.000
+엔비디아가 아직 더 갈 수 있다
+"""
+
+        def raise_for_status(self):
+            return None
+
+    class FakeYDL:
+        def __init__(self, opts):
+            self.opts = opts
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def extract_info(self, url, download=False):
+            return {
+                "subtitles": {
+                    "ko": [
+                        {"ext": "vtt", "url": "https://example.com/subtitles.ko.vtt"},
+                    ]
+                }
+            }
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda: FakeApi())
+    monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
+    monkeypatch.setattr("omx_brainstorm.youtube.requests.get", lambda url, timeout=20: FakeResponse())
+
+    fetcher = TranscriptFetcher()
+    cache = TranscriptCache(tmp_path / "cache")
+    video = VideoInput(video_id="abc123def45", title="제목", url="https://youtube.com/watch?v=abc123def45")
+
+    text, language, source, cached = resolve_transcript_text(video, cache, fetcher, logging.getLogger(__name__))
+
+    assert "엔비디아" in text
+    assert language == "ko"
+    assert source == "yt_dlp_subtitles"
+    assert cached is not None
+    assert cached["source"] == "yt_dlp_subtitles"

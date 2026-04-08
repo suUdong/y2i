@@ -83,6 +83,32 @@ def build_parser() -> argparse.ArgumentParser:
     p_backtest_report.add_argument("--top-filters", type=int, default=10)
     p_backtest_report.add_argument("--min-filter-sample", type=int, default=3)
 
+    p_session_status = sub.add_parser("session-status", help="Inspect Codex session state, worktree drift, and handoff freshness")
+    p_session_status.add_argument("--limit", type=int, default=12)
+
+    p_session_open = sub.add_parser("session-open", help="Build a start-of-session brief from status, checkpoint, and handoff")
+    p_session_open.add_argument("--limit", type=int, default=12)
+
+    p_session_checkpoint = sub.add_parser("session-checkpoint", help="Persist the current Codex work slice and exact next step")
+    p_session_checkpoint.add_argument("--task", required=True)
+    p_session_checkpoint.add_argument("--next-step", required=True)
+    p_session_checkpoint.add_argument("--verification", action="append", default=[])
+    p_session_checkpoint.add_argument("--note", action="append", default=[])
+    p_session_checkpoint.add_argument("--scope", action="append", default=[])
+
+    p_session_handoff = sub.add_parser("session-handoff", help="Write a resumable SESSION_HANDOFF.md from the current Codex state")
+    p_session_handoff.add_argument("--summary", required=True)
+    p_session_handoff.add_argument("--next-step", required=True)
+    p_session_handoff.add_argument("--decision", action="append", default=[])
+    p_session_handoff.add_argument("--blocker", action="append", default=[])
+    p_session_handoff.add_argument("--output", action="append", default=[])
+    p_session_handoff.add_argument("--verification", action="append", default=[])
+    p_session_handoff.add_argument("--path", default="SESSION_HANDOFF.md")
+
+    p_harness = sub.add_parser("run-harness", help="Run an offline smoke harness against the refactored analysis flow")
+    p_harness.add_argument("--scenario", default="basic")
+    p_harness.add_argument("--list-scenarios", action="store_true")
+
     p_all = sub.add_parser("analyze-all", help="Analyze all enabled channels from config")
     p_all.add_argument("--config", default="config.toml")
     p_all.add_argument("--limit", type=int, default=3, help="Videos per channel")
@@ -106,6 +132,9 @@ def _report_summary(report, paths) -> dict:
         "macro_insights_count": len(report.macro_insights),
         "expert_insights_count": len(report.expert_insights),
         "has_market_review": report.market_review is not None,
+        "transcript_backed": report.transcript_backed,
+        "source_quality_note": report.source_quality_note,
+        "video_summary": report.video_summary,
         "json_path": str(paths[0]),
         "markdown_path": str(paths[1]),
         "text_path": str(paths[2]),
@@ -256,16 +285,75 @@ def main() -> None:
             print(json.dumps(payload, ensure_ascii=False, indent=2))
             return
 
+        if args.command == "session-status":
+            from .session_harness import collect_session_status
+
+            payload = collect_session_status(limit=args.limit)
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "session-open":
+            from .session_harness import build_session_open_brief
+
+            payload = build_session_open_brief(limit=args.limit)
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "session-checkpoint":
+            from .session_harness import write_session_checkpoint
+
+            payload = write_session_checkpoint(
+                task=args.task,
+                next_step=args.next_step,
+                verification=args.verification,
+                notes=args.note,
+                scope=args.scope,
+            )
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "session-handoff":
+            from .session_harness import write_session_handoff
+
+            payload = write_session_handoff(
+                summary=args.summary,
+                next_step=args.next_step,
+                decisions=args.decision,
+                blockers=args.blocker,
+                outputs=args.output,
+                verification=args.verification,
+                path=args.path,
+            )
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return
+
+        if args.command == "run-harness":
+            from .harness import describe_harness_scenarios, run_harness
+
+            if args.list_scenarios:
+                print(json.dumps(describe_harness_scenarios(), ensure_ascii=False, indent=2))
+                return
+            provider_name = "mock" if args.provider == "auto" else args.provider
+            payload = run_harness(
+                output_dir=args.output_dir,
+                scenario=args.scenario,
+                provider_name=provider_name,
+            )
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return
+
         if args.command == "analyze-channel-30d":
             from datetime import date, timezone as tz
+            from .analysis_rows import analyze_resolved_videos_to_reports
+            from .artifact_cleanup import cleanup_generated_artifacts
+            from .comparison_rows import reports_to_comparison_rows
             from .comparison import RunContext, quality_scorecard, save_channel_artifacts
             from .evaluation import ranking_validation
-            from .fundamentals import FundamentalsFetcher
-            from .heuristic_pipeline import analyze_video_heuristic, render_heuristic_dashboard
             from .master_engine import validate_cross_stock_master_quality
+            from .output_layout import build_run_output_dir
+            from .reporting import save_combined_dashboard
             from .research import build_cross_video_ranking
             from .transcript_cache import TranscriptCache
-            from .youtube import TranscriptFetcher
 
             config = load_app_config(args.config)
             configure_logging(verbose=args.verbose, json_logs=config.logging.json, log_dir=config.logging.log_dir, retention_days=config.logging.retention_days)
@@ -277,15 +365,21 @@ def main() -> None:
             videos = resolver.resolve_channel_videos_since(channel.url, days=args.days)
             cache = TranscriptCache()
             cache.warm_from_output_dir(Path(args.output_dir))
-            fetcher = TranscriptFetcher()
-            fundamentals = FundamentalsFetcher()
-            rows = [analyze_video_heuristic(video, cache, fetcher, fundamentals) for video in videos]
+            reports = analyze_resolved_videos_to_reports(
+                videos,
+                config=config,
+                transcript_cache=cache,
+                output_dir=Path(args.output_dir),
+                persist=False,
+            )
+            rows = reports_to_comparison_rows(reports)
             validate_cross_stock_master_quality([stock for row in rows for stock in row["stocks"]])
             ranking = build_cross_video_ranking(rows)
+            run_id = datetime.now(tz.utc).strftime("%Y%m%dT%H%M%SZ")
             context = RunContext(
-                run_id=datetime.now(tz.utc).strftime("%Y%m%dT%H%M%SZ"),
+                run_id=run_id,
                 today=date.today().isoformat(),
-                output_dir=Path(args.output_dir),
+                output_dir=build_run_output_dir(args.output_dir, run_id),
                 window_days=args.days,
             )
             validation = ranking_validation(ranking, context.today)
@@ -294,7 +388,16 @@ def main() -> None:
                 channel.slug, channel.display_name, channel.url,
                 rows, ranking, validation, scorecard, context,
             )
-            dashboard_path = render_heuristic_dashboard(rows, Path(args.output_dir), label=f"{channel.slug}_30d_dashboard")
+            dashboard_path = save_combined_dashboard(reports, Path(args.output_dir), label=f"{channel.slug}_30d_dashboard") if reports else None
+            if config.retention.enabled:
+                cleanup_generated_artifacts(
+                    output_dir=Path(args.output_dir),
+                    report_dir=Path(args.output_dir).parent / "reports",
+                    log_dir=Path(config.logging.log_dir),
+                    output_days=config.retention.output_days,
+                    report_days=config.retention.report_days,
+                    log_days=config.logging.retention_days,
+                )
             print(json.dumps({
                 "json_path": str(json_path),
                 "txt_path": str(txt_path),

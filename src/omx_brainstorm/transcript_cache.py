@@ -126,7 +126,7 @@ class TranscriptCache:
 
     def warm_from_output_dir(self, output_dir: Path) -> int:
         count = 0
-        for artifact_path in sorted(output_dir.glob("*.json")):
+        for artifact_path in sorted(output_dir.rglob("*.json")):
             if self.warm_from_report_artifact(artifact_path):
                 count += 1
         return count

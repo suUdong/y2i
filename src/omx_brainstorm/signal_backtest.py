@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .analysis_rows import analyze_resolved_videos_to_rows
 from .app_config import AppConfig, load_app_config
 from .channel_quality import compute_channel_quality, compute_dynamic_weights, rank_channels
 from .comparison import quality_scorecard, summarize_channel_run
 from .evaluation import ranking_spearman, ranking_validation
-from .fundamentals import FundamentalsFetcher
-from .heuristic_pipeline import analyze_video_heuristic
+from .output_layout import build_run_output_dir
 from .research import build_cross_video_ranking
 from .signal_tracker import (
     SignalTrackerDB,
@@ -33,6 +32,9 @@ class _CacheOnlyTranscriptFetcher(TranscriptFetcher):
     def fetch(self, video_id: str, preferred_languages=None):  # type: ignore[override]
         raise RuntimeError(f"cache-only historical backfill for {video_id}")
 
+    def fetch_with_source(self, video_id: str, preferred_languages=None):  # type: ignore[override]
+        raise RuntimeError(f"cache-only historical backfill for {video_id}")
+
 
 def run_signal_backtest_workflow(
     *,
@@ -47,6 +49,7 @@ def run_signal_backtest_workflow(
     config = load_app_config(config_path)
     resolved_output_dir = Path(output_dir or config.output_dir)
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    run_output_dir = build_run_output_dir(resolved_output_dir, run_id)
     tracker_db = SignalTrackerDB(Path(tracker_db_path))
 
     channel_metadata, backfill_stats = backfill_signal_tracker(
@@ -62,7 +65,7 @@ def run_signal_backtest_workflow(
         min_filter_sample=min_filter_sample,
     )
     summary["backfill"] = backfill_stats
-    json_path, txt_path = save_signal_backtest_report(summary, resolved_output_dir, run_id)
+    json_path, txt_path = save_signal_backtest_report(summary, run_output_dir, run_id)
     return {
         "generated_at": summary.get("generated_at", run_id),
         "tracker_db": str(Path(tracker_db_path)),
@@ -87,7 +90,6 @@ def backfill_signal_tracker(
     output_dir.mkdir(parents=True, exist_ok=True)
     resolver = YoutubeResolver()
     fetcher = _CacheOnlyTranscriptFetcher()
-    fundamentals = FundamentalsFetcher()
     history_provider = None
     cache = TranscriptCache()
     cache.warm_from_output_dir(output_dir)
@@ -112,7 +114,6 @@ def backfill_signal_tracker(
                 videos,
                 cache=cache,
                 fetcher=fetcher,
-                fundamentals=fundamentals,
                 config=config,
             )
             total_videos_analyzed += len(rows)
@@ -157,32 +158,20 @@ def _analyze_videos(
     *,
     cache: TranscriptCache,
     fetcher: TranscriptFetcher,
-    fundamentals: FundamentalsFetcher,
     config: AppConfig,
 ) -> list[dict[str, Any]]:
-    if not videos:
+    try:
+        return analyze_resolved_videos_to_rows(
+            videos,
+            config=config,
+            transcript_cache=cache,
+            fetcher=fetcher,
+            output_dir=Path(config.output_dir),
+            persist=False,
+        )
+    except Exception as exc:
+        logger.warning("Historical batch analysis failed: %s", exc)
         return []
-    workers = max(1, min(len(videos), int(config.strategy.video_workers)))
-    results: list[dict[str, Any] | None] = [None] * len(videos)
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        future_to_index = {
-            pool.submit(
-                analyze_video_heuristic,
-                video,
-                cache,
-                fetcher,
-                fundamentals,
-                max_fundamental_workers=config.strategy.fundamentals_workers,
-            ): idx
-            for idx, video in enumerate(videos)
-        }
-        for future in as_completed(future_to_index):
-            idx = future_to_index[future]
-            try:
-                results[idx] = future.result()
-            except Exception as exc:
-                logger.warning("Skipping historical video %s due to analyze failure: %s", videos[idx].video_id, exc)
-    return [row for row in results if row is not None]
 
 
 def _enrich_channel_quality(

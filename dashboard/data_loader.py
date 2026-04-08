@@ -48,7 +48,7 @@ def _parse_timestamp(value: str) -> datetime | None:
 
 def _latest_file(output_dir: Path, pattern: str) -> Path | None:
     """Return the most recently modified file matching *pattern*, or None."""
-    matches = sorted(output_dir.glob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
+    matches = sorted(output_dir.rglob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
     return matches[0] if matches else None
 
 
@@ -57,6 +57,9 @@ def _file_for_run(output_dir: Path, pattern: str, run_id: str | None) -> Path | 
         exact = output_dir / pattern.format(run_id=run_id)
         if exact.exists():
             return exact
+        exact_matches = sorted(output_dir.rglob(pattern.format(run_id=run_id)), key=lambda p: p.stat().st_mtime, reverse=True)
+        if exact_matches:
+            return exact_matches[0]
     return _latest_file(output_dir, pattern.format(run_id="*"))
 
 
@@ -69,7 +72,7 @@ def _load_json(path: Path | None) -> dict[str, Any] | list[Any]:
 
 def _latest_channel_result_paths(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, str]:
     latest_paths: dict[str, tuple[str, str]] = {}
-    for path in output_dir.glob("*_30d_*.json"):
+    for path in output_dir.rglob("*_30d_*.json"):
         if path.stem.startswith("channel_comparison"):
             continue
         slug, run_id = path.stem.split("_30d_", 1)
@@ -379,7 +382,7 @@ def load_all_video_titles(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, An
     merged_titles: list[dict[str, Any]] = []
     channels: list[dict[str, str]] = []
 
-    for path in sorted(output_dir.glob("*_video_titles.json")):
+    for path in sorted(output_dir.rglob("*_video_titles.json")):
         data = _load_json(path)
         if not isinstance(data, dict):
             continue
@@ -409,7 +412,7 @@ def load_all_video_titles(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, An
 def load_video_reports(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[dict[str, Any]]:
     """Load all individual video analysis report JSONs (hash-based filenames)."""
     reports = []
-    for p in sorted(output_dir.glob("*_*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
+    for p in sorted(output_dir.rglob("*_*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
         name = p.stem
         # Skip channel-level / comparison / title files
         if any(tag in name for tag in ("30d_", "comparison", "titles", "integration", "results_", "PIPELINE")):
@@ -667,7 +670,7 @@ def get_available_channels(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[str]:
 @st.cache_data(ttl=60, show_spinner=False)
 def get_last_update_time(output_dir: Path = DEFAULT_OUTPUT_DIR) -> datetime | None:
     """Return the mtime of the most recently modified JSON in output_dir."""
-    jsons = list(output_dir.glob("*.json"))
+    jsons = list(output_dir.rglob("*.json"))
     if not jsons:
         return None
     latest = max(jsons, key=lambda p: p.stat().st_mtime)
@@ -685,7 +688,7 @@ def get_recent_videos(
     cutoff = datetime.now(tz=timezone.utc).timestamp() - hours * 3600
     recent: list[dict[str, Any]] = []
     latest_paths: dict[str, tuple[str, Path]] = {}
-    for p in output_dir.glob("*_30d_*.json"):
+    for p in output_dir.rglob("*_30d_*.json"):
         if p.stem.startswith("channel_comparison"):
             continue
         slug, run_id = p.stem.split("_30d_", 1)

@@ -301,6 +301,22 @@ class TestLoad30dResults:
         data = load_30d_results("sampro", tmp_output, preferred_run_id="20260323T094413Z")
         assert data["generated_at"] == "20260323T094413Z"
 
+    def test_loads_nested_run_artifact(self, tmp_output: Path):
+        nested = tmp_output / "runs" / "20260324" / "20260324T000000Z"
+        nested.mkdir(parents=True)
+        payload = {
+            "channel_slug": "sampro",
+            "channel_name": "Nested Channel",
+            "generated_at": "20260324T000000Z",
+            "window_days": 30,
+            "videos": [],
+            "cross_video_ranking": [],
+            "quality_scorecard": {"overall": 0.0},
+        }
+        (nested / "sampro_30d_20260324T000000Z.json").write_text(json.dumps(payload), encoding="utf-8")
+        data = load_30d_results("sampro", tmp_output, preferred_run_id="20260324T000000Z")
+        assert data["generated_at"] == "20260324T000000Z"
+
 
 # ── load_channel_comparison ──────────────────────────────────────────────────
 

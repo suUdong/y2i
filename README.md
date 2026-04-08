@@ -54,11 +54,76 @@ omx-brainstorm backtest-ranked output/itgod_30d_*.json --start-date 2026-03-01 -
 omx-brainstorm backtest-artifact output/itgod_30d_20260323T005353Z.json
 omx-brainstorm run-comparison --config config.toml
 omx-brainstorm signal-backtest-report --config config.toml --lookback-days 90
+omx-brainstorm session-open
+omx-brainstorm session-status
+omx-brainstorm session-checkpoint --task "..." --next-step "..."
+omx-brainstorm session-handoff --summary "..." --next-step "..."
+omx-brainstorm run-harness --list-scenarios
+omx-brainstorm run-harness --scenario basic
 omx-brainstorm run-scheduler --config config.toml --once
 omx-brainstorm run-healthcheck
 ```
 
 `--verbose`를 붙이면 로깅이 더 자세해진다.
+
+## 오프라인 하네스
+네트워크 없이 오늘 구조를 끝까지 태우는 smoke harness를 제공한다.
+
+시나리오 목록:
+```bash
+omx-brainstorm run-harness --list-scenarios
+```
+
+기본 시나리오 실행:
+```bash
+omx-brainstorm run-harness --scenario basic
+```
+
+생성 산출물:
+- `output/harness/runs/<YYYYMMDD>/<run_id>/basic_summary.json`
+- `output/harness/runs/<YYYYMMDD>/<run_id>/basic_ranking.json`
+- `output/harness/runs/<YYYYMMDD>/<run_id>/*_{json,md,txt}`
+
+용도:
+- 리팩토링 직후 분석 경로 smoke test
+- transcript-backed / metadata-fallback 경로 회귀 확인
+- ranking/dashboard 산출물 shape 확인
+
+## 세션 하네스
+기능 하네스와 별도로, Codex 작업 자체를 안정적으로 이어가기 위한 프로세스 하네스를 제공한다.
+
+상태 확인:
+```bash
+omx-brainstorm session-status
+```
+
+세션 시작 preflight:
+```bash
+omx-brainstorm session-open
+```
+
+현재 작업 slice 체크포인트 저장:
+```bash
+omx-brainstorm session-checkpoint \
+  --task "codex process harness" \
+  --next-step "session-handoff 연결 검증" \
+  --note "세션 재개 지점을 명시적으로 남긴다."
+```
+
+핸드오프 파일 갱신:
+```bash
+omx-brainstorm session-handoff \
+  --summary "현재까지 진행한 작업 요약" \
+  --next-step "다음 세션 첫 액션" \
+  --decision "상태/체크포인트/핸드오프를 분리" \
+  --verification "pytest -q"
+```
+
+용도:
+- 세션 시작 시 읽어야 할 파일, 경고, resume 액션, startup focus를 한 번에 확인
+- 세션 시작 시 현재 branch/worktree/handoff stale 여부를 즉시 확인
+- 작업 중 현재 slice와 exact next step을 `.omx/state/codex_harness.json`에 저장
+- 세션 종료 시 `SESSION_HANDOFF.md`를 현재 상태 기반으로 재생성
 
 ## 채널 추가
 1. `omx-brainstorm register-channel <url>`

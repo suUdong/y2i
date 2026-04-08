@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+import json
 import logging
 import re
 import time
@@ -11,6 +12,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Any, Callable, Iterable
 
+import requests
 from youtube_transcript_api import IpBlocked, RequestBlocked, YouTubeTranscriptApi
 from yt_dlp import DownloadError, YoutubeDL
 
@@ -395,13 +397,26 @@ class YoutubeResolver:
 
 class TranscriptFetcher:
     def fetch(self, video_id: str, preferred_languages: Iterable[str] | None = None) -> tuple[list[TranscriptSegment], str | None]:
+        segments, language, _source = self.fetch_with_source(video_id, preferred_languages=preferred_languages)
+        return segments, language
+
+    def fetch_with_source(
+        self,
+        video_id: str,
+        preferred_languages: Iterable[str] | None = None,
+    ) -> tuple[list[TranscriptSegment], str | None, str]:
         preferred_languages = list(preferred_languages or ["ko", "en"])
         api = YouTubeTranscriptApi()
-        fetched = _call_with_retry(
-            lambda: api.fetch(video_id, languages=preferred_languages),
-            context=f"transcript fetch for {video_id}",
-            is_retryable=_is_retryable_transcript_error,
-        )
+        try:
+            fetched = _call_with_retry(
+                lambda: api.fetch(video_id, languages=preferred_languages),
+                context=f"transcript fetch for {video_id}",
+                is_retryable=_is_retryable_transcript_error,
+            )
+        except Exception as exc:
+            logger.warning("Transcript API fetch failed for %s: %s; trying yt-dlp subtitles", video_id, describe_youtube_error(exc))
+            return self._fetch_from_ytdlp(video_id, preferred_languages)
+
         segments = [
             TranscriptSegment(start=item.start, duration=item.duration, text=normalize_ws(item.text))
             for item in fetched
@@ -410,11 +425,161 @@ class TranscriptFetcher:
         if not segments:
             raise ValueError(f"Transcript fetch returned no non-empty segments for {video_id}")
         language = getattr(fetched, "language_code", None)
-        return segments, language
+        return segments, language, "transcript_api"
 
     @staticmethod
     def join_segments(segments: list[TranscriptSegment]) -> str:
         return " ".join(segment.text for segment in segments)
+
+    def _fetch_from_ytdlp(
+        self,
+        video_id: str,
+        preferred_languages: list[str],
+    ) -> tuple[list[TranscriptSegment], str | None, str]:
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        info = _call_with_retry(
+            lambda: self._extract_subtitle_info(url, preferred_languages),
+            context=f"yt-dlp subtitle fetch for {video_id}",
+            is_retryable=_is_retryable_ytdlp_error,
+        )
+        subtitle = _select_subtitle_track(info, preferred_languages)
+        if subtitle is None:
+            raise ValueError(f"yt-dlp subtitle fallback unavailable for {video_id}")
+        payload = requests.get(subtitle["url"], timeout=20)
+        payload.raise_for_status()
+        if subtitle["ext"] == "json3":
+            segments = _parse_json3_segments(payload.text)
+        else:
+            segments = _parse_vtt_segments(payload.text)
+        if not segments:
+            raise ValueError(f"yt-dlp subtitle fallback returned no segments for {video_id}")
+        return segments, subtitle["language"], subtitle["source"]
+
+    @staticmethod
+    def _extract_subtitle_info(target_url: str, preferred_languages: list[str]) -> dict[str, Any]:
+        opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,
+            "extract_flat": False,
+            "subtitleslangs": preferred_languages,
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+        }
+        with YoutubeDL(opts) as ydl:
+            return ydl.extract_info(target_url, download=False)
+
+
+def _select_subtitle_track(info: dict[str, Any], preferred_languages: list[str]) -> dict[str, str] | None:
+    sources = (
+        ("subtitles", info.get("subtitles") or {}, "yt_dlp_subtitles"),
+        ("automatic_captions", info.get("automatic_captions") or {}, "yt_dlp_auto_captions"),
+    )
+    for _label, tracks, source_name in sources:
+        if not isinstance(tracks, dict):
+            continue
+        for language in _subtitle_language_candidates(preferred_languages, tracks):
+            formats = tracks.get(language) or []
+            selected = _select_subtitle_format(formats)
+            if selected is None:
+                continue
+            return {
+                "url": str(selected["url"]),
+                "ext": str(selected.get("ext") or "vtt").lower(),
+                "language": language,
+                "source": source_name,
+            }
+    return None
+
+
+def _subtitle_language_candidates(preferred_languages: list[str], tracks: dict[str, Any]) -> list[str]:
+    keys = list(tracks)
+    ranked: list[str] = []
+    for preferred in preferred_languages:
+        pref = preferred.lower()
+        ranked.extend(
+            key for key in keys
+            if key.lower() == pref or key.lower().startswith(f"{pref}-") or key.lower().endswith(f".{pref}")
+        )
+    ranked.extend(keys)
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for key in ranked:
+        if key not in seen:
+            seen.add(key)
+            deduped.append(key)
+    return deduped
+
+
+def _select_subtitle_format(formats: list[dict[str, Any]]) -> dict[str, Any] | None:
+    priorities = {"json3": 0, "srv3": 1, "vtt": 2, "ttml": 3}
+    candidates = [
+        item for item in formats
+        if isinstance(item, dict) and item.get("url")
+    ]
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: priorities.get(str(item.get("ext") or "").lower(), 10))
+    return candidates[0]
+
+
+def _parse_json3_segments(payload: str) -> list[TranscriptSegment]:
+    data = json.loads(payload)
+    events = data.get("events", []) if isinstance(data, dict) else []
+    segments: list[TranscriptSegment] = []
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        text = normalize_ws("".join(seg.get("utf8", "") for seg in event.get("segs", []) if isinstance(seg, dict)))
+        if not text:
+            continue
+        start = float(event.get("tStartMs", 0) or 0) / 1000.0
+        duration = float(event.get("dDurationMs", 0) or 0) / 1000.0
+        segments.append(TranscriptSegment(start=start, duration=duration, text=text))
+    return segments
+
+
+_TIMECODE_RE = re.compile(r"^\d{2}:\d{2}:\d{2}\.\d{3}\s+-->\s+\d{2}:\d{2}:\d{2}\.\d{3}")
+
+
+def _parse_vtt_segments(payload: str) -> list[TranscriptSegment]:
+    segments: list[TranscriptSegment] = []
+    block: list[str] = []
+    start = 0.0
+    duration = 0.0
+    for raw_line in payload.splitlines():
+        line = raw_line.strip("\ufeff").strip()
+        if not line:
+            if block:
+                text = normalize_ws(" ".join(block))
+                if text:
+                    segments.append(TranscriptSegment(start=start, duration=duration, text=text))
+            block = []
+            start = 0.0
+            duration = 0.0
+            continue
+        if line == "WEBVTT" or line.isdigit():
+            continue
+        if _TIMECODE_RE.match(line):
+            start_text, end_text = [item.strip() for item in line.split("-->", 1)]
+            start = _parse_vtt_timecode(start_text)
+            end = _parse_vtt_timecode(end_text)
+            duration = max(0.0, end - start)
+            continue
+        if line.startswith("NOTE"):
+            continue
+        block.append(line)
+    if block:
+        text = normalize_ws(" ".join(block))
+        if text:
+            segments.append(TranscriptSegment(start=start, duration=duration, text=text))
+    return segments
+
+
+def _parse_vtt_timecode(value: str) -> float:
+    hours, minutes, seconds = value.split(":")
+    sec, millis = seconds.split(".")
+    return int(hours) * 3600 + int(minutes) * 60 + int(sec) + int(millis) / 1000.0
 
 
 def _parse_upload_date(value: str | None) -> date | None:
