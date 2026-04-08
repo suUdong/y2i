@@ -22,6 +22,18 @@ from omx_brainstorm.transcript_cache import TranscriptCache
 from omx_brainstorm.youtube import YoutubeResolver
 
 
+def _network_proxy_kwargs(config) -> dict[str, str]:
+    network = getattr(config, "network", None)
+    http_proxy_url = getattr(network, "http_proxy_url", None)
+    https_proxy_url = getattr(network, "https_proxy_url", None)
+    kwargs: dict[str, str] = {}
+    if http_proxy_url:
+        kwargs["http_proxy_url"] = http_proxy_url
+    if https_proxy_url:
+        kwargs["https_proxy_url"] = https_proxy_url
+    return kwargs
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run one configured channel through the current 30-day heuristic pipeline.")
     parser.add_argument("slug")
@@ -36,7 +48,7 @@ def main() -> None:
     configure_logging(verbose=args.verbose, json_logs=config.logging.json, log_dir=config.logging.log_dir, retention_days=config.logging.retention_days)
     channel = next(item for item in config.channels if item.slug == args.slug)
 
-    resolver = YoutubeResolver()
+    resolver = YoutubeResolver(**_network_proxy_kwargs(config))
     videos = resolver.resolve_channel_videos_since(channel.url, days=config.strategy.window_days, reference_date=date.today())
     cache = TranscriptCache()
     cache.warm_from_output_dir(Path(config.output_dir))

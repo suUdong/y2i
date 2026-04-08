@@ -61,6 +61,13 @@ class LoggingConfig:
 
 
 @dataclass(slots=True)
+class NetworkConfig:
+    """Outbound network settings for YouTube and subtitle retrieval."""
+    http_proxy_url: str | None = None
+    https_proxy_url: str | None = None
+
+
+@dataclass(slots=True)
 class RetentionConfig:
     """Retention policy for generated artifacts."""
     enabled: bool = True
@@ -81,6 +88,7 @@ class AppConfig:
     notifications: NotificationConfig = field(default_factory=NotificationConfig)
     schedule: ScheduleConfig = field(default_factory=ScheduleConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
+    network: NetworkConfig = field(default_factory=NetworkConfig)
     retention: RetentionConfig = field(default_factory=RetentionConfig)
 
 
@@ -115,6 +123,7 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
     notifications_payload = payload.get("notifications", {})
     schedule_payload = payload.get("schedule", {})
     logging_payload = payload.get("logging", {})
+    network_payload = payload.get("network", {})
     retention_payload = payload.get("retention", {})
 
     try:
@@ -168,6 +177,18 @@ def load_app_config(path: str | Path | None = None) -> AppConfig:
             log_dir=_env_or_dotenv("OMX_LOG_DIR", dotenv_payload, logging_payload.get("log_dir", ".omx/logs")),
             retention_days=int(_env_or_dotenv("OMX_LOG_RETENTION_DAYS", dotenv_payload, logging_payload.get("retention_days", 7))),
         ),
+        network=NetworkConfig(
+            http_proxy_url=_env_or_dotenv_many(
+                ("OMX_HTTP_PROXY_URL", "OMX_HTTP_PROXY", "OMX_YOUTUBE_PROXY_URL", "OMX_RESIDENTIAL_PROXY_URL"),
+                dotenv_payload,
+                network_payload.get("http_proxy_url"),
+            ),
+            https_proxy_url=_env_or_dotenv_many(
+                ("OMX_HTTPS_PROXY_URL", "OMX_HTTPS_PROXY", "OMX_YOUTUBE_PROXY_URL", "OMX_RESIDENTIAL_PROXY_URL"),
+                dotenv_payload,
+                network_payload.get("https_proxy_url") or network_payload.get("http_proxy_url"),
+            ),
+        ),
         retention=RetentionConfig(
             enabled=_env_or_dotenv_bool("OMX_RETENTION_ENABLED", dotenv_payload, retention_payload.get("enabled", True)),
             output_days=int(_env_or_dotenv("OMX_OUTPUT_RETENTION_DAYS", dotenv_payload, retention_payload.get("output_days", 14))),
@@ -183,6 +204,18 @@ def _env_or_dotenv(name: str, dotenv_payload: dict[str, str], default: str | int
     dotenv_value = dotenv_payload.get(name)
     if dotenv_value is not None and dotenv_value.strip():
         return dotenv_value
+    return default
+
+
+def _env_or_dotenv_many(names: tuple[str, ...], dotenv_payload: dict[str, str], default: str | None) -> str | None:
+    for name in names:
+        value = os.getenv(name)
+        if value is not None and value.strip():
+            return value
+    for name in names:
+        value = dotenv_payload.get(name)
+        if value is not None and value.strip():
+            return value
     return default
 
 

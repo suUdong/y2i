@@ -145,6 +145,30 @@ def test_load_app_config_env_overrides_logging(tmp_path, monkeypatch):
     assert config.logging.retention_days == 9
 
 
+def test_load_app_config_reads_network_proxy_section(tmp_path):
+    path = tmp_path / "cfg.toml"
+    path.write_text(
+        """
+[network]
+http_proxy_url = "http://proxy.local:8080"
+https_proxy_url = "http://proxy.local:8443"
+        """.strip(),
+        encoding="utf-8",
+    )
+    config = load_app_config(path)
+    assert config.network.http_proxy_url == "http://proxy.local:8080"
+    assert config.network.https_proxy_url == "http://proxy.local:8443"
+
+
+def test_load_app_config_residential_proxy_env_populates_both_network_urls(tmp_path, monkeypatch):
+    path = tmp_path / "cfg.toml"
+    path.write_text("", encoding="utf-8")
+    monkeypatch.setenv("OMX_RESIDENTIAL_PROXY_URL", "http://res-proxy.local:9000")
+    config = load_app_config(path)
+    assert config.network.http_proxy_url == "http://res-proxy.local:9000"
+    assert config.network.https_proxy_url == "http://res-proxy.local:9000"
+
+
 def test_load_app_config_env_overrides_retention(tmp_path, monkeypatch):
     path = tmp_path / "cfg.toml"
     path.write_text("[retention]\noutput_days = 10\nreport_days = 20", encoding="utf-8")

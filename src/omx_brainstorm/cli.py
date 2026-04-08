@@ -20,6 +20,18 @@ from .youtube import ChannelRegistry, YoutubeResolver
 logger = logging.getLogger(__name__)
 
 
+def _network_proxy_kwargs(config) -> dict[str, str]:
+    network = getattr(config, "network", None)
+    http_proxy_url = getattr(network, "http_proxy_url", None)
+    https_proxy_url = getattr(network, "https_proxy_url", None)
+    kwargs: dict[str, str] = {}
+    if http_proxy_url:
+        kwargs["http_proxy_url"] = http_proxy_url
+    if https_proxy_url:
+        kwargs["https_proxy_url"] = https_proxy_url
+    return kwargs
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="omx-brainstorm",
@@ -361,7 +373,7 @@ def main() -> None:
             if not channel:
                 logger.error("Channel slug '%s' not found in config", args.slug)
                 raise SystemExit(1)
-            resolver = YoutubeResolver()
+            resolver = YoutubeResolver(**_network_proxy_kwargs(config))
             videos = resolver.resolve_channel_videos_since(channel.url, days=args.days)
             cache = TranscriptCache()
             cache.warm_from_output_dir(Path(args.output_dir))
@@ -418,7 +430,12 @@ def main() -> None:
             for ch in enabled:
                 logger.info("Analyzing channel %s (%s) limit=%d", ch.slug, ch.display_name, args.limit)
                 ch_output = Path(args.output_dir) / ch.slug
-                ch_pipeline = OMXPipeline(provider_name=config.provider, output_dir=ch_output, mode=args.mode)
+                ch_pipeline = OMXPipeline(
+                    provider_name=config.provider,
+                    output_dir=ch_output,
+                    mode=args.mode,
+                    **_network_proxy_kwargs(config),
+                )
                 try:
                     results = ch_pipeline.analyze_channel(ch.url, limit=args.limit)
                     all_results[ch.slug] = {

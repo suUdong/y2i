@@ -43,6 +43,19 @@ pip install -e .[dashboard] pytest
 - `[notifications]`: Telegram bot/chat
 - `[schedule]`: daily time, timezone, enabled, poll interval, poll video limit, scheduler state path
 - `[logging]`: JSON logging 여부, 로그 디렉터리, 보관 일수
+- `[network]`: YouTube/자막 요청용 HTTP/HTTPS 프록시
+
+유튜브 자막이 현재 IP에서 막히면 residential proxy를 붙일 수 있다:
+```toml
+[network]
+http_proxy_url = "http://user:pass@host:port"
+https_proxy_url = "http://user:pass@host:port"
+```
+
+또는 환경변수:
+```bash
+export OMX_RESIDENTIAL_PROXY_URL="http://user:pass@host:port"
+```
 
 ## CLI
 ```bash

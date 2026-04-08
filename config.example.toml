@@ -75,3 +75,9 @@ state_path = ".omx/state/scheduler_state.json"
 json = true
 log_dir = ".omx/logs"
 retention_days = 7
+
+[network]
+# Optional: residential / sticky proxy for YouTube metadata and subtitle retrieval.
+# If only one is set, it will be reused for both HTTP and HTTPS.
+http_proxy_url = ""
+https_proxy_url = ""

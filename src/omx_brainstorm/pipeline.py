@@ -34,13 +34,21 @@ logger = logging.getLogger(__name__)
 class OMXPipeline:
     """Primary report-generation pipeline for one video or channel slice."""
 
-    def __init__(self, provider_name: str, output_dir: Path, mode: str = "ralph", transcript_cache: TranscriptCache | None = None):
+    def __init__(
+        self,
+        provider_name: str,
+        output_dir: Path,
+        mode: str = "ralph",
+        transcript_cache: TranscriptCache | None = None,
+        http_proxy_url: str | None = None,
+        https_proxy_url: str | None = None,
+    ):
         self.provider_name = provider_name
         self.mode = mode
         self.provider = resolve_provider(provider_name)
         self.output_dir = output_dir
-        self.resolver = YoutubeResolver()
-        self.fetcher = TranscriptFetcher()
+        self.resolver = YoutubeResolver(http_proxy_url=http_proxy_url, https_proxy_url=https_proxy_url)
+        self.fetcher = TranscriptFetcher(http_proxy_url=http_proxy_url, https_proxy_url=https_proxy_url)
         self.transcript_cache = transcript_cache or TranscriptCache()
         self.fundamentals = FundamentalsFetcher()
         self.extractor = HybridTickerExtractor(self.provider, mode=mode)

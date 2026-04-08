@@ -26,6 +26,18 @@ from .youtube import TranscriptFetcher, VideoInput, YoutubeResolver
 logger = logging.getLogger(__name__)
 
 
+def _network_proxy_kwargs(config) -> dict[str, str]:
+    network = getattr(config, "network", None)
+    http_proxy_url = getattr(network, "http_proxy_url", None)
+    https_proxy_url = getattr(network, "https_proxy_url", None)
+    kwargs: dict[str, str] = {}
+    if http_proxy_url:
+        kwargs["http_proxy_url"] = http_proxy_url
+    if https_proxy_url:
+        kwargs["https_proxy_url"] = https_proxy_url
+    return kwargs
+
+
 class _CacheOnlyTranscriptFetcher(TranscriptFetcher):
     """Historical backfill should prefer cache and fall back immediately on blocked live fetches."""
 
@@ -88,8 +100,8 @@ def backfill_signal_tracker(
     """Refresh tracker records by re-analyzing enabled channels over a lookback window."""
     output_dir = Path(config.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    resolver = YoutubeResolver()
-    fetcher = _CacheOnlyTranscriptFetcher()
+    resolver = YoutubeResolver(**_network_proxy_kwargs(config))
+    fetcher = _CacheOnlyTranscriptFetcher(**_network_proxy_kwargs(config))
     history_provider = None
     cache = TranscriptCache()
     cache.warm_from_output_dir(output_dir)

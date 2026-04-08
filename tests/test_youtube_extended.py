@@ -131,6 +131,11 @@ def test_resolve_video_mocked(monkeypatch):
     assert video.tags == ["tag1"]
 
 
+def test_resolver_applies_proxy_to_ytdlp_options():
+    resolver = YoutubeResolver(http_proxy_url="http://proxy.local:8080")
+    assert resolver._ydl_opts["proxy"] == "http://proxy.local:8080"
+
+
 def test_resolve_video_uses_cache_on_repeat(monkeypatch, tmp_path):
     calls = {"count": 0}
     fake_info = {
@@ -583,7 +588,7 @@ def test_transcript_fetcher_retries_request_blocked(monkeypatch):
                 raise RequestBlocked(video_id)
             return FakeFetched([MagicMock(start=0, duration=1, text=" hello "), MagicMock(start=1, duration=1, text="world")])
 
-    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda: FakeApi())
+    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda *args, **kwargs: FakeApi())
     monkeypatch.setattr("omx_brainstorm.youtube._sleep_before_retry", lambda delay: sleeps.append(delay))
 
     fetcher = TranscriptFetcher()
@@ -593,6 +598,49 @@ def test_transcript_fetcher_retries_request_blocked(monkeypatch):
     assert language == "ko"
     assert calls["count"] == 3
     assert sleeps == [2.0, 4.0]
+
+
+def test_transcript_fetcher_builds_proxy_config_and_http_client():
+    fetcher = TranscriptFetcher(
+        http_proxy_url="http://proxy.local:8080",
+        https_proxy_url="http://secure-proxy.local:8443",
+    )
+
+    assert fetcher._http_client.proxies["http"] == "http://proxy.local:8080"
+    assert fetcher._http_client.proxies["https"] == "http://secure-proxy.local:8443"
+    assert fetcher._proxy_config.to_requests_dict() == {
+        "http": "http://proxy.local:8080",
+        "https": "http://secure-proxy.local:8443",
+    }
+
+
+def test_transcript_fetcher_passes_proxy_config_to_api(monkeypatch):
+    captured = {}
+
+    class FakeFetched(list):
+        language_code = "ko"
+
+    class FakeApi:
+        def __init__(self, proxy_config=None, http_client=None):
+            captured["proxy_dict"] = proxy_config.to_requests_dict() if proxy_config else None
+            captured["http_client"] = http_client
+
+        def fetch(self, video_id, languages):
+            return FakeFetched([MagicMock(start=0, duration=1, text=" hello ")])
+
+    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", FakeApi)
+
+    fetcher = TranscriptFetcher(http_proxy_url="http://proxy.local:8080")
+    segments, language, source = fetcher.fetch_with_source("dQw4w9WgXcQ")
+
+    assert [segment.text for segment in segments] == ["hello"]
+    assert language == "ko"
+    assert source == "transcript_api"
+    assert captured["proxy_dict"] == {
+        "http": "http://proxy.local:8080",
+        "https": "http://proxy.local:8080",
+    }
+    assert captured["http_client"] is fetcher._http_client
 
 
 def test_transcript_fetcher_retries_timeout_error(monkeypatch):
@@ -609,7 +657,7 @@ def test_transcript_fetcher_retries_timeout_error(monkeypatch):
                 raise TimeoutError("read timed out")
             return FakeFetched([MagicMock(start=0, duration=1, text=" hello ")])
 
-    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda: FakeApi())
+    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda *args, **kwargs: FakeApi())
     monkeypatch.setattr("omx_brainstorm.youtube._sleep_before_retry", lambda delay: sleeps.append(delay))
 
     fetcher = TranscriptFetcher()
@@ -639,6 +687,13 @@ def test_transcript_fetcher_uses_ytdlp_auto_captions_fallback(monkeypatch):
         def raise_for_status(self):
             return None
 
+    class FakeSession:
+        def __init__(self):
+            self.proxies = {}
+
+        def get(self, url, timeout=20):
+            return FakeResponse()
+
     class FakeYDL:
         def __init__(self, opts):
             self.opts = opts
@@ -658,11 +713,11 @@ def test_transcript_fetcher_uses_ytdlp_auto_captions_fallback(monkeypatch):
                 }
             }
 
-    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda: FakeApi())
+    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda *args, **kwargs: FakeApi())
     monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
-    monkeypatch.setattr("omx_brainstorm.youtube.requests.get", lambda url, timeout=20: FakeResponse())
+    monkeypatch.setattr("omx_brainstorm.youtube.requests.Session", FakeSession)
 
-    fetcher = TranscriptFetcher()
+    fetcher = TranscriptFetcher(http_proxy_url="http://proxy.local:8080")
     segments, language, source = fetcher.fetch_with_source("dQw4w9WgXcQ")
 
     assert [segment.text for segment in segments] == ["엔비디아가 아직 더 갈 수 있다", "데이터센터 수요가 강하다"]
@@ -685,6 +740,13 @@ def test_resolve_transcript_text_uses_ytdlp_source(monkeypatch, tmp_path):
         def raise_for_status(self):
             return None
 
+    class FakeSession:
+        def __init__(self):
+            self.proxies = {}
+
+        def get(self, url, timeout=20):
+            return FakeResponse()
+
     class FakeYDL:
         def __init__(self, opts):
             self.opts = opts
@@ -704,11 +766,11 @@ def test_resolve_transcript_text_uses_ytdlp_source(monkeypatch, tmp_path):
                 }
             }
 
-    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda: FakeApi())
+    monkeypatch.setattr("omx_brainstorm.youtube.YouTubeTranscriptApi", lambda *args, **kwargs: FakeApi())
     monkeypatch.setattr("omx_brainstorm.youtube.YoutubeDL", FakeYDL)
-    monkeypatch.setattr("omx_brainstorm.youtube.requests.get", lambda url, timeout=20: FakeResponse())
+    monkeypatch.setattr("omx_brainstorm.youtube.requests.Session", FakeSession)
 
-    fetcher = TranscriptFetcher()
+    fetcher = TranscriptFetcher(http_proxy_url="http://proxy.local:8080")
     cache = TranscriptCache(tmp_path / "cache")
     video = VideoInput(video_id="abc123def45", title="제목", url="https://youtube.com/watch?v=abc123def45")
 

@@ -17,6 +17,18 @@ from .utils import write_json, read_json
 
 logger = logging.getLogger(__name__)
 HEALTH_PATH = Path(".omx/state/scheduler_health.json")
+
+
+def _network_proxy_kwargs(config) -> dict[str, str]:
+    network = getattr(config, "network", None)
+    http_proxy_url = getattr(network, "http_proxy_url", None)
+    https_proxy_url = getattr(network, "https_proxy_url", None)
+    kwargs: dict[str, str] = {}
+    if http_proxy_url:
+        kwargs["http_proxy_url"] = http_proxy_url
+    if https_proxy_url:
+        kwargs["https_proxy_url"] = https_proxy_url
+    return kwargs
 DEFAULT_COMPARISON_TARGET = "scripts.run_channel_30d_comparison"
 
 
@@ -93,7 +105,7 @@ def scan_channels_for_new_videos(
     resolver: YoutubeResolver | None = None,
     now: datetime | None = None,
 ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
-    resolver = resolver or YoutubeResolver()
+    resolver = resolver or YoutubeResolver(**_network_proxy_kwargs(config))
     now = now or datetime.now(timezone.utc)
     channel_state = state.setdefault("channels", {})
     retain_limit = max(1, config.schedule.poll_video_limit)

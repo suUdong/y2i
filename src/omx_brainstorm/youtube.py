@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import OrderedDict
 import json
 import logging
+import os
 import re
 import time
 from datetime import datetime, timezone
@@ -14,6 +15,7 @@ from typing import Any, Callable, Iterable
 
 import requests
 from youtube_transcript_api import IpBlocked, RequestBlocked, YouTubeTranscriptApi
+from youtube_transcript_api.proxies import GenericProxyConfig
 from yt_dlp import DownloadError, YoutubeDL
 
 from .models import TranscriptSegment, VideoInput, utc_now_iso
@@ -59,6 +61,29 @@ RETRYABLE_TRANSCRIPT_MARKERS = (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_proxy_urls(
+    *,
+    http_proxy_url: str | None = None,
+    https_proxy_url: str | None = None,
+) -> tuple[str | None, str | None]:
+    http_proxy = http_proxy_url or os.getenv("OMX_HTTP_PROXY_URL") or os.getenv("OMX_HTTP_PROXY") or os.getenv("OMX_YOUTUBE_PROXY_URL") or os.getenv("OMX_RESIDENTIAL_PROXY_URL")
+    https_proxy = https_proxy_url or os.getenv("OMX_HTTPS_PROXY_URL") or os.getenv("OMX_HTTPS_PROXY") or os.getenv("OMX_YOUTUBE_PROXY_URL") or os.getenv("OMX_RESIDENTIAL_PROXY_URL")
+    if http_proxy and not https_proxy:
+        https_proxy = http_proxy
+    if https_proxy and not http_proxy:
+        http_proxy = https_proxy
+    return http_proxy or None, https_proxy or None
+
+
+def _proxy_dict(http_proxy_url: str | None, https_proxy_url: str | None) -> dict[str, str]:
+    proxies: dict[str, str] = {}
+    if http_proxy_url:
+        proxies["http"] = http_proxy_url
+    if https_proxy_url:
+        proxies["https"] = https_proxy_url
+    return proxies
 
 
 def describe_youtube_error(exc: Exception) -> str:
@@ -182,13 +207,21 @@ class YoutubeResolver:
         max_memory_entries: int = 256,
         memory_cache_max_entries: int | None = None,
         memory_cache_size: int | None = None,
+        http_proxy_url: str | None = None,
+        https_proxy_url: str | None = None,
     ):
+        self.http_proxy_url, self.https_proxy_url = _resolve_proxy_urls(
+            http_proxy_url=http_proxy_url,
+            https_proxy_url=https_proxy_url,
+        )
         self._ydl_opts = {
             "quiet": True,
             "no_warnings": True,
             "extract_flat": True,
             "skip_download": True,
         }
+        if self.https_proxy_url or self.http_proxy_url:
+            self._ydl_opts["proxy"] = self.https_proxy_url or self.http_proxy_url
         self.cache_root = cache_root or Path(".omx/cache/video_metadata")
         self.cache_max_age_hours = cache_max_age_hours
         if memory_cache_max_entries is not None:
@@ -396,6 +429,27 @@ class YoutubeResolver:
 
 
 class TranscriptFetcher:
+    def __init__(
+        self,
+        *,
+        http_proxy_url: str | None = None,
+        https_proxy_url: str | None = None,
+    ) -> None:
+        self.http_proxy_url, self.https_proxy_url = _resolve_proxy_urls(
+            http_proxy_url=http_proxy_url,
+            https_proxy_url=https_proxy_url,
+        )
+        self._http_client = requests.Session()
+        proxy_map = _proxy_dict(self.http_proxy_url, self.https_proxy_url)
+        if proxy_map:
+            self._http_client.proxies.update(proxy_map)
+            self._proxy_config = GenericProxyConfig(
+                http_url=self.http_proxy_url,
+                https_url=self.https_proxy_url,
+            )
+        else:
+            self._proxy_config = None
+
     def fetch(self, video_id: str, preferred_languages: Iterable[str] | None = None) -> tuple[list[TranscriptSegment], str | None]:
         segments, language, _source = self.fetch_with_source(video_id, preferred_languages=preferred_languages)
         return segments, language
@@ -406,7 +460,7 @@ class TranscriptFetcher:
         preferred_languages: Iterable[str] | None = None,
     ) -> tuple[list[TranscriptSegment], str | None, str]:
         preferred_languages = list(preferred_languages or ["ko", "en"])
-        api = YouTubeTranscriptApi()
+        api = YouTubeTranscriptApi(proxy_config=self._proxy_config, http_client=self._http_client)
         try:
             fetched = _call_with_retry(
                 lambda: api.fetch(video_id, languages=preferred_languages),
@@ -445,7 +499,7 @@ class TranscriptFetcher:
         subtitle = _select_subtitle_track(info, preferred_languages)
         if subtitle is None:
             raise ValueError(f"yt-dlp subtitle fallback unavailable for {video_id}")
-        payload = requests.get(subtitle["url"], timeout=20)
+        payload = self._http_client.get(subtitle["url"], timeout=20)
         payload.raise_for_status()
         if subtitle["ext"] == "json3":
             segments = _parse_json3_segments(payload.text)
@@ -455,8 +509,7 @@ class TranscriptFetcher:
             raise ValueError(f"yt-dlp subtitle fallback returned no segments for {video_id}")
         return segments, subtitle["language"], subtitle["source"]
 
-    @staticmethod
-    def _extract_subtitle_info(target_url: str, preferred_languages: list[str]) -> dict[str, Any]:
+    def _extract_subtitle_info(self, target_url: str, preferred_languages: list[str]) -> dict[str, Any]:
         opts = {
             "quiet": True,
             "no_warnings": True,
@@ -466,6 +519,8 @@ class TranscriptFetcher:
             "writesubtitles": True,
             "writeautomaticsub": True,
         }
+        if self.https_proxy_url or self.http_proxy_url:
+            opts["proxy"] = self.https_proxy_url or self.http_proxy_url
         with YoutubeDL(opts) as ydl:
             return ydl.extract_info(target_url, download=False)
 

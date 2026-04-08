@@ -25,6 +25,8 @@ def analyze_resolved_videos_to_reports(
         provider_name=config.provider,
         output_dir=Path(output_dir or config.output_dir),
         transcript_cache=transcript_cache,
+        http_proxy_url=config.network.http_proxy_url,
+        https_proxy_url=config.network.https_proxy_url,
     )
     if fetcher is not None:
         pipeline.fetcher = fetcher

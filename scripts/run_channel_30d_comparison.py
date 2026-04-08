@@ -44,6 +44,18 @@ from omx_brainstorm.youtube import ChannelRegistry, YoutubeResolver, describe_yo
 
 logger = logging.getLogger(__name__)
 
+
+def _network_proxy_kwargs(config) -> dict[str, str]:
+    network = getattr(config, "network", None)
+    http_proxy_url = getattr(network, "http_proxy_url", None)
+    https_proxy_url = getattr(network, "https_proxy_url", None)
+    kwargs: dict[str, str] = {}
+    if http_proxy_url:
+        kwargs["http_proxy_url"] = http_proxy_url
+    if https_proxy_url:
+        kwargs["https_proxy_url"] = https_proxy_url
+    return kwargs
+
 DEFAULT_CHANNELS = {
     "itgod": {
         "display_name": "IT의 신 이형수",
@@ -250,9 +262,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def register_channels(channels: dict[str, dict], registry_path: Path) -> dict[str, dict]:
+def register_channels(channels: dict[str, dict], registry_path: Path, config: AppConfig) -> dict[str, dict]:
     """Register configured channels and resolve channel IDs when possible."""
-    resolver = YoutubeResolver()
+    resolver = YoutubeResolver(**_network_proxy_kwargs(config))
     registry = ChannelRegistry(registry_path)
     rows = {}
     for slug, config in channels.items():
@@ -347,9 +359,10 @@ def run_comparison_job(config: AppConfig) -> dict:
     }
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    registry_rows = register_channels(configured_channels, registry_path)
+    registry_rows = register_channels(configured_channels, registry_path, config)
     cache = TranscriptCache()
     cache.warm_from_output_dir(output_dir)
+    youtube_resolver = YoutubeResolver(**_network_proxy_kwargs(config))
     channel_payloads: dict[str, dict] = {}
     for slug, channel in configured_channels.items():
         logger.info("Starting channel run: %s", slug)
@@ -361,6 +374,7 @@ def run_comparison_job(config: AppConfig) -> dict:
             str(channel_id or ""),
             days=window_days,
             today=context.today,
+            resolver=youtube_resolver,
         )
         logger.info("Collected %s videos for %s", len(video_ids), slug)
         rows = _analyze_channel_rows(video_ids, cache, config)
@@ -528,7 +542,7 @@ def _analyze_channel_rows(
     cache: TranscriptCache,
     config: AppConfig,
 ) -> list[dict]:
-    resolver = YoutubeResolver()
+    resolver = YoutubeResolver(**_network_proxy_kwargs(config))
 
     if not video_ids:
         return []
