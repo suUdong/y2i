@@ -136,6 +136,13 @@ class TranscriptCache:
 
 
 def _is_metadata_fallback_entry(entry: dict[str, Any]) -> bool:
+    """Transient metadata-only entry that should be retried sooner than full TTL.
+
+    Permanent fallbacks (``metadata_fallback_permanent``) are excluded so they
+    aren't re-fetched every few hours — the transcript genuinely isn't coming.
+    """
     source = str(entry.get("source") or "").strip().lower()
+    if source == "metadata_fallback_permanent":
+        return False
     language = _normalize_transcript_language(entry.get("transcript_language"))
     return source == "metadata_fallback" or language == "metadata_fallback"

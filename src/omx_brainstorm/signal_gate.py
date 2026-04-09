@@ -6,6 +6,7 @@ from .macro_signals import extract_macro_signals, indirect_macro_mentions
 from .models import VideoSignalAssessment
 from .stock_registry import COMPANY_PATTERNS, resolve_kr_ticker
 from .title_taxonomy import classify_video_type
+from .transcript_runtime import is_metadata_fallback_source
 
 _TOKEN_RE = re.compile(r"[0-9A-Za-z가-힣&]+")
 
@@ -99,7 +100,7 @@ def assess_video_signal(
     transcript_len = len(transcript_text)
     metadata_company_hits = sum(1 for pattern in COMPANY_PATTERNS if pattern.search(metadata_text)) + _count_spaced_kr_company_hits(metadata_text.lower())
     used_metadata_fallback = (
-        (transcript_source or "").lower().endswith("metadata_fallback")
+        is_metadata_fallback_source(transcript_source)
         or (transcript_len == 0 and bool(metadata_text))
     )
     macro_signals = extract_macro_signals(text)

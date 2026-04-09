@@ -4,7 +4,17 @@ import logging
 from typing import Any
 
 from .transcript_cache import TranscriptCache
-from .youtube import TranscriptFetcher, describe_youtube_error
+from .youtube import TranscriptFetcher, describe_youtube_error, is_permanent_transcript_error
+
+METADATA_FALLBACK_PERMANENT_SOURCE = "metadata_fallback_permanent"
+METADATA_FALLBACK_SOURCES = frozenset({"metadata_fallback", METADATA_FALLBACK_PERMANENT_SOURCE})
+
+
+def is_metadata_fallback_source(source: str | None) -> bool:
+    """True if the given transcript source string represents any metadata-only fallback."""
+    if not source:
+        return False
+    return source.strip().lower() in METADATA_FALLBACK_SOURCES
 
 
 def _normalize_cached_language(language: str | None) -> str:
@@ -38,15 +48,20 @@ def resolve_transcript_text(video, cache: TranscriptCache, fetcher: TranscriptFe
         return transcript_text, language or "unknown", source, cache.load(video.video_id)
     except Exception as exc:
         logger.warning("Transcript fetch failed for %s: %s", video.video_id, describe_youtube_error(exc))
+        permanent = is_permanent_transcript_error(exc)
         if cached and cached.get("transcript_text"):
             logger.info("Using cached transcript fallback for %s", video.video_id)
             cached_language = _normalize_cached_language(cached.get("transcript_language"))
             cached_source = str(cached.get("source") or "cache")
-            if cached_source == "metadata_fallback" or cached_language == "metadata_fallback":
-                return cached["transcript_text"], "cache:metadata_fallback", "metadata_fallback", cached
+            if cached_source in ("metadata_fallback", METADATA_FALLBACK_PERMANENT_SOURCE) or cached_language == "metadata_fallback":
+                return cached["transcript_text"], "cache:metadata_fallback", cached_source, cached
             return cached["transcript_text"], f"cache:{cached_language}", cached_source, cached
         if not metadata_text:
             logger.warning("Transcript fetch failed for %s and metadata fallback is empty", video.video_id)
-        cache.save(video, metadata_text, "metadata_fallback", "metadata_fallback")
-        logger.info("Using metadata fallback for %s", video.video_id)
-        return metadata_text, "metadata_fallback", "metadata_fallback", cache.load(video.video_id)
+        fallback_source = METADATA_FALLBACK_PERMANENT_SOURCE if permanent else "metadata_fallback"
+        cache.save(video, metadata_text, "metadata_fallback", fallback_source)
+        if permanent:
+            logger.info("Using permanent metadata fallback for %s (transcript unavailable)", video.video_id)
+        else:
+            logger.info("Using metadata fallback for %s", video.video_id)
+        return metadata_text, "metadata_fallback", fallback_source, cache.load(video.video_id)

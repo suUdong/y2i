@@ -4,6 +4,7 @@ from collections import OrderedDict
 import json
 import logging
 import os
+import random
 import re
 import time
 from datetime import datetime, timezone
@@ -14,7 +15,18 @@ from threading import Lock
 from typing import Any, Callable, Iterable
 
 import requests
-from youtube_transcript_api import IpBlocked, RequestBlocked, YouTubeTranscriptApi
+from youtube_transcript_api import (
+    IpBlocked,
+    NoTranscriptFound,
+    RequestBlocked,
+    TranscriptsDisabled,
+    VideoUnavailable,
+    YouTubeTranscriptApi,
+)
+try:  # top-level re-exports preferred; fall back to the private module on older releases
+    from youtube_transcript_api import AgeRestricted, VideoUnplayable  # type: ignore[attr-defined]
+except ImportError:  # pragma: no cover - depends on youtube_transcript_api version
+    from youtube_transcript_api._errors import AgeRestricted, VideoUnplayable
 from youtube_transcript_api.proxies import GenericProxyConfig
 from yt_dlp import DownloadError, YoutubeDL
 
@@ -128,6 +140,39 @@ def _is_retryable_ytdlp_error(exc: Exception) -> bool:
     if not isinstance(exc, (DownloadError, OSError)):
         return False
     return _has_retryable_marker(exc, RETRYABLE_YTDLP_MARKERS)
+
+
+_PERMANENT_TRANSCRIPT_EXC_TYPES = (
+    TranscriptsDisabled,
+    NoTranscriptFound,
+    VideoUnavailable,
+    VideoUnplayable,
+    AgeRestricted,
+)
+# Concrete subclasses are listed explicitly rather than the `CouldNotRetrieveTranscript`
+# base because sibling subclasses (e.g. YouTubeRequestFailed, CookiePathInvalid) are
+# transient and must not be cached as permanent failures.
+_PERMANENT_TRANSCRIPT_MARKERS = (
+    "transcripts are disabled",
+    "subtitles are disabled",
+    "no transcript",
+    "no transcripts",
+    "video unavailable",
+    "private video",
+    "members-only",
+    "age restricted",
+    "this live event",
+    "premiere",
+)
+
+
+def is_permanent_transcript_error(exc: Exception) -> bool:
+    """True when the transcript is unlikely to ever be available (not an IP/rate issue)."""
+    if isinstance(exc, (RequestBlocked, IpBlocked)):
+        return False
+    if isinstance(exc, _PERMANENT_TRANSCRIPT_EXC_TYPES):
+        return True
+    return _has_retryable_marker(exc, _PERMANENT_TRANSCRIPT_MARKERS)
 
 
 def _is_retryable_transcript_error(exc: Exception) -> bool:
@@ -434,6 +479,8 @@ class TranscriptFetcher:
         *,
         http_proxy_url: str | None = None,
         https_proxy_url: str | None = None,
+        min_interval_seconds: float | None = None,
+        jitter_seconds: float | None = None,
     ) -> None:
         self.http_proxy_url, self.https_proxy_url = _resolve_proxy_urls(
             http_proxy_url=http_proxy_url,
@@ -449,6 +496,37 @@ class TranscriptFetcher:
             )
         else:
             self._proxy_config = None
+        if min_interval_seconds is None:
+            min_interval_seconds = float(os.getenv("OMX_TRANSCRIPT_MIN_INTERVAL_SEC") or "1.5")
+        if jitter_seconds is None:
+            jitter_seconds = float(os.getenv("OMX_TRANSCRIPT_JITTER_SEC") or "1.0")
+        self._min_interval_seconds = max(0.0, float(min_interval_seconds))
+        self._jitter_seconds = max(0.0, float(jitter_seconds))
+        self._throttle_lock = Lock()
+        self._last_fetch_monotonic: float = 0.0
+
+    def _throttle(self) -> None:
+        """Pace outbound transcript requests to reduce IP-block risk.
+
+        Shared across threads via a single lock so that the ThreadPoolExecutor
+        in the pipeline cannot produce a burst of concurrent YouTube hits.
+        The lock is intentionally held across ``time.sleep`` to serialize the
+        worker pool — do not "optimize" it away.
+        """
+        if self._min_interval_seconds <= 0 and self._jitter_seconds <= 0:
+            return
+        with self._throttle_lock:
+            now = time.monotonic()
+            wait = 0.0
+            if self._last_fetch_monotonic > 0:
+                elapsed = now - self._last_fetch_monotonic
+                if elapsed < self._min_interval_seconds:
+                    wait = self._min_interval_seconds - elapsed
+            if self._jitter_seconds > 0:
+                wait += random.uniform(0.0, self._jitter_seconds)
+            if wait > 0:
+                time.sleep(wait)
+            self._last_fetch_monotonic = time.monotonic()
 
     def fetch(self, video_id: str, preferred_languages: Iterable[str] | None = None) -> tuple[list[TranscriptSegment], str | None]:
         segments, language, _source = self.fetch_with_source(video_id, preferred_languages=preferred_languages)
@@ -461,9 +539,14 @@ class TranscriptFetcher:
     ) -> tuple[list[TranscriptSegment], str | None, str]:
         preferred_languages = list(preferred_languages or ["ko", "en"])
         api = YouTubeTranscriptApi(proxy_config=self._proxy_config, http_client=self._http_client)
+
+        def _fetch_once() -> Any:
+            self._throttle()
+            return api.fetch(video_id, languages=preferred_languages)
+
         try:
             fetched = _call_with_retry(
-                lambda: api.fetch(video_id, languages=preferred_languages),
+                _fetch_once,
                 context=f"transcript fetch for {video_id}",
                 is_retryable=_is_retryable_transcript_error,
             )
@@ -491,8 +574,13 @@ class TranscriptFetcher:
         preferred_languages: list[str],
     ) -> tuple[list[TranscriptSegment], str | None, str]:
         url = f"https://www.youtube.com/watch?v={video_id}"
+
+        def _extract_once() -> dict[str, Any]:
+            self._throttle()
+            return self._extract_subtitle_info(url, preferred_languages)
+
         info = _call_with_retry(
-            lambda: self._extract_subtitle_info(url, preferred_languages),
+            _extract_once,
             context=f"yt-dlp subtitle fetch for {video_id}",
             is_retryable=_is_retryable_ytdlp_error,
         )
