@@ -145,6 +145,18 @@ def build_parser() -> argparse.ArgumentParser:
     p_news_health.add_argument("--stale-threshold-hours", type=float, default=6.0)
     p_news_health.add_argument("--exit-nonzero-on-stale", action="store_true",
                                help="Exit with code 1 if news ingestion is stale")
+
+    p_twitter = sub.add_parser("ingest-twitter", help="Fetch Twitter/X influencer RSS and write SignalRecords")
+    p_twitter.add_argument("--config", default="config.toml")
+    p_twitter.add_argument("--tracker-db", default=".omx/state/signal_tracker.json")
+    p_twitter.add_argument("--handles", default="", help="Comma-separated handles (default: built-in curated list)")
+    p_twitter.add_argument("--max-items", type=int, default=30)
+
+    p_twitter_health = sub.add_parser("twitter-healthcheck", help="Read twitter-ingestion health state")
+    p_twitter_health.add_argument("--path", default=".omx/state/twitter_ingestion_health.json")
+    p_twitter_health.add_argument("--stale-threshold-hours", type=float, default=6.0)
+    p_twitter_health.add_argument("--exit-nonzero-on-stale", action="store_true",
+                                  help="Exit with code 1 if twitter ingestion is stale")
     return parser
 
 
@@ -288,6 +300,39 @@ def main() -> None:
             return
 
         if args.command == "news-healthcheck":
+            from .healthcheck import compute_health_summary, read_health_state
+
+            state = read_health_state(args.path)
+            summary = compute_health_summary(
+                state, stale_threshold_hours=args.stale_threshold_hours
+            )
+            print(json.dumps(summary, ensure_ascii=False, indent=2))
+            if args.exit_nonzero_on_stale and summary.get("is_stale"):
+                raise SystemExit(1)
+            return
+
+        if args.command == "ingest-twitter":
+            from .twitter_source import run_twitter_ingestion, TWITTER_HEALTH_PATH
+
+            handles = [name.strip() for name in (args.handles or "").split(",") if name.strip()] or None
+            try:
+                config = load_app_config(args.config)
+                proxy_kwargs = _network_proxy_kwargs(config)
+            except Exception:
+                proxy_kwargs = {}
+            result = run_twitter_ingestion(
+                handles=handles,
+                max_items_per_handle=args.max_items,
+                tracker_db_path=Path(args.tracker_db),
+                health_path=TWITTER_HEALTH_PATH,
+                **proxy_kwargs,
+            )
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            if result.get("status") == "error":
+                raise SystemExit(1)
+            return
+
+        if args.command == "twitter-healthcheck":
             from .healthcheck import compute_health_summary, read_health_state
 
             state = read_health_state(args.path)
