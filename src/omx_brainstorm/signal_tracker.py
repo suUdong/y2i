@@ -2,11 +2,25 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Sequence
+
+
+def _safe_float(value: Any) -> float | None:
+    """Return ``value`` as float, mapping None and NaN to None."""
+    if value is None:
+        return None
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(result):
+        return None
+    return result
 
 logger = logging.getLogger(__name__)
 
@@ -511,10 +525,10 @@ def _signal_direction(verdict: str | None) -> int:
 
 
 def _directional_return(record: SignalRecord, window_key: str) -> float | None:
-    value = record.returns.get(window_key)
+    value = _safe_float(record.returns.get(window_key))
     if value is None:
         return None
-    return round(float(value) * _signal_direction(record.verdict), 2)
+    return round(value * _signal_direction(record.verdict), 2)
 
 
 def _window_value(window_stats: dict[str, dict[str, float | int | None]], window_key: str, field: str) -> float | int | None:
@@ -528,7 +542,8 @@ def _build_accuracy_stats(filtered: list[SignalRecord]) -> AccuracyStats:
     window_stats: dict[str, dict[str, float | int | None]] = {}
     for window in TRACKING_WINDOWS:
         key = f"{window}d"
-        with_window = [record for record in filtered if record.returns.get(key) is not None]
+        raw_pairs = [(record, _safe_float(record.returns.get(key))) for record in filtered]
+        with_window = [(record, raw) for record, raw in raw_pairs if raw is not None]
         if not with_window:
             window_stats[key] = {
                 "tracked": 0,
@@ -539,8 +554,8 @@ def _build_accuracy_stats(filtered: list[SignalRecord]) -> AccuracyStats:
             }
             continue
 
-        raw_returns = [float(record.returns.get(key) or 0) for record in with_window]
-        directional_returns = [float(_directional_return(record, key) or 0) for record in with_window]
+        raw_returns = [raw for _, raw in with_window]
+        directional_returns = [raw * _signal_direction(record.verdict) for record, raw in with_window]
         hits = sum(1 for value in directional_returns if value > 0)
         window_stats[key] = {
             "tracked": len(with_window),
@@ -553,7 +568,7 @@ def _build_accuracy_stats(filtered: list[SignalRecord]) -> AccuracyStats:
     signals_with_price_1d = int(_window_value(window_stats, "1d", "tracked") or 0)
     signals_with_price_3d = int(_window_value(window_stats, "3d", "tracked") or 0)
     signals_with_price_5d = int(_window_value(window_stats, "5d", "tracked") or 0)
-    with_5d = [record for record in filtered if record.returns.get("5d") is not None]
+    with_5d = [record for record in filtered if _directional_return(record, "5d") is not None]
     best = max(with_5d, key=lambda record: _directional_return(record, "5d") or -999) if with_5d else None
     worst = min(with_5d, key=lambda record: _directional_return(record, "5d") or 999) if with_5d else None
     target_records = [record for record in filtered if _target_price_from_record(record) is not None]
@@ -981,7 +996,7 @@ def _build_roi_fields(records: list[SignalRecord]) -> dict[str, float | None]:
 
 
 def _compounded_directional_roi(records: list[SignalRecord], window_key: str) -> float | None:
-    values = [float(value) for value in (_directional_return(record, window_key) for record in records) if value is not None]
+    values = [value for value in (_directional_return(record, window_key) for record in records) if value is not None]
     if not values:
         return None
     capital = 1.0
@@ -1177,9 +1192,9 @@ def _build_consensus_cluster_summary(
 
 def _average_cluster_return(records: list[SignalRecord], window_key: str) -> float | None:
     values = [
-        float(record.returns.get(window_key))
-        for record in records
-        if record.returns.get(window_key) is not None
+        v
+        for v in (_safe_float(record.returns.get(window_key)) for record in records)
+        if v is not None
     ]
     if not values:
         return None

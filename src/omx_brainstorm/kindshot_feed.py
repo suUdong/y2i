@@ -1,13 +1,26 @@
 from __future__ import annotations
 
 import json
-from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+import math
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from .signal_tracker import build_recent_consensus_signals
 from .signal_tracker import SignalRecord, SignalTrackerDB
+
+
+def _safe_float(value: Any) -> float | None:
+    """Coerce to float, treating None and NaN as missing."""
+    if value is None:
+        return None
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(result):
+        return None
+    return result
 
 _KR_MARKET_SUFFIXES = (".KS", ".KQ")
 _EXPORTABLE_VERDICTS = {"BUY", "STRONG_BUY"}
@@ -69,12 +82,13 @@ def _record_to_kindshot_signal(
         if currency:
             target_label = f"{target_label} {currency}"
         evidence.append(target_label)
-    if record.target_progress_pct is not None:
-        evidence.append(f"목표 진척 {float(record.target_progress_pct):.1f}%")
+    target_progress = _safe_float(record.target_progress_pct)
+    if target_progress is not None:
+        evidence.append(f"목표 진척 {target_progress:.1f}%")
     for window_key in _KINDSHOT_DIRECTIONAL_WINDOWS:
         directional_return = _directional_return(record, window_key)
         if directional_return is not None:
-            evidence.append(f"{window_key} 방향수익률 {float(directional_return):.2f}%")
+            evidence.append(f"{window_key} 방향수익률 {directional_return:.2f}%")
     if not evidence:
         evidence.append(f"{record.channel_slug} {record.signal_date} tracked signal")
 
@@ -114,7 +128,7 @@ def _has_failed_directional_history(record: SignalRecord) -> bool:
         return directional_5d < 0.5
 
     short_values = [
-        float(value)
+        value
         for value in (_directional_return(record, "1d"), _directional_return(record, "3d"))
         if value is not None
     ]
@@ -127,7 +141,7 @@ def _has_positive_directional_history(record: SignalRecord) -> bool:
         return directional_5d > 0
 
     short_values = [
-        float(value)
+        value
         for value in (_directional_return(record, "1d"), _directional_return(record, "3d"))
         if value is not None
     ]
@@ -135,13 +149,13 @@ def _has_positive_directional_history(record: SignalRecord) -> bool:
 
 
 def _directional_return(record: SignalRecord, window_key: str) -> float | None:
-    raw_return = record.returns.get(window_key)
-    if raw_return is None:
+    raw = _safe_float(record.returns.get(window_key))
+    if raw is None:
         return None
     verdict = str(record.verdict or "").upper()
     if verdict in {"SELL", "REJECT", "AVOID"}:
-        return round(-float(raw_return), 2)
-    return round(float(raw_return), 2)
+        return round(-raw, 2)
+    return round(raw, 2)
 
 
 def _build_consensus_by_ticker(
