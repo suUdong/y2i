@@ -920,7 +920,7 @@ def test_export_signals_for_kindshot_filters_to_kr_buy_signals(tmp_path: Path):
     assert payload["signal_count"] == 3
     exported_tickers = [item["ticker"] for item in written["signals"]]
     assert exported_tickers == ["012450.KS", "035720.KS", "005930.KS"]
-    assert written["signals"][0]["signal_source"] == "y2i"
+    assert written["signals"][0]["signal_source"] == "y2i:youtube"
     assert "점수" in written["signals"][0]["evidence"][0]
     assert written["signals"][2]["channel"] == "sampro"
     assert "목표가 70000 KRW" in written["signals"][2]["evidence"]

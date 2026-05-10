@@ -36,6 +36,14 @@ _MIN_KINDSHOT_HIGH_CONFIDENCE_SCORE = 72.0
 _KINDSHOT_DIRECTIONAL_WINDOWS = ("3d", "5d")
 _MIN_KINDSHOT_CHANNEL_WEIGHT = 0.9
 _TICKER_CHANNEL_COOLDOWN_DAYS = 7
+_NEWS_CHANNEL_PREFIX = "news:"
+
+
+def _signal_source_label(channel_slug: str | None) -> str:
+    """Source-class label exported alongside each kindshot signal."""
+    if channel_slug and channel_slug.startswith(_NEWS_CHANNEL_PREFIX):
+        return "y2i:news"
+    return "y2i:youtube"
 
 # Empirical 5d directional win rate by number of channels mentioning the
 # same ticker (KR BUY only, signal_tracker history):
@@ -150,7 +158,7 @@ def _record_to_kindshot_signal(
     return {
         "ticker": record.ticker,
         "company_name": record.company_name,
-        "signal_source": "y2i",
+        "signal_source": _signal_source_label(record.channel_slug),
         "signal_date": record.signal_date,
         "confidence": round(max(0.0, min(0.99, confidence)), 4),
         "verdict": verdict,

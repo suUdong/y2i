@@ -73,7 +73,7 @@
       "id": "US-005",
       "title": "kindshot_feed integration — export news signals",
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "export_signals_for_kindshot in kindshot_feed.py treats channel_slug starting with 'news:' as a first-class export candidate (no breakage of YT exports)",
         "News records still must pass _is_exportable_record gates (score>=65, KR market, BUY/STRONG_BUY, conviction or consensus)",

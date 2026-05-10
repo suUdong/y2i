@@ -147,7 +147,9 @@ def test_fresh_y2i_video_reaches_kindshot_buy_queue_contract(
     }
     for sig in feed["signals"]:
         assert required_keys.issubset(sig.keys()), f"missing keys: {required_keys - sig.keys()}"
-        assert sig["signal_source"] == "y2i"
+        # y2i emits "y2i:<source-class>" (youtube / news). Kindshot keys off the
+        # "y2i:" prefix so both source classes flow into the same consumer queue.
+        assert sig["signal_source"].startswith("y2i")
         # confidence is a normalized [0,1] float — kindshot multiplies by 100
         assert 0.0 <= sig["confidence"] < 1.0
 
