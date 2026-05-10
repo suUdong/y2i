@@ -88,7 +88,7 @@
       "id": "US-006",
       "title": "Final verification + per-step commits pushed",
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Full pytest run is green (.venv/bin/python -m pytest -q)",
         "Compound backtest harness (scripts.backtest_kindshot_export --fresh) still runs without ImportError / regression",
