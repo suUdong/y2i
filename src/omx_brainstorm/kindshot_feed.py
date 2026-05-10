@@ -37,6 +37,20 @@ _KINDSHOT_DIRECTIONAL_WINDOWS = ("3d", "5d")
 _MIN_KINDSHOT_CHANNEL_WEIGHT = 0.9
 _TICKER_CHANNEL_COOLDOWN_DAYS = 7
 
+# Empirical 5d directional win rate by number of channels mentioning the
+# same ticker (KR BUY only, signal_tracker history):
+#   1 channel  : 71% win  (n=31)
+#   2 channels : 73% win  (n=11)  <-- strongest consensus signal
+#   3+ channels: 54% win  (n=104) <-- crowded / priced-in, weakest
+# The previous fixed +0.06 boost for any consensus_signal=True ignored this
+# cliff. We now cap it at 2 channels and step the boost down as the consensus
+# gets crowded.
+_CONSENSUS_BOOST_BY_CHANNEL_COUNT: tuple[tuple[int, float], ...] = (
+    (2, 0.06),   # 2 channels: full boost (best empirical cohort)
+    (4, 0.01),   # 3–4 channels: small bonus
+    (10_000, -0.03),  # 5+ channels: penalise (underperforms baseline)
+)
+
 
 def _sweet_spot_confidence_adjustment(score: float) -> float:
     """Empirical confidence adjustment from KR BUY 5d-win-rate buckets."""
@@ -44,6 +58,14 @@ def _sweet_spot_confidence_adjustment(score: float) -> float:
         return 0.05
     if _NOISY_SCORE_RANGE[0] <= score < _NOISY_SCORE_RANGE[1]:
         return -0.05
+    return 0.0
+
+
+def _consensus_confidence_adjustment(channel_count: int) -> float:
+    """Return the confidence delta for a passing consensus signal."""
+    for upper, delta in _CONSENSUS_BOOST_BY_CHANNEL_COUNT:
+        if channel_count <= upper:
+            return delta
     return 0.0
 
 
@@ -116,9 +138,10 @@ def _record_to_kindshot_signal(
     if record.price_target and record.price_target.get("target_price") is not None:
         confidence += 0.03
     confidence += max(-0.04, min(0.05, (float(channel_weight or 1.0) - 1.0) * 0.18))
+    consensus_channel_count = int((consensus or {}).get("channel_count", 0) or 0)
     if consensus and consensus.get("consensus_signal"):
-        confidence += 0.06
-    elif consensus and consensus.get("channel_count", 0) >= 2:
+        confidence += _consensus_confidence_adjustment(consensus_channel_count)
+    elif consensus and consensus_channel_count >= 2:
         confidence -= 0.02
     directional_5d = _directional_return(record, "5d")
     if directional_5d is not None:

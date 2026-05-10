@@ -1217,3 +1217,56 @@ def test_export_signals_for_kindshot_sweet_spot_score_boosts_confidence(tmp_path
     # Both qualify; sweet-spot signal should have HIGHER confidence than the
     # noisy-band signal even though its raw score is lower.
     assert by_ticker["012450.KS"]["confidence"] > by_ticker["005380.KS"]["confidence"]
+
+
+def test_export_signals_for_kindshot_caps_consensus_boost_for_crowded_clusters(tmp_path: Path):
+    """5+ channel consensus underperforms 2-channel consensus empirically.
+
+    The exporter should give the 2-channel cohort the highest consensus boost
+    and penalise crowded (5+ channel) consensus.
+    """
+    db = SignalTrackerDB(tmp_path / "tracker.json")
+    # Two-channel consensus for 005930.KS
+    for channel in ("sampro", "itgod"):
+        db.add_record(
+            SignalRecord(
+                ticker="005930.KS",
+                company_name="삼성전자",
+                channel_slug=channel,
+                signal_date="2026-03-20",
+                signal_score=68.0,
+                verdict="BUY",
+                price_target={"target_price": 70000, "currency": "KRW"},
+                returns={"1d": 1.0, "3d": 2.0, "5d": 4.0, "10d": None, "20d": None},
+            )
+        )
+    # Six-channel consensus for 000660.KS
+    for idx, channel in enumerate(
+        ("sampro", "itgod", "syuka", "sosumonkey", "moneyinside", "jeoningoo"), start=1
+    ):
+        db.add_record(
+            SignalRecord(
+                ticker="000660.KS",
+                company_name="SK hynix",
+                channel_slug=channel,
+                signal_date=f"2026-03-2{idx}",
+                signal_score=68.0,
+                verdict="BUY",
+                price_target={"target_price": 200000, "currency": "KRW"},
+                returns={"1d": 1.0, "3d": 2.0, "5d": 4.0, "10d": None, "20d": None},
+            )
+        )
+
+    output_path = tmp_path / "kindshot_feed.json"
+    export_signals_for_kindshot(db, output_path)
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    # All other inputs identical (score, target, verdict). Confidence
+    # difference is purely the consensus-channel-count adjustment.
+    two_channel_confidence = max(
+        item["confidence"] for item in written["signals"] if item["ticker"] == "005930.KS"
+    )
+    crowded_confidence = max(
+        item["confidence"] for item in written["signals"] if item["ticker"] == "000660.KS"
+    )
+    assert two_channel_confidence > crowded_confidence
