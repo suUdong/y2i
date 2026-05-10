@@ -61,7 +61,7 @@
       "id": "US-004",
       "title": "Hit-rate + freshness measurement vs YouTube channels",
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "New script scripts/news_signal_freshness.py compares news SignalRecord set vs YouTube SignalRecord set in .omx/state/signal_tracker.json",
         "Outputs JSON report with: news_tickers_total, news_tickers_unique (not in YT 7d window), overlap_ratio_pct, lead_time_summary (median hours news_signal precedes YT signal for shared tickers), news_hit_rate_5d (when ≥1 mature news SignalRecord)",
