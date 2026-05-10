@@ -24,11 +24,27 @@ def _safe_float(value: Any) -> float | None:
 
 _KR_MARKET_SUFFIXES = (".KS", ".KQ")
 _EXPORTABLE_VERDICTS = {"BUY", "STRONG_BUY"}
-_MIN_KINDSHOT_SIGNAL_SCORE = 58.0
+# Empirical 5d directional win rate by score bucket (KR BUY/STRONG_BUY, n≥1500):
+#   < 65   : insufficient signal (rejected by filter)
+#   65-70  : 73.9% win rate   <- sweet spot
+#   70-75  : 50.6% win rate   <- noisy mid-band, penalised
+#   75+    : 57.1% win rate   <- moderate plateau
+_MIN_KINDSHOT_SIGNAL_SCORE = 65.0
+_SWEET_SPOT_SCORE_RANGE = (65.0, 70.0)
+_NOISY_SCORE_RANGE = (70.0, 75.0)
 _MIN_KINDSHOT_HIGH_CONFIDENCE_SCORE = 72.0
 _KINDSHOT_DIRECTIONAL_WINDOWS = ("3d", "5d")
 _MIN_KINDSHOT_CHANNEL_WEIGHT = 0.9
 _TICKER_CHANNEL_COOLDOWN_DAYS = 7
+
+
+def _sweet_spot_confidence_adjustment(score: float) -> float:
+    """Empirical confidence adjustment from KR BUY 5d-win-rate buckets."""
+    if _SWEET_SPOT_SCORE_RANGE[0] <= score < _SWEET_SPOT_SCORE_RANGE[1]:
+        return 0.05
+    if _NOISY_SCORE_RANGE[0] <= score < _NOISY_SCORE_RANGE[1]:
+        return -0.05
+    return 0.0
 
 
 def _is_exportable_record(
@@ -92,7 +108,9 @@ def _record_to_kindshot_signal(
     if not evidence:
         evidence.append(f"{record.channel_slug} {record.signal_date} tracked signal")
 
-    confidence = float(record.signal_score or 0.0) / 100.0
+    score = float(record.signal_score or 0.0)
+    confidence = score / 100.0
+    confidence += _sweet_spot_confidence_adjustment(score)
     if verdict == "STRONG_BUY":
         confidence += 0.05
     if record.price_target and record.price_target.get("target_price") is not None:

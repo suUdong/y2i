@@ -1139,3 +1139,81 @@ def test_export_signals_for_kindshot_adds_consensus_evidence(tmp_path: Path):
     assert [item["ticker"] for item in written["signals"]] == ["005930.KS", "005930.KS"]
     assert any("합의" in evidence for evidence in written["signals"][0]["evidence"])
     assert written["signals"][0]["confidence"] > 0.84
+
+
+def test_export_signals_for_kindshot_rejects_below_min_score(tmp_path: Path):
+    """Score < 65 BUY signals are dropped even if otherwise qualifying.
+
+    Empirical 5d win rate < 65 is too noisy to forward to kindshot.
+    """
+    db = SignalTrackerDB(tmp_path / "tracker.json")
+    db.add_record(
+        SignalRecord(
+            ticker="035420.KS",
+            company_name="NAVER",
+            channel_slug="sampro",
+            signal_date="2026-03-20",
+            signal_score=64.9,
+            verdict="BUY",
+            price_target={"target_price": 250000, "currency": "KRW"},
+            returns={"1d": 1.0, "3d": 2.0, "5d": 4.0, "10d": None, "20d": None},
+        )
+    )
+    db.add_record(
+        SignalRecord(
+            ticker="035720.KS",
+            company_name="Kakao",
+            channel_slug="sampro",
+            signal_date="2026-03-20",
+            signal_score=65.0,
+            verdict="BUY",
+            price_target={"target_price": 80000, "currency": "KRW"},
+            returns={"1d": 1.0, "3d": 2.0, "5d": 4.0, "10d": None, "20d": None},
+        )
+    )
+
+    output_path = tmp_path / "kindshot_feed.json"
+    export_signals_for_kindshot(db, output_path)
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    exported = [item["ticker"] for item in written["signals"]]
+    assert "035420.KS" not in exported
+    assert "035720.KS" in exported
+
+
+def test_export_signals_for_kindshot_sweet_spot_score_boosts_confidence(tmp_path: Path):
+    """Score 65–70 (empirical 74% 5d win rate) is rewarded vs 70–75 noisy band."""
+    db = SignalTrackerDB(tmp_path / "tracker.json")
+    db.add_record(
+        SignalRecord(
+            ticker="012450.KS",
+            company_name="Hanwha Aerospace",
+            channel_slug="sampro",
+            signal_date="2026-03-20",
+            signal_score=68.0,
+            verdict="BUY",
+            price_target={"target_price": 800000, "currency": "KRW"},
+            returns={"1d": 1.0, "3d": 2.0, "5d": 4.0, "10d": None, "20d": None},
+        )
+    )
+    db.add_record(
+        SignalRecord(
+            ticker="005380.KS",
+            company_name="Hyundai Motor",
+            channel_slug="sampro",
+            signal_date="2026-03-20",
+            signal_score=72.0,
+            verdict="BUY",
+            price_target={"target_price": 320000, "currency": "KRW"},
+            returns={"1d": 1.0, "3d": 2.0, "5d": 4.0, "10d": None, "20d": None},
+        )
+    )
+
+    output_path = tmp_path / "kindshot_feed.json"
+    export_signals_for_kindshot(db, output_path)
+    written = json.loads(output_path.read_text(encoding="utf-8"))
+
+    by_ticker = {item["ticker"]: item for item in written["signals"]}
+    # Both qualify; sweet-spot signal should have HIGHER confidence than the
+    # noisy-band signal even though its raw score is lower.
+    assert by_ticker["012450.KS"]["confidence"] > by_ticker["005380.KS"]["confidence"]
