@@ -79,6 +79,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_health = sub.add_parser("run-healthcheck", help="Read scheduler health state")
     p_health.add_argument("--path", default=".omx/state/scheduler_health.json")
+    p_health.add_argument("--stale-threshold-hours", type=float, default=6.0,
+                          help="Hours since last_success_at before marking the scheduler stale")
+    p_health.add_argument("--exit-nonzero-on-stale", action="store_true",
+                          help="Exit with code 2 if the scheduler is stale (useful for cron)")
 
     p_accuracy = sub.add_parser("signal-accuracy-report", help="Generate a tracked signal accuracy report")
     p_accuracy.add_argument("--tracker-db", default=".omx/state/signal_tracker.json")
@@ -239,9 +243,15 @@ def main() -> None:
             return
 
         if args.command == "run-healthcheck":
-            from .healthcheck import read_health_state
+            from .healthcheck import compute_health_summary, read_health_state
 
-            print(json.dumps(read_health_state(args.path), ensure_ascii=False, indent=2))
+            state = read_health_state(args.path)
+            summary = compute_health_summary(
+                state, stale_threshold_hours=args.stale_threshold_hours
+            )
+            print(json.dumps(summary, ensure_ascii=False, indent=2))
+            if args.exit_nonzero_on_stale and summary.get("is_stale"):
+                raise SystemExit(2)
             return
 
         if args.command == "signal-accuracy-report":
