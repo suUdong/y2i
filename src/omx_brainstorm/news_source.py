@@ -26,11 +26,12 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Any, Iterable, Sequence
 
 from .signal_gate import FINANCE_KEYWORDS, ACTIONABLE_TITLE_ANCHORS, NON_EQUITY_KEYWORDS
-from .signal_tracker import SignalRecord, SignalTrackerDB
+from .signal_tracker import DEFAULT_DB_PATH, SignalRecord, SignalTrackerDB
 from .stock_registry import COMPANY_MAP, resolve_kr_ticker
+from .utils import read_json, write_json
 
 logger = logging.getLogger(__name__)
 
@@ -355,4 +356,80 @@ def ingest_news_into_tracker(
         "ingested": ingested,
         "skipped": skipped,
         "by_outlet": by_outlet,
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Runner — health-file aware (mirrors scheduler_health.json shape)
+# ──────────────────────────────────────────────────────────────────────────
+
+
+def run_news_ingestion(
+    *,
+    outlets: Sequence[str] | None = None,
+    max_items_per_outlet: int = 30,
+    tracker_db_path: Path = DEFAULT_DB_PATH,
+    health_path: Path = NEWS_HEALTH_PATH,
+    http_proxy_url: str | None = None,
+    https_proxy_url: str | None = None,
+    resolver: NewsResolver | None = None,
+    tracker_db: SignalTrackerDB | None = None,
+) -> dict:
+    """Fetch RSS, classify, ingest into the tracker, and update the health file.
+
+    Health file shape matches scheduler_health.json so the existing
+    healthcheck.compute_health_summary works unchanged.
+    """
+    resolver = resolver or NewsResolver(
+        http_proxy_url=http_proxy_url,
+        https_proxy_url=https_proxy_url,
+    )
+    tracker = tracker_db if tracker_db is not None else SignalTrackerDB(tracker_db_path)
+
+    state: dict[str, Any] = dict(read_json(health_path, {"error_count": 0}))
+    started_at = datetime.now(timezone.utc).isoformat()
+    state["last_run_at"] = started_at
+
+    requested_outlets = list(outlets) if outlets is not None else list(resolver.outlets)
+    errors: list[dict[str, str | int]] = []
+    items: list[NewsItem] = []
+    for name in requested_outlets:
+        try:
+            items.extend(resolver.fetch(name, max_items=max_items_per_outlet))
+        except NewsFetchError as exc:
+            errors.append({"outlet": name, "status": str(exc.status), "message": str(exc)})
+
+    summary = ingest_news_into_tracker(tracker, items)
+
+    finished_at = datetime.now(timezone.utc).isoformat()
+    state["last_run_at"] = finished_at
+    state["ingested_count"] = int(summary.get("ingested", 0))
+    state["fetched_items"] = len(items)
+    state["outlets"] = requested_outlets
+    state["by_outlet"] = summary.get("by_outlet", {})
+    if errors and not items:
+        state["status"] = "error"
+        state["last_error_at"] = finished_at
+        state["error_count"] = int(state.get("error_count", 0)) + 1
+        state["errors"] = errors
+    elif errors:
+        state["status"] = "degraded"
+        state["last_success_at"] = finished_at
+        state["errors"] = errors
+        state["error_count"] = int(state.get("error_count", 0)) + 1
+    else:
+        state["status"] = "ok"
+        state["last_success_at"] = finished_at
+        state["errors"] = []
+
+    write_json(health_path, state)
+    return {
+        "ingested": summary.get("ingested", 0),
+        "skipped": summary.get("skipped", 0),
+        "fetched_items": len(items),
+        "by_outlet": summary.get("by_outlet", {}),
+        "outlets": requested_outlets,
+        "errors": errors,
+        "status": state["status"],
+        "health_path": str(health_path),
     }

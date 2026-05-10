@@ -17,6 +17,7 @@ from omx_brainstorm.news_source import (
     extract_kr_tickers,
     ingest_news_into_tracker,
     parse_rss_xml,
+    run_news_ingestion,
 )
 from omx_brainstorm.signal_tracker import SignalTrackerDB
 
@@ -219,3 +220,115 @@ def test_ingest_news_into_tracker_is_idempotent(tmp_path: Path) -> None:
 def test_news_health_path_is_module_level_constant() -> None:
     assert isinstance(NEWS_HEALTH_PATH, Path)
     assert str(NEWS_HEALTH_PATH).endswith("news_ingestion_health.json")
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# run_news_ingestion — health-file contract (74aeb5f pattern)
+# ──────────────────────────────────────────────────────────────────────────
+
+
+import json  # noqa: E402
+
+from omx_brainstorm.healthcheck import compute_health_summary, read_health_state  # noqa: E402
+
+
+class _ScriptedResolver:
+    """In-memory NewsResolver double; emits a fixed item list per outlet."""
+
+    def __init__(self, outlets: dict[str, list[NewsItem]]) -> None:
+        self._outlets_map = outlets
+
+    @property
+    def outlets(self) -> dict[str, str]:
+        return {name: f"mem://{name}" for name in self._outlets_map}
+
+    def fetch(self, outlet: str, max_items: int | None = None) -> list[NewsItem]:
+        items = self._outlets_map.get(outlet)
+        if items is None:
+            raise NewsFetchError(outlet, "unknown_outlet", "unscripted outlet")
+        return list(items[: max_items or len(items)])
+
+
+def test_run_news_ingestion_writes_health_file_ok(tmp_path: Path) -> None:
+    tracker = SignalTrackerDB(db_path=tmp_path / "tracker.json")
+    health_path = tmp_path / "news_health.json"
+    resolver = _ScriptedResolver({
+        "hankyung": [_make_item("삼성전자 HBM 수주 확대 반도체 매수세")],
+        "mt": [_make_item("SK하이닉스 HBM 수주 강세 반도체", outlet="mt")],
+    })
+
+    result = run_news_ingestion(
+        outlets=["hankyung", "mt"],
+        tracker_db_path=tmp_path / "tracker.json",
+        health_path=health_path,
+        resolver=resolver,
+        tracker_db=tracker,
+    )
+
+    assert result["status"] == "ok"
+    assert result["ingested"] >= 2
+    state = json.loads(health_path.read_text(encoding="utf-8"))
+    assert state["status"] == "ok"
+    assert "last_success_at" in state
+    assert state["ingested_count"] == result["ingested"]
+
+
+def test_run_news_ingestion_marks_error_when_all_fetches_fail(tmp_path: Path) -> None:
+    tracker = SignalTrackerDB(db_path=tmp_path / "tracker.json")
+    health_path = tmp_path / "news_health.json"
+    resolver = _ScriptedResolver({})  # nothing registered → every fetch raises
+
+    result = run_news_ingestion(
+        outlets=["hankyung"],
+        tracker_db_path=tmp_path / "tracker.json",
+        health_path=health_path,
+        resolver=resolver,
+        tracker_db=tracker,
+    )
+
+    assert result["status"] == "error"
+    state = json.loads(health_path.read_text(encoding="utf-8"))
+    assert state["status"] == "error"
+    assert state["error_count"] >= 1
+    assert "last_error_at" in state
+
+
+def test_news_healthcheck_is_stale_when_last_success_is_24h_old(tmp_path: Path) -> None:
+    state_path = tmp_path / "news_health.json"
+    stale_iso = (datetime.now(timezone.utc).replace(microsecond=0) -
+                 _hours(24)).isoformat()
+    state_path.write_text(json.dumps({
+        "status": "ok",
+        "last_run_at": stale_iso,
+        "last_success_at": stale_iso,
+        "error_count": 0,
+    }), encoding="utf-8")
+
+    summary = compute_health_summary(read_health_state(state_path), stale_threshold_hours=6.0)
+    assert summary["is_stale"] is True
+    assert summary["staleness_hours"] is not None and summary["staleness_hours"] >= 6.0
+
+
+def test_news_healthcheck_not_stale_when_fresh(tmp_path: Path) -> None:
+    state_path = tmp_path / "news_health.json"
+    fresh_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    state_path.write_text(json.dumps({
+        "status": "ok",
+        "last_run_at": fresh_iso,
+        "last_success_at": fresh_iso,
+        "error_count": 0,
+    }), encoding="utf-8")
+
+    summary = compute_health_summary(read_health_state(state_path), stale_threshold_hours=6.0)
+    assert summary["is_stale"] is False
+
+
+def test_news_healthcheck_missing_last_success_is_stale(tmp_path: Path) -> None:
+    summary = compute_health_summary({"status": "unknown"}, stale_threshold_hours=6.0)
+    assert summary["is_stale"] is True
+    assert summary["staleness_hours"] is None
+
+
+def _hours(value: float):
+    from datetime import timedelta
+    return timedelta(hours=value)

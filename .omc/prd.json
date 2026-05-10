@@ -13,7 +13,7 @@
       "id": "US-001",
       "title": "Korean financial news RSS resolver (stdlib)",
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "New module src/omx_brainstorm/news_source.py with NewsItem dataclass: source_id, outlet, title, summary, url, published_at, raw_categories",
         "NewsResolver.fetch(outlet, max_items) returns list[NewsItem] parsed with stdlib (urllib.request + xml.etree.ElementTree), no new dependency in pyproject.toml",
@@ -30,7 +30,7 @@
       "id": "US-002",
       "title": "News → SignalRecord pipeline + CLI command",
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "New helper news_source.classify_news_item(item: NewsItem) -> dict with keys: signal_score, video_signal_class, should_analyze, skip_reason — reusing signal_gate FINANCE_KEYWORDS and ACTIONABLE_TITLE_ANCHORS for Korean tokenisation",
         "Ticker extraction reuses stock_registry.resolve_kr_ticker on NewsItem.title + summary; only .KS / .KQ tickers admitted",
@@ -47,7 +47,7 @@
       "id": "US-003",
       "title": "Stale-detection healthcheck for news ingestion (74aeb5f pattern)",
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "ingest-news writes news_ingestion_health.json with last_run_at, last_success_at, last_error_at, status, error_count, ingested_count (same shape as scheduler_health.json)",
         "healthcheck.compute_health_summary works against news_ingestion_health.json with stale_threshold_hours=6 producing is_stale, staleness_hours, healthcheck_at",
