@@ -330,15 +330,40 @@ def _parse_time_like(value: str | None) -> datetime | None:
 # Section renderers
 # ---------------------------------------------------------------------------
 
+def _pipeline_status_emoji(transcript_backed: int, total_videos: int) -> tuple[str, str]:
+    if total_videos <= 0:
+        return "⚪", "no data"
+    ratio = transcript_backed / total_videos
+    if ratio >= 0.4:
+        return "🟢", "healthy"
+    if ratio >= 0.1:
+        return "🟡", "degraded"
+    return "🔴", "critical"
+
+
 def render_header(channel_data: dict[str, dict | None]) -> str:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     active = sum(1 for v in channel_data.values() if v is not None)
+    summary = build_pipeline_summary_from_channels(channel_data)
+    total_videos = summary.get("total_videos", 0)
+    transcript_backed = summary.get("transcript_backed_videos", 0)
+    metadata_fallback = summary.get("metadata_fallback_videos", 0)
+    actionable = summary.get("analyzable_videos", 0)
+    emoji, status_text = _pipeline_status_emoji(transcript_backed, total_videos)
+    ratio_pct = _pct(transcript_backed, total_videos)
+
     lines = [
         "# OMX Pipeline Dashboard (6-Month / 180-Day Analysis)",
         "",
         f"> Auto-generated: {now}",
         f"> Channels analyzed: {active}/{len(channel_data)}",
         "> Data source: `output/` directory pipeline results",
+        "",
+        f"**Status:** {emoji} {status_text} · "
+        f"transcript-backed {transcript_backed}/{total_videos} ({ratio_pct}) · "
+        f"metadata fallback {metadata_fallback} · actionable {actionable}",
+        "",
+        "> Legend — 🟢 ≥40% transcript-backed · 🟡 ≥10% · 🔴 <10% · ⚪ no data",
         "",
         "---",
         "",
@@ -348,23 +373,28 @@ def render_header(channel_data: dict[str, dict | None]) -> str:
 
 def render_channel_overview(channel_data: dict[str, dict | None]) -> str:
     lines = ["## Channel Overview", ""]
-    lines.append("| Channel | Videos | Analyzable | Strict ACTIONABLE | Ratio | Stocks Found | Quality Score |")
-    lines.append("|---------|------:|-----------:|------------------:|------:|------------:|--------------:|")
+    lines.append("| | Channel | Videos | Analyzable | Strict ACTIONABLE | Ratio | Stocks Found | Quality Score |")
+    lines.append("|:-:|---------|------:|-----------:|------------------:|------:|------------:|--------------:|")
 
     for slug, data in channel_data.items():
         name = channel_label(slug, data)
         if data is None:
-            lines.append(f"| {name} | - | - | - | - | - | - |")
+            lines.append(f"| ⚪ | {name} | - | - | - | - | - | - |")
             continue
         videos = data.get("videos", [])
         total = len(videos)
         analyzable = sum(1 for v in videos if v.get("should_analyze_stocks"))
         strict_actionable = sum(1 for v in videos if v.get("video_signal_class") == "ACTIONABLE")
         ratio = analyzable / total if total else 0
+        transcript_backed = sum(
+            1 for v in videos
+            if v.get("transcript_language") and v.get("transcript_language") != "metadata_fallback"
+        )
+        emoji, _ = _pipeline_status_emoji(transcript_backed, total)
         stocks = len(data.get("cross_video_ranking", []))
         scorecard = data.get("quality_scorecard", {})
         quality = scorecard.get("overall", 0.0)
-        lines.append(f"| {name} | {total} | {analyzable} | {strict_actionable} | {ratio:.1%} | {stocks} | {quality:.1f} |")
+        lines.append(f"| {emoji} | {name} | {total} | {analyzable} | {strict_actionable} | {ratio:.1%} | {stocks} | {quality:.1f} |")
 
     lines.append("")
     return "\n".join(lines)

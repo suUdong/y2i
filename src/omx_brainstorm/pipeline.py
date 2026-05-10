@@ -176,13 +176,14 @@ class OMXPipeline:
             else INSUFFICIENT_TRANSCRIPT_REASON
         )
 
-        self.transcript_cache.save(
-            video=video,
-            transcript_text=analysis_text,
-            transcript_language=language,
-            source=transcript_source,
-            ticker_mentions=[asdict(item) for item in mentions],
-        )
+        if transcript_source != "metadata_fallback":
+            self.transcript_cache.save(
+                video=video,
+                transcript_text=analysis_text,
+                transcript_language=language,
+                source=transcript_source,
+                ticker_mentions=[asdict(item) for item in mentions],
+            )
         report = VideoAnalysisReport(
             run_id=uuid.uuid4().hex[:10],
             created_at=utc_now_iso(),

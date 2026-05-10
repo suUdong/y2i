@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 from .app_config import AppConfig
 from .notifications import notify_all, send_telegram_document
 from .signal_alerts import send_analysis_summary_alert, send_daily_leaderboard_alert
-from .youtube import YoutubeResolver
+from .youtube import YoutubeResolver, ip_block_limit_reached, clear_ip_block_counter, IP_BLOCK_STATE_PATH
 from .utils import write_json, read_json
 
 logger = logging.getLogger(__name__)
@@ -353,10 +353,32 @@ def adaptive_poll_interval(
     return max(60.0, interval), idle
 
 
+_IP_BLOCK_COOLDOWN_BASE_HOURS = 3
+_IP_BLOCK_COOLDOWN_MAX_HOURS = 12
+
+
 def run_scheduler_forever(config: AppConfig, script_path: str = DEFAULT_COMPARISON_TARGET) -> None:
     base_interval = max(60, int(config.schedule.poll_interval_minutes) * 60)
     consecutive_idle = 0
+    consecutive_cooldowns = 0
     while True:
+        if ip_block_limit_reached():
+            cooldown_hours = min(
+                _IP_BLOCK_COOLDOWN_BASE_HOURS * (2 ** consecutive_cooldowns),
+                _IP_BLOCK_COOLDOWN_MAX_HOURS,
+            )
+            consecutive_cooldowns += 1
+            logger.warning(
+                "IP block limit reached — cooling down for %s hours (cooldown #%s). "
+                "Will auto-retry after sleep.",
+                cooldown_hours,
+                consecutive_cooldowns,
+            )
+            time.sleep(cooldown_hours * 3600)
+            clear_ip_block_counter()
+            logger.info("IP block cooldown finished — resuming scheduler")
+            continue
+        consecutive_cooldowns = 0
         try:
             result = run_scheduler_iteration(config, script_path=script_path)
             found_new = bool(result.get("new_videos"))

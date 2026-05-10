@@ -376,6 +376,10 @@ def run_comparison_job(config: AppConfig) -> dict:
             today=context.today,
             resolver=youtube_resolver,
         )
+        max_per_channel = max(1, config.strategy.max_scan // max(1, len(configured_channels)))
+        if len(video_ids) > max_per_channel:
+            logger.info("Trimming %s videos to %s for %s (max_scan=%s)", len(video_ids), max_per_channel, slug, config.strategy.max_scan)
+            video_ids = video_ids[:max_per_channel]
         logger.info("Collected %s videos for %s", len(video_ids), slug)
         rows = _analyze_channel_rows(video_ids, cache, config)
         validate_cross_stock_master_quality([stock for row in rows for stock in row["stocks"]])

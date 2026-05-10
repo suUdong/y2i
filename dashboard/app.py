@@ -184,6 +184,33 @@ st.markdown(
         margin-top: 0.25rem;
         font-size: 0.92rem;
     }
+    .status-badge {
+        display: inline-block;
+        padding: 0.08rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin-left: 0.35rem;
+        vertical-align: middle;
+    }
+    .status-transcript { background: rgba(16,185,129,0.14); color: #047857; }
+    .status-metadata   { background: rgba(245,158,11,0.16); color: #b45309; }
+    .status-unknown    { background: rgba(148,163,184,0.18); color: #475569; }
+    .scope-summary {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        padding: 0.65rem 0.9rem;
+        border-radius: 12px;
+        background: rgba(15,23,42,0.04);
+        border: 1px solid rgba(148,163,184,0.16);
+        margin: 0.5rem 0 1rem 0;
+        font-size: 0.9rem;
+        color: #334155;
+    }
+    .scope-summary strong { color: #0f172a; }
+    hr.soft { border: none; border-top: 1px solid rgba(148,163,184,0.22); margin: 1rem 0 0.75rem 0; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -216,6 +243,17 @@ def _translate_signal_kind(value: str) -> str:
         "CONSENSUS": "합의",
         "SINGLE_SOURCE": "단일 출처",
     }.get(kind, value)
+
+
+def _transcript_badge_html(status: str | None, label: str | None = None) -> str:
+    status = (status or "").lower()
+    if status == "transcript_backed" or (status and status not in {"metadata_only", "unknown", ""}):
+        klass, text = "status-transcript", label or "실자막 ✓"
+    elif status == "metadata_only":
+        klass, text = "status-metadata", label or "메타데이터만 ⚠"
+    else:
+        klass, text = "status-unknown", label or "미확인 ?"
+    return f"<span class='status-badge {klass}'>{text}</span>"
 
 
 def _translate_master(value: str) -> str:
@@ -261,10 +299,11 @@ def _render_video_feed_list(
             source_bits.append(item["lead_expert"])
         elif item.get("lead_stock"):
             source_bits.append(item["lead_stock"])
+        badge = _transcript_badge_html(item.get("transcript_status"), item.get("transcript_status_label"))
         st.markdown(
             (
                 "<div class='list-card'>"
-                f"<div class='list-kicker'>새 영상 · {item.get('published_at', '-')} · {item.get('transcript_status_label', '')}</div>"
+                f"<div class='list-kicker'>새 영상 · {item.get('published_at', '-')}{badge}</div>"
                 f"<div><strong>{item['title']}</strong></div>"
                 f"<div class='list-summary'>{' · '.join(bit for bit in source_bits if bit)}</div>"
                 f"<div class='list-summary'>점수 {item['signal_score']:.1f} · {item['summary']}</div>"
@@ -273,7 +312,7 @@ def _render_video_feed_list(
             unsafe_allow_html=True,
         )
         if st.button(
-            "이 영상 보기",
+            "✓ 선택됨 — 상세에서 보기" if is_selected else "이 영상 보기",
             key=f"feed_video_{item['video_id']}",
             use_container_width=True,
             type="primary" if is_selected else "secondary",
@@ -312,7 +351,7 @@ def _render_ranking_list(
             unsafe_allow_html=True,
         )
         if st.button(
-            "이 종목 보기",
+            "✓ 선택됨 — 상세에서 보기" if is_selected else "이 종목 보기",
             key=f"ranking_stock_{item['ticker']}",
             use_container_width=True,
             type="primary" if is_selected else "secondary",
@@ -332,7 +371,7 @@ def _render_stock_detail(card: dict | None, *, empty_message: str) -> None:
     st.markdown(
         (
             "<div class='insight-card'>"
-            f"<div class='insight-eyebrow'>{card['signal_note']} · 확신도 {_translate_conviction(card['conviction'])}</div>"
+            f"<div class='insight-eyebrow'>{card['signal_note']} · 확신도 {_translate_conviction(card['conviction'])}{_transcript_badge_html(card.get('transcript_status'), card.get('transcript_status_label'))}</div>"
             f"<div class='insight-headline'>{card['ticker_display']}</div>"
             f"<div class='insight-copy'>{card['why_now']}</div>"
             "</div>"
@@ -399,7 +438,7 @@ def _render_video_detail(video: dict | None, *, empty_message: str) -> None:
     st.markdown(
         (
             "<div class='insight-card'>"
-            f"<div class='insight-eyebrow'>{video.get('_channel_display', video.get('_channel', ''))} · {video.get('published_at', '-')} · {video.get('transcript_status_label', '')}</div>"
+            f"<div class='insight-eyebrow'>{video.get('_channel_display', video.get('_channel', ''))} · {video.get('published_at', '-')}{_transcript_badge_html(('metadata_only' if str(video.get('transcript_language','') or '').lower() == 'metadata_fallback' else ('transcript_backed' if video.get('transcript_language') else 'unknown')), video.get('transcript_status_label'))}</div>"
             f"<div class='insight-headline'>{video.get('title', '')}</div>"
             f"<div class='insight-copy'>{video.get('video_summary') or video.get('reason') or video.get('skip_reason') or ''}</div>"
             "</div>"
@@ -452,12 +491,13 @@ def _render_video_detail(video: dict | None, *, empty_message: str) -> None:
 
 
 OUTPUT_DIR = data_loader_runtime.DEFAULT_OUTPUT_DIR
-comparison = load_channel_comparison(OUTPUT_DIR)
-overview = build_overview_report(OUTPUT_DIR)
-live_feed = get_live_feed_data(OUTPUT_DIR, hours=72)
-channel_names = get_channel_display_names(OUTPUT_DIR)
-rankings = get_all_rankings(OUTPUT_DIR)
-available_channels = get_available_channels(OUTPUT_DIR)
+with st.spinner("파이프라인 데이터를 불러오는 중..."):
+    comparison = load_channel_comparison(OUTPUT_DIR)
+    overview = build_overview_report(OUTPUT_DIR)
+    live_feed = get_live_feed_data(OUTPUT_DIR, hours=72)
+    channel_names = get_channel_display_names(OUTPUT_DIR)
+    rankings = get_all_rankings(OUTPUT_DIR)
+    available_channels = get_available_channels(OUTPUT_DIR)
 
 header_metrics = build_header_metrics(
     overview=overview if isinstance(overview, dict) else {},
@@ -498,7 +538,25 @@ else:
 for video in scope_videos:
     video.setdefault("_channel_display", channel_names.get(str(video.get("_channel", "")), str(video.get("_channel", ""))))
 
-st.markdown(f"**현재 범위:** {scope_label} · 새 영상 {len(scope_videos)}개 · 종목 인사이트 {len(scope_cards)}개")
+transcript_backed_count = sum(
+    1 for v in scope_videos
+    if str(v.get("transcript_language", "") or "").lower() not in {"", "metadata_fallback"}
+)
+metadata_only_count = sum(
+    1 for v in scope_videos
+    if str(v.get("transcript_language", "") or "").lower() == "metadata_fallback"
+)
+st.markdown(
+    "<hr class='soft'/>"
+    "<div class='scope-summary'>"
+    f"<span>범위: <strong>{scope_label}</strong></span>"
+    f"<span>새 영상 <strong>{len(scope_videos)}</strong></span>"
+    f"<span>종목 인사이트 <strong>{len(scope_cards)}</strong></span>"
+    f"<span>실자막 <strong>{transcript_backed_count}</strong></span>"
+    f"<span>메타데이터만 <strong>{metadata_only_count}</strong></span>"
+    "</div>",
+    unsafe_allow_html=True,
+)
 
 feed_items = build_video_feed_items(scope_videos, channel_names, limit=12)
 ranking_items = build_ranking_items(scope_cards, limit=12)

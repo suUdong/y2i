@@ -42,6 +42,8 @@ DEFAULT_VIDEO_CACHE_HOURS = 24
 DEFAULT_YOUTUBE_FETCH_MAX_ATTEMPTS = 3
 DEFAULT_YOUTUBE_FETCH_RETRY_BASE_SECONDS = 2.0
 MAX_YOUTUBE_FETCH_RETRY_SECONDS = 12.0
+IP_BLOCK_STATE_PATH = Path(".omx/state/ip_block_state.json")
+IP_BLOCK_CONSECUTIVE_LIMIT = 3
 RETRYABLE_YTDLP_MARKERS = (
     "sign in to confirm you're not a bot",
     "sign in to confirm you’re not a bot",
@@ -179,6 +181,39 @@ def _is_retryable_transcript_error(exc: Exception) -> bool:
     if isinstance(exc, (RequestBlocked, IpBlocked, BrokenPipeError, TimeoutError, ConnectionResetError, ConnectionAbortedError, EOFError)):
         return True
     return _has_retryable_marker(exc, RETRYABLE_TRANSCRIPT_MARKERS)
+
+
+def record_ip_block() -> int:
+    """Record an IP block event and return the new consecutive count."""
+    ensure_dir(IP_BLOCK_STATE_PATH.parent)
+    state = read_json(IP_BLOCK_STATE_PATH, {"consecutive_blocks": 0})
+    state["consecutive_blocks"] = state.get("consecutive_blocks", 0) + 1
+    state["last_blocked_at"] = datetime.now(timezone.utc).isoformat()
+    write_json(IP_BLOCK_STATE_PATH, state)
+    logger.warning(
+        "IP block recorded (consecutive: %s/%s)",
+        state["consecutive_blocks"],
+        IP_BLOCK_CONSECUTIVE_LIMIT,
+    )
+    return state["consecutive_blocks"]
+
+
+def clear_ip_block_counter() -> None:
+    """Reset the consecutive IP block counter after a successful fetch."""
+    if IP_BLOCK_STATE_PATH.exists():
+        state = read_json(IP_BLOCK_STATE_PATH, {})
+        if state.get("consecutive_blocks", 0) > 0:
+            state["consecutive_blocks"] = 0
+            state["cleared_at"] = datetime.now(timezone.utc).isoformat()
+            write_json(IP_BLOCK_STATE_PATH, state)
+
+
+def ip_block_limit_reached() -> bool:
+    """Check if consecutive IP blocks have hit the shutdown threshold."""
+    if not IP_BLOCK_STATE_PATH.exists():
+        return False
+    state = read_json(IP_BLOCK_STATE_PATH, {})
+    return state.get("consecutive_blocks", 0) >= IP_BLOCK_CONSECUTIVE_LIMIT
 
 
 def _call_with_retry(
@@ -497,9 +532,9 @@ class TranscriptFetcher:
         else:
             self._proxy_config = None
         if min_interval_seconds is None:
-            min_interval_seconds = float(os.getenv("OMX_TRANSCRIPT_MIN_INTERVAL_SEC") or "1.5")
+            min_interval_seconds = float(os.getenv("OMX_TRANSCRIPT_MIN_INTERVAL_SEC") or "4.0")
         if jitter_seconds is None:
-            jitter_seconds = float(os.getenv("OMX_TRANSCRIPT_JITTER_SEC") or "1.0")
+            jitter_seconds = float(os.getenv("OMX_TRANSCRIPT_JITTER_SEC") or "2.0")
         self._min_interval_seconds = max(0.0, float(min_interval_seconds))
         self._jitter_seconds = max(0.0, float(jitter_seconds))
         self._throttle_lock = Lock()
@@ -551,9 +586,20 @@ class TranscriptFetcher:
                 is_retryable=_is_retryable_transcript_error,
             )
         except Exception as exc:
+            is_ip_block = isinstance(exc, (RequestBlocked, IpBlocked)) or _has_retryable_marker(exc, ("ip blocked", "request blocked", "youtube is blocking requests from your ip"))
+            if is_ip_block:
+                record_ip_block()
             logger.warning("Transcript API fetch failed for %s: %s; trying yt-dlp subtitles", video_id, describe_youtube_error(exc))
-            return self._fetch_from_ytdlp(video_id, preferred_languages)
+            try:
+                result = self._fetch_from_ytdlp(video_id, preferred_languages)
+                clear_ip_block_counter()
+                return result
+            except Exception:
+                if is_ip_block:
+                    record_ip_block()
+                raise
 
+        clear_ip_block_counter()
         segments = [
             TranscriptSegment(start=item.start, duration=item.duration, text=normalize_ws(item.text))
             for item in fetched

@@ -290,7 +290,7 @@ def load_integration_report(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, 
 
 # ── 30-day channel results ───────────────────────────────────────────────────
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def load_30d_results(
     channel_slug: str,
     output_dir: Path = DEFAULT_OUTPUT_DIR,
@@ -302,7 +302,7 @@ def load_30d_results(
 
 # ── Channel comparison ───────────────────────────────────────────────────────
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def load_channel_comparison(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
     path = _latest_file(output_dir, "channel_comparison_30d_*.json")
     comparison = _load_json(path)
@@ -381,7 +381,7 @@ def load_video_titles(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
     return _load_json(path)
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def load_all_video_titles(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
     """Load and merge title-label data across all available channels."""
     merged_titles: list[dict[str, Any]] = []
@@ -417,14 +417,19 @@ def load_all_video_titles(output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, An
 def load_video_reports(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[dict[str, Any]]:
     """Load all individual video analysis report JSONs (hash-based filenames)."""
     reports = []
-    for p in sorted(output_dir.rglob("*_*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
-        name = p.stem
-        # Skip channel-level / comparison / title files
-        if any(tag in name for tag in ("30d_", "comparison", "titles", "integration", "results_", "PIPELINE")):
-            continue
-        data = _load_json(p)
-        if isinstance(data, dict) and "video" in data:
-            reports.append(data)
+    runs_dir = output_dir / "runs"
+    search_dirs = [output_dir]
+    if runs_dir.is_dir():
+        run_dirs = sorted(runs_dir.iterdir(), reverse=True)
+        search_dirs.extend(rd for rd in run_dirs[:5] if rd.is_dir())
+    for search_dir in search_dirs:
+        for p in sorted(search_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
+            name = p.stem
+            if any(tag in name for tag in ("30d_", "comparison", "titles", "integration", "results_", "PIPELINE")):
+                continue
+            data = _load_json(p)
+            if isinstance(data, dict) and "video" in data:
+                reports.append(data)
     return reports
 
 
@@ -458,7 +463,7 @@ def load_signal_accuracy_summary(
     return build_signal_accuracy_summary(tracker_db, channel_metadata=channels)
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def load_tracker_records(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[dict[str, Any]]:
     tracker_path = _tracker_db_path(output_dir)
     payload = _load_json(tracker_path)
@@ -548,7 +553,7 @@ def build_signal_timeline(record: dict[str, Any]) -> list[dict[str, Any]]:
     return timeline
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def get_signal_chart_records(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     limit: int = 24,
@@ -587,7 +592,7 @@ def get_signal_chart_records(
     return chart_records[:limit]
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def build_live_feed_events(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     hours: int = 48,
@@ -664,7 +669,7 @@ def extract_recent_tracked_signals(comparison: dict[str, Any]) -> list[dict[str,
     return summary.get("recent_signals", []) if isinstance(summary, dict) else []
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def get_available_channels(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[str]:
     """Detect channel slugs from *_30d_*.json filenames."""
     return sorted(_latest_channel_result_paths(output_dir))
@@ -672,19 +677,32 @@ def get_available_channels(output_dir: Path = DEFAULT_OUTPUT_DIR) -> list[str]:
 
 # ── Last-update timestamp (US-002) ──────────────────────────────────────────
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def get_last_update_time(output_dir: Path = DEFAULT_OUTPUT_DIR) -> datetime | None:
     """Return the mtime of the most recently modified JSON in output_dir."""
-    jsons = list(output_dir.rglob("*.json"))
-    if not jsons:
+    latest_mtime: float = 0
+    for p in output_dir.glob("*.json"):
+        mt = p.stat().st_mtime
+        if mt > latest_mtime:
+            latest_mtime = mt
+    runs_dir = output_dir / "runs"
+    if runs_dir.is_dir():
+        run_dirs = sorted(runs_dir.iterdir(), reverse=True)
+        for rd in run_dirs[:3]:
+            if rd.is_dir():
+                for p in rd.rglob("*.json"):
+                    mt = p.stat().st_mtime
+                    if mt > latest_mtime:
+                        latest_mtime = mt
+                break
+    if latest_mtime == 0:
         return None
-    latest = max(jsons, key=lambda p: p.stat().st_mtime)
-    return datetime.fromtimestamp(latest.stat().st_mtime, tz=timezone.utc)
+    return datetime.fromtimestamp(latest_mtime, tz=timezone.utc)
 
 
 # ── Recent videos across all channels (US-003) ─────────────────────────────
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def get_recent_videos(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     hours: int = 24,
@@ -729,7 +747,7 @@ def get_recent_videos(
 
 # ── Actionable signal extraction (US-006) ───────────────────────────────────
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def extract_actionable_signals(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
 ) -> list[dict[str, Any]]:
@@ -761,7 +779,7 @@ def extract_actionable_signals(
 
 # ── Pipeline activity log (US-004) ──────────────────────────────────────────
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def get_pipeline_activity(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     limit: int = 15,
@@ -778,7 +796,7 @@ def get_pipeline_activity(
     return entries
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def build_overview_report(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
 ) -> dict[str, Any]:
@@ -926,7 +944,7 @@ KOREAN_STOCK_NAMES: dict[str, str] = {
 }
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def get_live_feed_data(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     hours: int = 48,
@@ -1002,7 +1020,7 @@ def translate_video_type(video_type: str) -> str:
     }.get(video_type or "OTHER", video_type or "기타")
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def get_channel_display_names(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
 ) -> dict[str, str]:
@@ -1019,7 +1037,7 @@ def get_channel_display_names(
     return names
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def get_all_rankings(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
 ) -> list[dict[str, Any]]:

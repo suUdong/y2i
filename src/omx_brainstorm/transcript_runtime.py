@@ -58,10 +58,10 @@ def resolve_transcript_text(video, cache: TranscriptCache, fetcher: TranscriptFe
             return cached["transcript_text"], f"cache:{cached_language}", cached_source, cached
         if not metadata_text:
             logger.warning("Transcript fetch failed for %s and metadata fallback is empty", video.video_id)
-        fallback_source = METADATA_FALLBACK_PERMANENT_SOURCE if permanent else "metadata_fallback"
-        cache.save(video, metadata_text, "metadata_fallback", fallback_source)
         if permanent:
+            cache.save(video, metadata_text, "metadata_fallback", METADATA_FALLBACK_PERMANENT_SOURCE)
             logger.info("Using permanent metadata fallback for %s (transcript unavailable)", video.video_id)
+            return metadata_text, "metadata_fallback", METADATA_FALLBACK_PERMANENT_SOURCE, cache.load(video.video_id)
         else:
-            logger.info("Using metadata fallback for %s", video.video_id)
-        return metadata_text, "metadata_fallback", fallback_source, cache.load(video.video_id)
+            logger.info("Transient transcript failure for %s — skipping cache so next run retries", video.video_id)
+            return metadata_text, "metadata_fallback", "metadata_fallback", None

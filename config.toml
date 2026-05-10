@@ -1,5 +1,5 @@
 [app]
-provider = "auto"
+provider = "claude"
 output_dir = "output"
 registry_path = "channels.json"
 paper_trading_mode = true
@@ -71,8 +71,8 @@ url = "https://www.youtube.com/channel/UCKTMvIu9a4VGSrpWy-8bUrQ/videos"
 enabled = true
 
 [strategy]
-window_days = 30
-max_scan = 300
+window_days = 7
+max_scan = 30
 top_n = 5
 paper_trade_capital = 10000.0
 signal_alert_min_score = 68.0
@@ -86,8 +86,8 @@ telegram_chat_id = ""
 enabled = true
 daily_time = "09:00"
 timezone = "Asia/Seoul"
-poll_interval_minutes = 2
-poll_video_limit = 8
+poll_interval_minutes = 60
+poll_video_limit = 1
 state_path = ".omx/state/scheduler_state.json"
 
 [logging]
