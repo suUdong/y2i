@@ -1,58 +1,100 @@
 {
+  "task": "y2i 시그널 소스 확장 — YouTube 의존도 다변화: 한국 증권 뉴스 RSS 인입 파일럿",
+  "decision_log": [
+    "Source ROI ranking: news_rss > podcasts > discussion_boards > twitter_x",
+    "Twitter/X: API 비용 prohibitive — out of scope",
+    "Podcasts: Whisper 전사 비용 prohibitive (시간당 $)— v2 후보",
+    "Discussion boards (Naver/Toss): bot detection + 낮은 S/N — v2 후보",
+    "Korean financial news RSS (한경, 머투, 이데일리): 구조화·실시간·무료·기존 LLM extractor 재사용 가능 → 1순위 선정",
+    "Dependency policy (CLAUDE.md): stdlib only — feedparser 사용 금지, urllib + xml.etree 로 구현"
+  ],
   "stories": [
     {
       "id": "US-001",
-      "title": "Expand Korean stock registry with comprehensive KOSPI/KOSDAQ coverage",
+      "title": "Korean financial news RSS resolver (stdlib)",
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "acceptanceCriteria": [
-        "COMPANY_MAP has 60+ entries covering major KOSPI/KOSDAQ sectors (반도체, 2차전지, 바이오, 자동차, 조선, 방산, 전력, 건설, 금융, 유통, 엔터, 게임 etc)",
-        "Korean company name variants (e.g. '현대차', '현대자동차', '현차') all map to the same ticker",
-        "All tickers use correct suffix: .KS for KOSPI, .KQ for KOSDAQ",
-        "COMPANY_PATTERN_STRINGS updated with new company name patterns for signal_gate detection",
-        "SECTOR_STOCKS expanded with new sector categories (battery, bio, defense, entertainment, gaming)",
-        "FINANCE_KEYWORDS in signal_gate.py expanded with Korean market terms (2차전지, 바이오, 방산, 조선, 전력기기 etc)",
-        "Existing tests still pass"
+        "New module src/omx_brainstorm/news_source.py with NewsItem dataclass: source_id, outlet, title, summary, url, published_at, raw_categories",
+        "NewsResolver.fetch(outlet, max_items) returns list[NewsItem] parsed with stdlib (urllib.request + xml.etree.ElementTree), no new dependency in pyproject.toml",
+        "Built-in outlets registry includes at least 3 Korean financial outlets (hankyung, mt, edaily) with their RSS URLs",
+        "Published_at returned as ISO-8601 UTC string; empty pubDate handled with current UTC fallback",
+        "Network errors raise NewsFetchError with the outlet name and HTTP status (no silent crash)",
+        "Optional http_proxy_url / https_proxy_url kwargs mirror youtube.py for outbound network parity",
+        "Unit test: parses a fixed RSS XML fixture into NewsItem list — pubDate parse, html-entity-decoded title, missing-fields fallback",
+        "Unit test: NewsFetchError raised when urlopen returns non-200 (via mocked urlopen)",
+        "All previously-passing tests still pass (.venv/bin/python -m pytest -q)"
       ]
     },
     {
       "id": "US-002",
-      "title": "KOSPI/KOSDAQ ticker code auto-mapping from Korean names",
+      "title": "News → SignalRecord pipeline + CLI command",
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "acceptanceCriteria": [
-        "New function resolve_kr_ticker(name: str) -> tuple[str, str] | None in stock_registry.py that fuzzy-matches Korean company names to (ticker, english_name)",
-        "extract_mentions in heuristic_pipeline.py uses resolve_kr_ticker as fallback when COMPANY_MAP miss",
-        "Korean suffixes handled: '전자', '화학', '건설', '증권', '보험', '카드', '지주' etc stripped for matching",
-        "Test: resolve_kr_ticker('삼성전자') returns ('005930.KS', 'Samsung Electronics')",
-        "Test: resolve_kr_ticker('현대차') returns ('005380.KS', 'Hyundai Motor')",
-        "Test: resolve_kr_ticker('unknown_company_xyz') returns None"
+        "New helper news_source.classify_news_item(item: NewsItem) -> dict with keys: signal_score, video_signal_class, should_analyze, skip_reason — reusing signal_gate FINANCE_KEYWORDS and ACTIONABLE_TITLE_ANCHORS for Korean tokenisation",
+        "Ticker extraction reuses stock_registry.resolve_kr_ticker on NewsItem.title + summary; only .KS / .KQ tickers admitted",
+        "New function news_source.ingest_news_into_tracker(db: SignalTrackerDB, items, *, min_signal_score=60.0) writes one SignalRecord per (ticker, outlet, item) with channel_slug='news:<outlet>', verdict='BUY' when score>=68 else 'WATCH', source_video_id=item.source_id (idempotent on re-run)",
+        "Idempotency: re-ingesting the same NewsItem list does not add duplicate records (dedup via SignalTrackerDB._record_key)",
+        "New CLI command 'ingest-news' in cli.py: omx-brainstorm ingest-news --config config.toml --outlets hankyung,mt,edaily --max-items 30 — exits 0 with JSON summary {ingested, skipped, outlets}",
+        "Module-level constant NEWS_HEALTH_PATH = Path('.omx/state/news_ingestion_health.json')",
+        "Unit test: classify_news_item flags '삼성전자 HBM 수주' as should_analyze=True with score>=60; flags '먹방 일상' as should_analyze=False",
+        "Unit test: ingest_news_into_tracker writes SignalRecord with channel_slug='news:hankyung' and ticker '005930.KS' for a 삼성전자 headline",
+        "Unit test: re-ingesting the same NewsItem returns ingested=0 (dedup)"
       ]
     },
     {
       "id": "US-003",
-      "title": "kindshot signal feed export",
+      "title": "Stale-detection healthcheck for news ingestion (74aeb5f pattern)",
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "acceptanceCriteria": [
-        "New module src/omx_brainstorm/kindshot_feed.py with export_signals_for_kindshot(db: SignalTrackerDB, output_path: Path) function",
-        "Exports only KR-market signals (ticker ends with .KS or .KQ) with BUY/STRONG_BUY verdict",
-        "Output JSON schema: {signals: [{ticker, company_name, signal_source: 'y2i', signal_date, confidence, verdict, channel, evidence}], generated_at}",
-        "New CLI command 'export-kindshot-feed' writes to .omx/state/kindshot_feed.json",
-        "Scheduler auto-exports after each successful comparison run",
-        "Test: export produces correct JSON with KR-only filtered signals"
+        "ingest-news writes news_ingestion_health.json with last_run_at, last_success_at, last_error_at, status, error_count, ingested_count (same shape as scheduler_health.json)",
+        "healthcheck.compute_health_summary works against news_ingestion_health.json with stale_threshold_hours=6 producing is_stale, staleness_hours, healthcheck_at",
+        "New CLI command 'news-healthcheck' prints JSON summary and exits 1 when is_stale=True, 0 otherwise",
+        "Unit test: simulated healthy state (last_success_at = now) yields is_stale=False",
+        "Unit test: simulated stale state (last_success_at = now - 24h) yields is_stale=True and exit code 1",
+        "Unit test: missing last_success_at -> is_stale=True (default-skeleton path)"
       ]
     },
     {
       "id": "US-004",
-      "title": "Tests pass, commit, and push",
+      "title": "Hit-rate + freshness measurement vs YouTube channels",
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "acceptanceCriteria": [
-        "All existing tests pass (pytest)",
-        "New tests for resolve_kr_ticker, expanded registry, and kindshot feed export",
-        "Changes committed with descriptive message",
-        "Pushed to remote"
+        "New script scripts/news_signal_freshness.py compares news SignalRecord set vs YouTube SignalRecord set in .omx/state/signal_tracker.json",
+        "Outputs JSON report with: news_tickers_total, news_tickers_unique (not in YT 7d window), overlap_ratio_pct, lead_time_summary (median hours news_signal precedes YT signal for shared tickers), news_hit_rate_5d (when ≥1 mature news SignalRecord)",
+        "Script handles empty tracker (no SignalRecords) gracefully — prints zero-counts report and exits 0",
+        "Unit test: synthetic mixed tracker (2 news + 3 yt records, 1 shared ticker) produces overlap_ratio_pct=50.0 and unique=1 for news side"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "kindshot_feed integration — export news signals",
+      "priority": 5,
+      "passes": false,
+      "acceptanceCriteria": [
+        "export_signals_for_kindshot in kindshot_feed.py treats channel_slug starting with 'news:' as a first-class export candidate (no breakage of YT exports)",
+        "News records still must pass _is_exportable_record gates (score>=65, KR market, BUY/STRONG_BUY, conviction or consensus)",
+        "kindshot signal output includes 'signal_source' label distinguishing 'y2i:youtube' vs 'y2i:news' (replace flat 'y2i' to label by source class)",
+        "Default channel_weight for unknown 'news:*' slugs is 1.0 (preserves baseline export gate)",
+        "Unit test: SignalTrackerDB with one YT BUY @ score 75 and one news BUY @ score 75 — both appear in export with correct signal_source labels",
+        "Unit test: news WATCH (verdict not in BUY/STRONG_BUY) gets filtered out",
+        "All previously-passing kindshot_feed tests still pass"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Final verification + per-step commits pushed",
+      "priority": 6,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Full pytest run is green (.venv/bin/python -m pytest -q)",
+        "Compound backtest harness (scripts.backtest_kindshot_export --fresh) still runs without ImportError / regression",
+        "Each story (US-001..US-005) landed as its own commit on the current branch",
+        "All commits pushed to origin (git log origin/<branch>..HEAD shows zero unpushed when finished, or push command output captured)",
+        "progress.txt records architecture decisions, files changed, learnings"
       ]
     }
   ]
