@@ -18,3 +18,7 @@ logs/
 *.rootbak
 .venv.rootbak/
 README.rootbak
+.memsearch/
+.omg/
+ralph-loop.state.json*
+dashboard/app_fixed.py
