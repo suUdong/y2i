@@ -157,6 +157,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_twitter_health.add_argument("--stale-threshold-hours", type=float, default=6.0)
     p_twitter_health.add_argument("--exit-nonzero-on-stale", action="store_true",
                                   help="Exit with code 1 if twitter ingestion is stale")
+
+    p_talkboard = sub.add_parser("ingest-talkboard", help="Fetch Korean stock talkboards and write SignalRecords")
+    p_talkboard.add_argument("--config", default="config.toml")
+    p_talkboard.add_argument("--tracker-db", default=".omx/state/signal_tracker.json")
+    p_talkboard.add_argument("--boards", default="", help="Comma-separated board IDs/codes/URLs (default: built-in Naver boards)")
+    p_talkboard.add_argument("--max-items", type=int, default=30)
+    p_talkboard.add_argument("--sleep-seconds", type=float, default=1.2,
+                             help="Delay between board fetches; keep nonzero for robots-friendly operation")
+
+    p_talkboard_health = sub.add_parser("talkboard-healthcheck", help="Read talkboard-ingestion health state")
+    p_talkboard_health.add_argument("--path", default=".omx/state/talkboard_ingestion_health.json")
+    p_talkboard_health.add_argument("--stale-threshold-hours", type=float, default=6.0)
+    p_talkboard_health.add_argument("--exit-nonzero-on-stale", action="store_true",
+                                    help="Exit with code 1 if talkboard ingestion is stale")
     return parser
 
 
@@ -333,6 +347,40 @@ def main() -> None:
             return
 
         if args.command == "twitter-healthcheck":
+            from .healthcheck import compute_health_summary, read_health_state
+
+            state = read_health_state(args.path)
+            summary = compute_health_summary(
+                state, stale_threshold_hours=args.stale_threshold_hours
+            )
+            print(json.dumps(summary, ensure_ascii=False, indent=2))
+            if args.exit_nonzero_on_stale and summary.get("is_stale"):
+                raise SystemExit(1)
+            return
+
+        if args.command == "ingest-talkboard":
+            from .talkboard_source import run_talkboard_ingestion, TALKBOARD_HEALTH_PATH
+
+            boards = [name.strip() for name in (args.boards or "").split(",") if name.strip()] or None
+            try:
+                config = load_app_config(args.config)
+                proxy_kwargs = _network_proxy_kwargs(config)
+            except Exception:
+                proxy_kwargs = {}
+            result = run_talkboard_ingestion(
+                boards=boards,
+                max_items_per_board=args.max_items,
+                tracker_db_path=Path(args.tracker_db),
+                health_path=TALKBOARD_HEALTH_PATH,
+                sleep_seconds=args.sleep_seconds,
+                **proxy_kwargs,
+            )
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            if result.get("status") == "error":
+                raise SystemExit(1)
+            return
+
+        if args.command == "talkboard-healthcheck":
             from .healthcheck import compute_health_summary, read_health_state
 
             state = read_health_state(args.path)
