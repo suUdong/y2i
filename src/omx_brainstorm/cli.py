@@ -171,6 +171,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_talkboard_health.add_argument("--stale-threshold-hours", type=float, default=6.0)
     p_talkboard_health.add_argument("--exit-nonzero-on-stale", action="store_true",
                                     help="Exit with code 1 if talkboard ingestion is stale")
+
+    p_reddit = sub.add_parser("ingest-reddit", help="Fetch subreddit old.reddit.com JSON feeds and write SignalRecords")
+    p_reddit.add_argument("--config", default="config.toml")
+    p_reddit.add_argument("--tracker-db", default=".omx/state/signal_tracker.json")
+    p_reddit.add_argument("--subreddits", default="", help="Comma-separated subreddit names (default: built-in curated list)")
+    p_reddit.add_argument("--max-items", type=int, default=30)
+    p_reddit.add_argument("--sleep-seconds", type=float, default=1.5,
+                          help="Delay between subreddit fetches; keep nonzero for Reddit-friendly operation")
+
+    p_reddit_health = sub.add_parser("reddit-healthcheck", help="Read reddit-ingestion health state")
+    p_reddit_health.add_argument("--path", default=".omx/state/reddit_ingestion_health.json")
+    p_reddit_health.add_argument("--stale-threshold-hours", type=float, default=6.0)
+    p_reddit_health.add_argument("--exit-nonzero-on-stale", action="store_true",
+                                 help="Exit with code 1 if reddit ingestion is stale")
     return parser
 
 
@@ -381,6 +395,40 @@ def main() -> None:
             return
 
         if args.command == "talkboard-healthcheck":
+            from .healthcheck import compute_health_summary, read_health_state
+
+            state = read_health_state(args.path)
+            summary = compute_health_summary(
+                state, stale_threshold_hours=args.stale_threshold_hours
+            )
+            print(json.dumps(summary, ensure_ascii=False, indent=2))
+            if args.exit_nonzero_on_stale and summary.get("is_stale"):
+                raise SystemExit(1)
+            return
+
+        if args.command == "ingest-reddit":
+            from .reddit_source import run_reddit_ingestion, REDDIT_HEALTH_PATH
+
+            subreddits = [name.strip() for name in (args.subreddits or "").split(",") if name.strip()] or None
+            try:
+                config = load_app_config(args.config)
+                proxy_kwargs = _network_proxy_kwargs(config)
+            except Exception:
+                proxy_kwargs = {}
+            result = run_reddit_ingestion(
+                subreddits=subreddits,
+                max_items_per_subreddit=args.max_items,
+                tracker_db_path=Path(args.tracker_db),
+                health_path=REDDIT_HEALTH_PATH,
+                sleep_seconds=args.sleep_seconds,
+                **proxy_kwargs,
+            )
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            if result.get("status") == "error":
+                raise SystemExit(1)
+            return
+
+        if args.command == "reddit-healthcheck":
             from .healthcheck import compute_health_summary, read_health_state
 
             state = read_health_state(args.path)

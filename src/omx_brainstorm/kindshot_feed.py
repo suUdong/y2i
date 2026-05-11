@@ -39,6 +39,7 @@ _TICKER_CHANNEL_COOLDOWN_DAYS = 7
 _NEWS_CHANNEL_PREFIX = "news:"
 _TWITTER_CHANNEL_PREFIX = "twitter:"
 _TALKBOARD_CHANNEL_PREFIX = "talkboard:"
+_REDDIT_CHANNEL_PREFIX = "reddit:"
 
 
 def _signal_source_label(channel_slug: str | None) -> str:
@@ -51,6 +52,8 @@ def _signal_source_label(channel_slug: str | None) -> str:
         return "y2i:twitter"
     if channel_slug.startswith(_TALKBOARD_CHANNEL_PREFIX):
         return "y2i:talkboard"
+    if channel_slug.startswith(_REDDIT_CHANNEL_PREFIX):
+        return "y2i:reddit"
     return "y2i:youtube"
 
 # Empirical 5d directional win rate by number of channels mentioning the
